@@ -240,14 +240,22 @@ namespace Enyim.Caching.Memcached
 
             int read = 0;
             int shouldRead = count;
+            var timedOut = false;
 
+            var timer = new System.Timers.Timer(inputStream.ReadTimeout);
+            timer.Elapsed += (source, e) => timedOut = true;
+            timer.Start();
+            
             while (read < count)
             {
                 try
                 {
                     int currentRead = await this.inputStream.ReadAsync(buffer, offset, shouldRead);
                     if (currentRead < 1)
+                    {
+                        if (timedOut) throw new IOException("Reading from network has timed out.");
                         continue;
+                    }
 
                     read += currentRead;
                     offset += currentRead;
@@ -274,6 +282,10 @@ namespace Enyim.Caching.Memcached
 
             int read = 0;
             int shouldRead = count;
+            var timedOut = false;
+            var timer = new System.Timers.Timer(inputStream.ReadTimeout);
+            timer.Elapsed += (source, e) => timedOut = true;
+            timer.Start();
 
             while (read < count)
             {
@@ -281,7 +293,10 @@ namespace Enyim.Caching.Memcached
                 {
                     int currentRead = this.inputStream.Read(buffer, offset, shouldRead);
                     if (currentRead < 1)
+                    {
+                        if (timedOut) throw new IOException("Reading from network has timed out.");
                         continue;
+                    }
 
                     read += currentRead;
                     offset += currentRead;
