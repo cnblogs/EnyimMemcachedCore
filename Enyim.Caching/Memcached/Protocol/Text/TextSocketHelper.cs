@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
@@ -58,7 +58,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 		/// <returns></returns>
 		private static string ReadLine(PooledSocket socket)
 		{
-			MemoryStream ms = new MemoryStream(50);
+			var ms = new MemoryStream(50);
 
 			bool gotR = false;
 			//byte[] buffer = new byte[1];
