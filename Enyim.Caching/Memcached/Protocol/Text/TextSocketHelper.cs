@@ -68,6 +68,11 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             {
                 data = socket.ReadByte();
 
+                if (data == -1)
+                {
+                    return string.Empty;
+                }
+
                 if (data == 13)
                 {
                     gotR = true;
