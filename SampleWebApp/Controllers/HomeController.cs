@@ -13,16 +13,20 @@ namespace Enyim.Caching.SampleWebApp.Controllers
     public class HomeController : Controller
     {
         private readonly IMemcachedClient _memcachedClient;
+        readonly IMemcachedClient _postbodyMemcachedClient;
         private readonly IBlogPostService _blogPostService;
         private readonly ILogger _logger;
         public static readonly string CacheKey = "blogposts-recent";
+        public static readonly string PostbodyCacheKey = "postbody";
 
         public HomeController(
             IMemcachedClient memcachedClient,
+            IMemcachedClient<PostBody> postbodyMemcachedClient,
             IBlogPostService blogPostService,
             ILoggerFactory loggerFactory)
         {
             _memcachedClient = memcachedClient;
+            _postbodyMemcachedClient = postbodyMemcachedClient;
             _blogPostService = blogPostService;
             _logger = loggerFactory.CreateLogger<HomeController>();
         }
@@ -40,6 +44,14 @@ namespace Enyim.Caching.SampleWebApp.Controllers
             _logger.LogDebug("Done _memcachedClient.GetValueOrCreateAsync");
 
             return Ok(posts);
+        }
+
+        public async Task<IActionResult> Postbody()
+        {
+            var postbody = (await _blogPostService.GetRecent(10)).First()?.Body;
+            await _postbodyMemcachedClient.AddAsync(PostbodyCacheKey, postbody, 10);
+            var result = await _postbodyMemcachedClient.GetAsync<string>(PostbodyCacheKey);
+            return result.Success ? Ok() : StatusCode(500);
         }
     }
 }

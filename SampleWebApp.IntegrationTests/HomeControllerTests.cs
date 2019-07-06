@@ -37,5 +37,13 @@ namespace SampleWebApp.IntegrationTests
 
             await memcachedClient.RemoveAsync(HomeController.CacheKey);
         }
+
+        [Fact]
+        public async Task Get_postbody_from_cache_ok()
+        {
+            var httpClient = _factory.CreateClient();
+            var response = await httpClient.GetAsync("/home/postbody");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
     }
 }

@@ -42,11 +42,9 @@ namespace Enyim.Caching
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
         protected ITranscoder Transcoder { get { return this.transcoder; } }
 
-        public MemcachedClient(
-            ILoggerFactory loggerFactor,
-            IMemcachedClientConfiguration configuration)
+        public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration)
         {
-            _logger = loggerFactor.CreateLogger<MemcachedClient>();
+            _logger = loggerFactory.CreateLogger<MemcachedClient>();
 
             if (configuration == null)
             {
