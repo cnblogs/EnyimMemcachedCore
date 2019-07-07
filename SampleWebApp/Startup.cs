@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Enyim.Caching;
+using Enyim.Caching.SampleWebApp.Models;
 using Enyim.Caching.SampleWebApp.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +27,7 @@ namespace Enyim.Caching.SampleWebApp
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEnyimMemcached();
+            services.AddEnyimMemcached<PostBody>(Configuration, "postbodyMemcached");
             //services.AddEnyimMemcached(Configuration);
             //services.AddEnyimMemcached(Configuration, "enyimMemcached");
             //services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));

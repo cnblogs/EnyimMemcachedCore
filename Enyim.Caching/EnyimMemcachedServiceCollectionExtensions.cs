@@ -5,6 +5,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -49,7 +51,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configurationSection));
             }
 
-            if(!configurationSection.Exists())
+            if (!configurationSection.Exists())
             {
                 throw new ArgumentNullException($"{configurationSection.Key} in appsettings.json");
             }
@@ -92,6 +94,27 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IDistributedCache>(factory => factory.GetService<MemcachedClient>());
 
             return services;
-        }        
+        }
+
+        public static IServiceCollection AddEnyimMemcached<T>(
+            this IServiceCollection services,
+            IConfiguration configuration,
+            string sectionKey)
+        {
+            services.AddOptions();
+            services.Configure<MemcachedClientOptions>(sectionKey, configuration.GetSection(sectionKey));
+            services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
+            services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
+
+            services.AddSingleton<IMemcachedClient<T>>(sp =>
+            {
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                var options = sp.GetRequiredService<IOptionsMonitor<MemcachedClientOptions>>();
+                var conf = new MemcachedClientConfiguration(loggerFactory, options.Get(sectionKey));
+                return new MemcachedClient<T>(loggerFactory, conf);
+            });
+
+            return services;
+        }
     }
 }
