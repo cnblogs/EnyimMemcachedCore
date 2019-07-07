@@ -13,7 +13,7 @@ namespace Enyim.Caching.SampleWebApp.Controllers
     public class HomeController : Controller
     {
         private readonly IMemcachedClient _memcachedClient;
-        readonly IMemcachedClient _postbodyMemcachedClient;
+        private readonly IMemcachedClient _postbodyMemcachedClient;
         private readonly IBlogPostService _blogPostService;
         private readonly ILogger _logger;
         public static readonly string CacheKey = "blogposts-recent";
