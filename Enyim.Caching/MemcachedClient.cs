@@ -261,6 +261,19 @@ namespace Enyim.Caching
             return this.PerformTryGet(key, out cas, out value).Success;
         }
 
+        /// <summary>
+        /// Tries to get an item from the cache.
+        /// </summary>
+        /// <param name="key">The identifier for the item to retrieve.</param>
+        /// <param name="value">The retrieved item or null if not found.</param>
+        /// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
+        public bool TryGet<T>(string key, out T value)
+        {
+            ulong cas = 0;
+
+            return this.PerformTryGet(key, out cas, out value).Success;
+        }
+
         public CasResult<object> GetWithCas(string key)
         {
             return this.GetWithCas<object>(key);
@@ -268,11 +281,11 @@ namespace Enyim.Caching
 
         public CasResult<T> GetWithCas<T>(string key)
         {
-            CasResult<object> tmp;
+            CasResult<T> tmp;
 
             return this.TryGetWithCas(key, out tmp)
-                    ? new CasResult<T> { Cas = tmp.Cas, Result = (T)tmp.Result }
-                    : new CasResult<T> { Cas = tmp.Cas, Result = default(T) };
+                    ? new CasResult<T> { Cas = tmp.Cas, Result = tmp.Result }
+                    : new CasResult<T> { Cas = tmp.Cas, Result = default };
         }
 
         public bool TryGetWithCas(string key, out CasResult<object> value)
@@ -285,6 +298,15 @@ namespace Enyim.Caching
             value = new CasResult<object> { Cas = cas, Result = tmp };
 
             return retval.Success;
+        }
+
+        public bool TryGetWithCas<T>(string key, out CasResult<T> value)
+        {
+            var retVal = PerformTryGet(key, out var cas, out T tmp);
+
+            value = new CasResult<T> { Cas = cas, Result = tmp };
+
+            return retVal.Success;
         }
 
         protected virtual IGetOperationResult PerformTryGet(string key, out ulong cas, out object value)
@@ -314,6 +336,40 @@ namespace Enyim.Caching
                     commandResult.Combine(result);
                     return result;
                 }
+            }
+
+            result.Value = value;
+            result.Cas = cas;
+
+            result.Fail("Unable to locate node");
+            return result;
+        }
+
+        protected virtual IGetOperationResult PerformTryGet<T>(string key, out ulong cas, out T value)
+        {
+            var hashedKey = keyTransformer.Transform(key);
+            var node = pool.Locate(hashedKey);
+            var result = GetOperationResultFactory.Create();
+
+            cas = 0;
+            value = default;
+
+            if (node != null)
+            {
+                var command = pool.OperationFactory.Get(hashedKey);
+                var commandResult = node.Execute(command);
+
+                if (commandResult.Success)
+                {
+                    result.Value = value = transcoder.Deserialize<T>(command.Result);
+                    result.Cas = cas = command.CasValue;
+
+                    result.Pass();
+                    return result;
+                }
+
+                commandResult.Combine(result);
+                return result;
             }
 
             result.Value = value;

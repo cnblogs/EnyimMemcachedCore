@@ -280,7 +280,17 @@ namespace Enyim.Caching
             return _memcachedClient.TryGet(key, out value);
         }
 
+        public bool TryGet<T1>(string key, out T1 value)
+        {
+            return _memcachedClient.TryGet(key, out value);
+        }
+
         public bool TryGetWithCas(string key, out CasResult<object> value)
+        {
+            return _memcachedClient.TryGetWithCas(key, out value);
+        }
+
+        public bool TryGetWithCas<T1>(string key, out CasResult<T1> value)
         {
             return _memcachedClient.TryGetWithCas(key, out value);
         }

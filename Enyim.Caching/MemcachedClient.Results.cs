@@ -145,16 +145,29 @@ namespace Enyim.Caching
 			ulong cas = 0;
 
 			return this.PerformTryGet(key, out cas, out value);
-		}
+        }
 
-		/// <summary>
-		/// Retrieves the specified item from the cache.
-		/// </summary>
-		/// <param name="key">The identifier for the item to retrieve.</param>
-		/// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
-		public IGetOperationResult<T> ExecuteGet<T>(string key)
+        /// <summary>
+        /// Tries to get an item from the cache.
+        /// </summary>
+        /// <param name="key">The identifier for the item to retrieve.</param>
+        /// <param name="value">The retrieved item or null if not found.</param>
+        /// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
+        public IGetOperationResult ExecuteTryGet<T>(string key, out T value)
+        {
+            ulong cas = 0;
+
+            return this.PerformTryGet(key, out cas, out value);
+        }
+
+        /// <summary>
+        /// Retrieves the specified item from the cache.
+        /// </summary>
+        /// <param name="key">The identifier for the item to retrieve.</param>
+        /// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
+        public IGetOperationResult<T> ExecuteGet<T>(string key)
 		{
-			object tmp;
+            T tmp;
 			var result = new DefaultGetOperationResultFactory<T>().Create();
 
 			var tryGetResult = ExecuteTryGet(key, out tmp);

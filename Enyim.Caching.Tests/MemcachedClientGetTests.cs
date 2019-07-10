@@ -46,6 +46,19 @@ namespace Enyim.Caching.Tests
         }
 
         [Fact]
+        public void When_Generic_TryGetting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
+        {
+            var key = GetUniqueKey("get");
+            var value = GetRandomString();
+            var storeResult = Store(key: key, value: value);
+            StoreAssertPass(storeResult);
+
+            string temp;
+            var getResult = _client.ExecuteTryGet(key, out temp);
+            GetAssertPass(getResult, temp);
+        }
+
+        [Fact]
         public void When_Generic_Getting_Existing_Item_Value_Is_Not_Null_And_Result_Is_Successful()
         {
             var key = GetUniqueKey("get");

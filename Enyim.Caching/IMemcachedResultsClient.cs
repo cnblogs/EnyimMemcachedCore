@@ -18,6 +18,7 @@ namespace Enyim.Caching
         IDictionary<string, IGetOperationResult> ExecuteGet(IEnumerable<string> keys);
 
         IGetOperationResult ExecuteTryGet(string key, out object value);
+        IGetOperationResult ExecuteTryGet<T>(string key, out T value);
 
         IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value);
         IStoreOperationResult ExecuteStore(StoreMode mode, string key, object value, DateTime expiresAt);

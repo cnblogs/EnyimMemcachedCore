@@ -228,9 +228,21 @@ namespace Enyim.Caching
             return false;
         }
 
+        public bool TryGet<T>(string key, out T value)
+        {
+            value = default;
+            return false;
+        }
+
         public bool TryGetWithCas(string key, out CasResult<object> value)
         {
             value = new CasResult<object>();
+            return false;
+        }
+
+        public bool TryGetWithCas<T>(string key, out CasResult<T> value)
+        {
+            value = new CasResult<T>();
             return false;
         }
 
