@@ -779,7 +779,8 @@ namespace Enyim.Caching.Memcached
             }
             catch (Exception ex)
             {
-                _logger.LogError(new EventId(this.GetHashCode(), nameof(MemcachedNode)), ex, $"Create {nameof(PooledSocket)}");
+                var endPointStr =  endPoint.ToString().Replace("Unspecified/", string.Empty);
+                _logger.LogError(ex, $"Failed to {nameof(CreateSocketAsync)} to {endPointStr}");
                 throw;
             }
         }

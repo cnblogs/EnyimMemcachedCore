@@ -87,7 +87,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
             services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
-            services.TryAddTransient<IMemcachedClientConfiguration, MemcachedClientConfiguration>();
+            services.TryAddSingleton<IMemcachedClientConfiguration, MemcachedClientConfiguration>();
             services.AddSingleton<MemcachedClient>();
 
             services.AddSingleton<IMemcachedClient>(factory => factory.GetService<MemcachedClient>());
