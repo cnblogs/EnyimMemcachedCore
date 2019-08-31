@@ -7,6 +7,7 @@ using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -36,7 +37,21 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var retval = base.CreateSocket();
 
-            if (this.authenticationProvider != null && !this.Auth(retval))
+            if (this.authenticationProvider != null && !Auth(retval))
+            {
+                _logger.LogError("Authentication failed: " + this.EndPoint);
+
+                throw new SecurityException("auth failed: " + this.EndPoint);
+            }
+
+            return retval;
+        }
+
+        protected internal override async Task<PooledSocket> CreateSocketAsync()
+        {
+            var retval = await base.CreateSocketAsync();
+
+            if (this.authenticationProvider != null && !(await AuthAsync(retval)))
             {
                 _logger.LogError("Authentication failed: " + this.EndPoint);
 
@@ -64,6 +79,32 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 {
                     currentStep = new SaslContinue(this.authenticationProvider, currentStep.Data);
                     socket.Write(currentStep.GetBuffer());
+                }
+                else
+                {
+                    _logger.LogWarning("Authentication failed, return code: 0x{0:x}", currentStep.StatusCode);
+
+                    // invalid credentials or other error
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private async Task<bool> AuthAsync(PooledSocket socket)
+        {
+            SaslStep currentStep = new SaslStart(this.authenticationProvider);
+
+            await socket.WriteAsync(currentStep.GetBuffer());
+
+            while (!(await currentStep.ReadResponseAsync(socket)).Success)
+            {
+                // challenge-response authentication
+                if (currentStep.StatusCode == 0x21)
+                {
+                    currentStep = new SaslContinue(this.authenticationProvider, currentStep.Data);
+                    await socket.WriteAsync(currentStep.GetBuffer());
                 }
                 else
                 {

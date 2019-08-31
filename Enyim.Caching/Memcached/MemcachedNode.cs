@@ -768,6 +768,7 @@ namespace Enyim.Caching.Memcached
             }
 
         }
+
         protected internal virtual async Task<PooledSocket> CreateSocketAsync()
         {
             try
