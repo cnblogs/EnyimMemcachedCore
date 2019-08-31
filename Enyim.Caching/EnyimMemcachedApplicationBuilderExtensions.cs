@@ -17,9 +17,7 @@ namespace Microsoft.AspNetCore.Builder
             var logger = app.ApplicationServices.GetService<ILogger<IMemcachedClient>>();
             try
             {
-                var client = app.ApplicationServices.GetRequiredService<IMemcachedClient>();
-                client.GetValueAsync<string>("UseEnyimMemcached").Wait();
-                Console.WriteLine("EnyimMemcached connected memcached servers.");
+                var client = app.ApplicationServices.GetRequiredService<IMemcachedClient>();                
             }
             catch (Exception ex)
             {
