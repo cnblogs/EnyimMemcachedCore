@@ -369,6 +369,7 @@ namespace Enyim.Caching.Memcached
 
                 return ps;
             }
+
             private PooledSocket CreateSocket()
             {
                 var ps = this.ownerNode.CreateSocket();
@@ -767,6 +768,7 @@ namespace Enyim.Caching.Memcached
             }
 
         }
+
         protected internal virtual async Task<PooledSocket> CreateSocketAsync()
         {
             try
