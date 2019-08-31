@@ -369,6 +369,7 @@ namespace Enyim.Caching.Memcached
 
                 return ps;
             }
+
             private PooledSocket CreateSocket()
             {
                 var ps = this.ownerNode.CreateSocket();
