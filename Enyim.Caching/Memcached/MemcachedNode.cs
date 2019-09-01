@@ -87,7 +87,7 @@ namespace Enyim.Caching.Memcached
 
         /// <summary>
         /// Gets a value indicating whether the server is working or not.
-        /// 
+        ///
         /// If the server is back online, we'll ercreate the internal socket pool and mark the server as alive so operations can target it.
         /// </summary>
         /// <returns>true if the server is alive; false otherwise.</returns>
@@ -263,7 +263,7 @@ namespace Enyim.Caching.Memcached
             /// <summary>
             /// A list of already connected but free to use sockets
             /// </summary>
-            private InterlockedStack<PooledSocket> freeItems;
+            private InterlockedStack<PooledSocket> _freeItems;
 
             private bool isDisposed;
             private bool isAlive;
@@ -300,7 +300,7 @@ namespace Enyim.Caching.Memcached
                 this.maxItems = config.MaxPoolSize;
 
                 _semaphore = new SemaphoreSlim(maxItems, maxItems);
-                this.freeItems = new InterlockedStack<PooledSocket>();
+                _freeItems = new InterlockedStack<PooledSocket>();
 
                 _logger = logger;
                 _isDebugEnabled = _logger.IsEnabled(LogLevel.Debug);
@@ -314,7 +314,14 @@ namespace Enyim.Caching.Memcached
                     {
                         for (int i = 0; i < this.minItems; i++)
                         {
-                            this.freeItems.Push(this.CreateSocket());
+                            try
+                            {
+                                _freeItems.Push(CreateSocket());
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, $"Failed to put {nameof(PooledSocket)} {i} in Pool");
+                            }
 
                             // cannot connect to the server
                             if (!this.isAlive)
@@ -342,7 +349,14 @@ namespace Enyim.Caching.Memcached
                     {
                         for (int i = 0; i < this.minItems; i++)
                         {
-                            this.freeItems.Push(await this.CreateSocketAsync());
+                            try
+                            {
+                                _freeItems.Push(await CreateSocketAsync());
+                            }
+                            catch(Exception ex)
+                            {
+                                _logger.LogError(ex, $"Failed to put {nameof(PooledSocket)} {i} in Pool");
+                            }
 
                             // cannot connect to the server
                             if (!this.isAlive)
@@ -432,7 +446,7 @@ namespace Enyim.Caching.Memcached
                 }
 
                 // do we have free items?
-                if (this.freeItems.TryPop(out retval))
+                if (_freeItems.TryPop(out retval))
                 {
                     #region [ get it from the pool         ]
 
@@ -538,7 +552,7 @@ namespace Enyim.Caching.Memcached
                 }
 
                 // do we have free items?
-                if (this.freeItems.TryPop(out retval))
+                if (_freeItems.TryPop(out retval))
                 {
                     #region [ get it from the pool         ]
 
@@ -643,7 +657,7 @@ namespace Enyim.Caching.Memcached
                         try
                         {
                             // mark the item as free
-                            this.freeItems.Push(socket);
+                            _freeItems.Push(socket);
                         }
                         finally
                         {
@@ -679,7 +693,7 @@ namespace Enyim.Caching.Memcached
                 {
                     try
                     {
-                        // one of our previous sockets has died, so probably all of them 
+                        // one of our previous sockets has died, so probably all of them
                         // are dead. so, kill the socket (this will eventually clear the pool as well)
                         socket.Destroy();
                     }
@@ -716,7 +730,7 @@ namespace Enyim.Caching.Memcached
 
                     PooledSocket ps;
 
-                    while (this.freeItems.TryPop(out ps))
+                    while (_freeItems.TryPop(out ps))
                     {
                         try { ps.Destroy(); }
                         catch { }
@@ -725,7 +739,7 @@ namespace Enyim.Caching.Memcached
                     this.ownerNode = null;
                     _semaphore.Dispose();
                     _semaphore = null;
-                    this.freeItems = null;
+                    _freeItems = null;
                 }
             }
 
@@ -904,7 +918,7 @@ namespace Enyim.Caching.Memcached
             var socket = (await this.AcquireAsync()).Value;
             if (socket == null) return false;
 
-            //key(string) to buffer(btye[]) 
+            //key(string) to buffer(btye[])
             var b = op.GetBuffer();
 
             try
@@ -982,20 +996,20 @@ namespace Enyim.Caching.Memcached
 
 #region [ License information          ]
 /* ************************************************************
- * 
+ *
  *    Copyright (c) 2010 Attila Kisk? enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
 #endregion

@@ -82,6 +82,8 @@ namespace Enyim.Caching.Configuration
                 _logger.LogInformation($"{nameof(SocketPool.QueueTimeout)}: {SocketPool.QueueTimeout}");
 
                 SocketPool.InitPoolTimeout = options.SocketPool.InitPoolTimeout;
+
+                SocketPool.FailurePolicyFactory = options.SocketPool.FailurePolicyFactory;
             }
 
             Protocol = options.Protocol;

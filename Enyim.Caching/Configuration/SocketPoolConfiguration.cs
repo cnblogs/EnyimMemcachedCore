@@ -15,7 +15,7 @@ namespace Enyim.Caching.Configuration
         private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
         private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
         private TimeSpan _initPoolTimeout = new TimeSpan(0, 1, 0);
-        private INodeFailurePolicyFactory policyFactory = new FailImmediatelyPolicyFactory();
+        private INodeFailurePolicyFactory FailurePolicyFactory = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
         int ISocketPoolConfiguration.MinPoolSize
         {
@@ -96,13 +96,13 @@ namespace Enyim.Caching.Configuration
 
         INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
         {
-            get { return this.policyFactory; }
+            get { return this.FailurePolicyFactory; }
             set
             {
                 if (value == null)
                     throw new ArgumentNullException("value");
 
-                this.policyFactory = value;
+                this.FailurePolicyFactory = value;
             }
         }
     }

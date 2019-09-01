@@ -69,6 +69,7 @@ namespace Enyim.Caching.Configuration
         public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
         public TimeSpan InitPoolTimeout { get; set; } = new TimeSpan(0, 1, 0);
+        public INodeFailurePolicyFactory FailurePolicyFactory { get; set; } = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
         public void CheckPoolSize()
         {
