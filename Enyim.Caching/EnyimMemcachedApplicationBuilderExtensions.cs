@@ -17,11 +17,12 @@ namespace Microsoft.AspNetCore.Builder
             var logger = app.ApplicationServices.GetService<ILogger<IMemcachedClient>>();
             try
             {
-                var client = app.ApplicationServices.GetRequiredService<IMemcachedClient>();                
+                var client = app.ApplicationServices.GetRequiredService<IMemcachedClient>();
+                client.GetValueAsync<string>("EnyimMemcached").Wait();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed in UseEnyimMemcached");
+                logger.LogError(ex, "Failed to UseEnyimMemcached");
             }
 
             return app;
