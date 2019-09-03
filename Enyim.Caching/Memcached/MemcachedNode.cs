@@ -28,7 +28,7 @@ namespace Enyim.Caching.Memcached
 
         private bool isDisposed;
 
-        private readonly EndPoint endPoint;
+        private readonly EndPoint _endPoint;
         private readonly ISocketPoolConfiguration config;
         private InternalPoolImpl internalPoolImpl;
         private bool isInitialized = false;
@@ -40,7 +40,8 @@ namespace Enyim.Caching.Memcached
             ISocketPoolConfiguration socketPoolConfig,
             ILogger logger)
         {
-            this.endPoint = endpoint;
+            _endPoint = endpoint;
+            EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
             this.config = socketPoolConfig;
 
             if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
@@ -72,8 +73,10 @@ namespace Enyim.Caching.Memcached
         /// </summary>
         public EndPoint EndPoint
         {
-            get { return this.endPoint; }
+            get { return _endPoint; }
         }
+
+        public string EndPointString { get; private set; }
 
         /// <summary>
         /// <para>Gets a value indicating whether the server is working or not. Returns a <b>cached</b> state.</para>
@@ -771,7 +774,7 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
                 ps.Connect();
                 return ps;
             }
@@ -787,13 +790,13 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(this.endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
                 await ps.ConnectAsync();
                 return ps;
             }
             catch (Exception ex)
             {
-                var endPointStr =  endPoint.ToString().Replace("Unspecified/", string.Empty);
+                var endPointStr =  _endPoint.ToString().Replace("Unspecified/", string.Empty);
                 _logger.LogError(ex, $"Failed to {nameof(CreateSocketAsync)} to {endPointStr}");
                 throw;
             }
@@ -835,7 +838,7 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (IOException e)
                 {
-                    _logger.LogError(nameof(MemcachedNode), e);
+                    _logger.LogError(e, $"Failed to ExecuteOperation on {EndPointString}");
 
                     result.Fail("Exception reading response", e);
                     return result;
@@ -887,14 +890,14 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (IOException e)
                 {
-                    _logger.LogError(nameof(MemcachedNode), e);
+                    _logger.LogError(e, $"IOException occurs when ExecuteOperationAsync({op}) on {EndPointString}");
 
                     result.Fail("IOException reading response", e);
                     return result;
                 }
                 catch (SocketException e)
                 {
-                    _logger.LogError(nameof(MemcachedNode), e);
+                    _logger.LogError(e, $"SocketException occurs when ExecuteOperationAsync({op}) on {EndPointString}");
 
                     result.Fail("SocketException reading response", e);
                     return result;
@@ -936,7 +939,7 @@ namespace Enyim.Caching.Memcached
             }
             catch (IOException e)
             {
-                _logger.LogError(nameof(MemcachedNode), e);
+                _logger.LogError(e, $"Failed to ExecuteOperationAsync({op}) with next action on {EndPointString}");
                 ((IDisposable)socket).Dispose();
 
                 return false;
@@ -956,7 +959,7 @@ namespace Enyim.Caching.Memcached
 
         EndPoint IMemcachedNode.EndPoint
         {
-            get { return this.EndPoint; }
+            get { return _endPoint; }
         }
 
         bool IMemcachedNode.IsAlive
