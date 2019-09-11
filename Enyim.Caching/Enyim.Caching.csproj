@@ -13,7 +13,6 @@
     <RepositoryUrl>https://github.com/cnblogs/EnyimMemcachedCore</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
-    <Version>2.4.0-beta2</Version>
   </PropertyGroup>
 
   <ItemGroup>
