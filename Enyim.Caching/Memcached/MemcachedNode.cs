@@ -872,11 +872,26 @@ namespace Enyim.Caching.Memcached
                     var b = op.GetBuffer();
 
                     _logger.LogDebug("pooledSocket.WriteAsync...");
-                    await pooledSocket.WriteAsync(b);
+
+                    var writeSocketTask = pooledSocket.WriteAsync(b);
+                    if(await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)) != writeSocketTask)
+                    {
+                        result.Fail("Timeout to pooledSocket.WriteAsync");
+                        return result;
+                    }
+                    await writeSocketTask;
 
                     //if Get, call BinaryResponse
                     _logger.LogDebug($"{op}.ReadResponseAsync...");
-                    var readResult = await op.ReadResponseAsync(pooledSocket);
+
+                    var readResponseTask = op.ReadResponseAsync(pooledSocket);
+                    if (await Task.WhenAny(readResponseTask, Task.Delay(_config.ConnectionTimeout)) != readResponseTask)
+                    {
+                        result.Fail($"Timeout to ReadResponseAsync(pooledSocket) for {op}");
+                        return result;
+                    }
+
+                    var readResult = await readResponseTask;
                     if (readResult.Success)
                     {
                         result.Pass();
@@ -974,12 +989,12 @@ namespace Enyim.Caching.Memcached
 
         IOperationResult IMemcachedNode.Execute(IOperation op)
         {
-            return this.ExecuteOperation(op);
+            return ExecuteOperation(op);
         }
 
         async Task<IOperationResult> IMemcachedNode.ExecuteAsync(IOperation op)
         {
-            return await this.ExecuteOperationAsync(op);
+            return await ExecuteOperationAsync(op);
         }
 
         async Task<bool> IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
