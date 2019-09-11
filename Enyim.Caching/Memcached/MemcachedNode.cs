@@ -29,7 +29,7 @@ namespace Enyim.Caching.Memcached
         private bool isDisposed;
 
         private readonly EndPoint _endPoint;
-        private readonly ISocketPoolConfiguration config;
+        private readonly ISocketPoolConfiguration _config;
         private InternalPoolImpl internalPoolImpl;
         private bool isInitialized = false;
         private SemaphoreSlim poolInitSemaphore = new SemaphoreSlim(1, 1);
@@ -42,7 +42,7 @@ namespace Enyim.Caching.Memcached
         {
             _endPoint = endpoint;
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
-            this.config = socketPoolConfig;
+            _config = socketPoolConfig;
 
             if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
                 throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
@@ -65,7 +65,7 @@ namespace Enyim.Caching.Memcached
 
         protected INodeFailurePolicy FailurePolicy
         {
-            get { return this.failurePolicy ?? (this.failurePolicy = this.config.FailurePolicyFactory.Create(this)); }
+            get { return this.failurePolicy ?? (this.failurePolicy = _config.FailurePolicyFactory.Create(this)); }
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Enyim.Caching.Memcached
                     // it's easier to create a new pool than reinitializing a dead one
                     // rewrite-then-dispose to avoid a race condition with Acquire (which does no locking)
                     var oldPool = this.internalPoolImpl;
-                    var newPool = new InternalPoolImpl(this, this.config, _logger);
+                    var newPool = new InternalPoolImpl(this, _config, _logger);
 
                     Interlocked.Exchange(ref this.internalPoolImpl, newPool);
 
@@ -774,7 +774,7 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 ps.Connect();
                 return ps;
             }
@@ -790,7 +790,7 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, this.config.ConnectionTimeout, this.config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 await ps.ConnectAsync();
                 return ps;
             }
@@ -872,11 +872,26 @@ namespace Enyim.Caching.Memcached
                     var b = op.GetBuffer();
 
                     _logger.LogDebug("pooledSocket.WriteAsync...");
-                    await pooledSocket.WriteAsync(b);
+
+                    var writeSocketTask = pooledSocket.WriteAsync(b);
+                    if(await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)) != writeSocketTask)
+                    {
+                        result.Fail("Timeout to pooledSocket.WriteAsync");
+                        return result;
+                    }
+                    await writeSocketTask;
 
                     //if Get, call BinaryResponse
                     _logger.LogDebug($"{op}.ReadResponseAsync...");
-                    var readResult = await op.ReadResponseAsync(pooledSocket);
+
+                    var readResponseTask = op.ReadResponseAsync(pooledSocket);
+                    if (await Task.WhenAny(readResponseTask, Task.Delay(_config.ConnectionTimeout)) != readResponseTask)
+                    {
+                        result.Fail($"Timeout to ReadResponseAsync(pooledSocket) for {op}");
+                        return result;
+                    }
+
+                    var readResult = await readResponseTask;
                     if (readResult.Success)
                     {
                         result.Pass();
@@ -974,12 +989,12 @@ namespace Enyim.Caching.Memcached
 
         IOperationResult IMemcachedNode.Execute(IOperation op)
         {
-            return this.ExecuteOperation(op);
+            return ExecuteOperation(op);
         }
 
         async Task<IOperationResult> IMemcachedNode.ExecuteAsync(IOperation op)
         {
-            return await this.ExecuteOperationAsync(op);
+            return await ExecuteOperationAsync(op);
         }
 
         async Task<bool> IMemcachedNode.ExecuteAsync(IOperation op, Action<bool> next)
