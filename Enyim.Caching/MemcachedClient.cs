@@ -210,7 +210,7 @@ namespace Enyim.Caching
             catch (Exception ex)
             {
                 _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
-                result.Fail(ex.Message);
+                result.Fail(ex.Message, ex);
                 return result;
             }
         }
