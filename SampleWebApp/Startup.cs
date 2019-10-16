@@ -38,7 +38,12 @@ namespace Enyim.Caching.SampleWebApp
         public void Configure(IApplicationBuilder app)
         {
             app.UseEnyimMemcached();
-            app.UseMvcWithDefaultRoute();
+
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapDefaultControllerRoute();
+            });
         }
     }
 }
