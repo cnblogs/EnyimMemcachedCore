@@ -65,7 +65,15 @@ namespace Enyim.Caching.Memcached
             }
             cts.Token.Register(Cancel);
 
-            _socket.Connect(_endpoint);
+            try
+            {
+                _socket.Connect(_endpoint);
+            }
+            catch (PlatformNotSupportedException)
+            {
+                var ep = GetIPEndPoint(_endpoint);
+                _socket.Connect(ep.Address, ep.Port);
+            }
 
             if (_socket != null)
             {
@@ -94,20 +102,28 @@ namespace Enyim.Caching.Memcached
         {
             bool success = false;
 
-            var connTask = _socket.ConnectAsync(_endpoint);
+            try
+            {
+                var connTask = _socket.ConnectAsync(_endpoint);
 
-            if (await Task.WhenAny(connTask, Task.Delay(_connectionTimeout)) == connTask)
-            {
-                await connTask;
-            }
-            else
-            {
-                if (_socket != null)
+                if (await Task.WhenAny(connTask, Task.Delay(_connectionTimeout)) == connTask)
                 {
-                    _socket.Dispose();
-                    _socket = null;
+                    await connTask;
                 }
-                throw new TimeoutException($"Timeout to connect to {_endpoint}.");
+                else
+                {
+                    if (_socket != null)
+                    {
+                        _socket.Dispose();
+                        _socket = null;
+                    }
+                    throw new TimeoutException($"Timeout to connect to {_endpoint}.");
+                }
+            }
+            catch (PlatformNotSupportedException)
+            {
+                var ep = GetIPEndPoint(_endpoint);
+                await _socket.ConnectAsync(ep.Address, ep.Port);
             }
 
             if (_socket != null)
@@ -421,6 +437,27 @@ namespace Enyim.Caching.Memcached
                 }
                 _logger.LogError(ex, nameof(PooledSocket.WriteAsync));
                 throw;
+            }
+        }
+
+        private IPEndPoint GetIPEndPoint(EndPoint endpoint)
+        {
+            if (endpoint is DnsEndPoint)
+            {
+                var dnsEndPoint = (DnsEndPoint)endpoint;
+                var address = Dns.GetHostAddresses(dnsEndPoint.Host).FirstOrDefault(ip =>
+                    ip.AddressFamily == AddressFamily.InterNetwork);
+                if (address == null)
+                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint));
+                return new IPEndPoint(address, dnsEndPoint.Port);
+            }
+            else if (endpoint is IPEndPoint)
+            {
+                return endpoint as IPEndPoint;
+            }
+            else
+            {
+                throw new Exception("Not supported EndPoint type");
             }
         }
     }
