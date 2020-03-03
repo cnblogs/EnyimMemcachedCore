@@ -441,12 +441,7 @@ namespace Enyim.Caching
 
             statusCode = -1;
 
-
-            if (value == null)
-            {
-                result.Fail("value is null");
-                return result;
-            }
+            //Removed null check on value parameter, in order to allow storing null
 
             if (node != null)
             {
@@ -491,11 +486,8 @@ namespace Enyim.Caching
 
             int statusCode = -1;
             ulong cas = 0;
-            if (value == null)
-            {
-                result.Fail("value is null");
-                return result;
-            }
+            
+            //Removed null check on value parameter, in order to allow storing null
 
             if (node != null)
             {
@@ -1025,7 +1017,7 @@ namespace Enyim.Caching
                 var node = slice.Key;
                 var nodeKeys = slice.Value;
                 var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
-                var task = Task.Run(async () => 
+                var task = Task.Run(async () =>
                 {
                     if ((await node.ExecuteAsync(mget)).Success)
                     {
@@ -1038,7 +1030,7 @@ namespace Enyim.Caching
                         }
                     }
                 });
-                tasks.Add(task);               
+                tasks.Add(task);
             }
 
             await Task.WhenAll(tasks);
