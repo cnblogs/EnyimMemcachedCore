@@ -184,7 +184,12 @@ namespace Enyim.Caching
 
         public Task<bool> RemoveAsync(string key)
         {
-            return Task.FromResult<bool>(false);
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> RemoveMultiAsync(params string[] keys)
+        {
+            return Task.FromResult(false);
         }
 
         public ServerStats Stats()
