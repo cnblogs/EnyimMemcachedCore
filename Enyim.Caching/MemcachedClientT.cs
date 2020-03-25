@@ -210,6 +210,11 @@ namespace Enyim.Caching
             return _memcachedClient.RemoveAsync(key);
         }
 
+        public Task<bool> RemoveMultiAsync(params string[] keys)
+        {
+            return _memcachedClient.RemoveMultiAsync(keys);
+        }
+
         public bool Replace(string key, object value, int cacheSeconds)
         {
             return _memcachedClient.Replace(key, value, cacheSeconds);

@@ -73,6 +73,7 @@ namespace Enyim.Caching
 
         bool Remove(string key);
         Task<bool> RemoveAsync(string key);
+        Task<bool> RemoveMultiAsync(params string[] keys);
 
         void FlushAll();
         Task FlushAllAsync();
