@@ -30,8 +30,6 @@ namespace Enyim.Caching.Memcached
 
         public virtual T Deserialize<T>(CacheItem item)
         {
-            if (item.Data == null || item.Data.Count == 0) return default(T);
-
             if (typeof(T).GetTypeCode() != TypeCode.Object || typeof(T) == typeof(Byte[]))
             {
                 var value = Deserialize(item);

@@ -112,6 +112,16 @@ namespace Enyim.Caching.Tests
         }
 
         [Fact]
+        public async Task When_Getting_Empty_String_Async_Result_Is_Successful()
+        {
+            var key = GetUniqueKey("Get");
+            var empty = string.Empty;
+            Store(key: key, value: empty);
+            var getResult = await _client.GetAsync<string>(key);
+            Assert.Equal(getResult.Value, empty);
+        }
+
+        [Fact]
         public async Task GetValueOrCreateAsyncTest()
         {
             var key = "GetValueOrCreateAsyncTest_" + Guid.NewGuid();
@@ -132,7 +142,7 @@ namespace Enyim.Caching.Tests
             var posts = new List<BlogPost>()
             {
                 new BlogPost{ Title = "test title 1", Body = "test body 1" },
-                new BlogPost{ Title = "test title 2", Body = "test body 2" }
+                new BlogPost{ Title = "test title 2", Body = "test body 2" },
             };
 
             return Task.FromResult(posts.AsEnumerable());
