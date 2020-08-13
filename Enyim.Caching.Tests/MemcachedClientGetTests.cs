@@ -117,8 +117,8 @@ namespace Enyim.Caching.Tests
             var key = GetUniqueKey("Get");
             var empty = string.Empty;
             Store(key: key, value: empty);
-            var getResult = await _client.GetAsync<string>(key);
-            Assert.Equal(getResult.Value, empty);
+            var getResult = await _client.GetValueAsync<string>(key);
+            Assert.Equal(getResult, empty);
         }
 
         [Fact]
