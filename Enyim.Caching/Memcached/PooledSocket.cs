@@ -158,8 +158,7 @@ namespace Enyim.Caching.Memcached
 
         public void Reset()
         {
-            // discard any buffered data
-            _inputStream.Flush();
+            // _inputStream.Flush();
 
             int available = _socket.Available;
 
@@ -172,10 +171,7 @@ namespace Enyim.Caching.Memcached
 
                 byte[] data = new byte[available];
 
-                this.Read(data, 0, available);
-
-                if (_logger.IsEnabled(LogLevel.Warning))
-                    _logger.LogWarning(Encoding.ASCII.GetString(data));
+                Read(data, 0, available);
             }
 
             if (_logger.IsEnabled(LogLevel.Debug))
