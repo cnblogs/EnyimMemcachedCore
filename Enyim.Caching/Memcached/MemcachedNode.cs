@@ -278,6 +278,7 @@ namespace Enyim.Caching.Memcached
             private MemcachedNode ownerNode;
             private readonly EndPoint _endPoint;
             private readonly TimeSpan queueTimeout;
+            private readonly TimeSpan _receiveTimeout;
             private SemaphoreSlim _semaphore;
 
             private readonly object initLock = new Object();
@@ -293,11 +294,14 @@ namespace Enyim.Caching.Memcached
                     throw new InvalidOperationException("maxItems must be larger than minItems", null);
                 if (config.QueueTimeout < TimeSpan.Zero)
                     throw new InvalidOperationException("queueTimeout must be >= TimeSpan.Zero", null);
+                if (config.ReceiveTimeout < TimeSpan.Zero)
+                    throw new InvalidOperationException("ReceiveTimeout must be >= TimeSpan.Zero", null);
 
                 this.ownerNode = ownerNode;
                 this.isAlive = true;
                 _endPoint = ownerNode.EndPoint;
                 this.queueTimeout = config.QueueTimeout;
+                _receiveTimeout = config.ReceiveTimeout;
 
                 this.minItems = config.MinPoolSize;
                 this.maxItems = config.MaxPoolSize;
@@ -356,7 +360,7 @@ namespace Enyim.Caching.Memcached
                             {
                                 _freeItems.Push(await CreateSocketAsync());
                             }
-                            catch(Exception ex)
+                            catch (Exception ex)
                             {
                                 _logger.LogError(ex, $"Failed to put {nameof(PooledSocket)} {i} in Pool");
                             }
@@ -561,9 +565,22 @@ namespace Enyim.Caching.Memcached
 
                     try
                     {
-                        retval.Reset();
+                        var resetTask = retval.ResetAsync();
 
-                        message = "Socket was reset. " + retval.InstanceId;
+                        if (await Task.WhenAny(resetTask, Task.Delay(_receiveTimeout)) == resetTask)
+                        {
+                            await resetTask;
+                        }
+                        else
+                        {
+                            message = "Timeout to reset an acquired socket. InstanceId " + retval.InstanceId;
+                            _logger.LogError(message);
+                            MarkAsDead();
+                            result.Fail(message);
+                            return result;
+                        }
+
+                        message = "Socket was reset. InstanceId " + retval.InstanceId;
                         if (_isDebugEnabled) _logger.LogDebug(message);
 
                         result.Pass(message);
@@ -796,7 +813,7 @@ namespace Enyim.Caching.Memcached
             }
             catch (Exception ex)
             {
-                var endPointStr =  _endPoint.ToString().Replace("Unspecified/", string.Empty);
+                var endPointStr = _endPoint.ToString().Replace("Unspecified/", string.Empty);
                 _logger.LogError(ex, $"Failed to {nameof(CreateSocketAsync)} to {endPointStr}");
                 throw;
             }
@@ -874,7 +891,7 @@ namespace Enyim.Caching.Memcached
                     _logger.LogDebug("pooledSocket.WriteAsync...");
 
                     var writeSocketTask = pooledSocket.WriteAsync(b);
-                    if(await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)) != writeSocketTask)
+                    if (await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)) != writeSocketTask)
                     {
                         result.Fail("Timeout to pooledSocket.WriteAsync");
                         return result;
