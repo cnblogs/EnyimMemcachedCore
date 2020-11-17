@@ -158,8 +158,7 @@ namespace Enyim.Caching.Memcached
 
         public void Reset()
         {
-            // discard any buffered data
-            _inputStream.Flush();
+            // _inputStream.Flush();
 
             int available = _socket.Available;
 
@@ -168,18 +167,39 @@ namespace Enyim.Caching.Memcached
                 if (_logger.IsEnabled(LogLevel.Warning))
                     _logger.LogWarning(
                         "Socket bound to {0} has {1} unread data! This is probably a bug in the code. InstanceID was {2}.",
-                        _socket.RemoteEndPoint, available, this.InstanceId);
+                        _socket.RemoteEndPoint, available, InstanceId);
 
                 byte[] data = new byte[available];
 
-                this.Read(data, 0, available);
-
-                if (_logger.IsEnabled(LogLevel.Warning))
-                    _logger.LogWarning(Encoding.ASCII.GetString(data));
+                Read(data, 0, available);
             }
 
             if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("Socket {0} was reset", this.InstanceId);
+                _logger.LogDebug("Socket {0} was reset", InstanceId);
+        }
+
+        public async Task ResetAsync()
+        {
+            // await _inputStream.FlushAsync();
+
+            int available = _socket.Available;
+
+            if (available > 0)
+            {
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning(
+                        "Socket bound to {0} has {1} unread data! This is probably a bug in the code. InstanceID was {2}.",
+                        _socket.RemoteEndPoint, available, InstanceId);
+                }
+
+                byte[] data = new byte[available];
+
+                await ReadAsync(data, 0, available);
+            }
+
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Socket {0} was reset", InstanceId);
         }
 
         /// <summary>
