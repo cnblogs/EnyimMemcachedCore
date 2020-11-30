@@ -575,7 +575,7 @@ namespace Enyim.Caching.Memcached
                         {
                             message = "Timeout to reset an acquired socket. InstanceId " + retval.InstanceId;
                             _logger.LogError(message);
-                            MarkAsDead();
+                            retval.IsAlive = false;
                             result.Value = retval;
                             result.Fail(message);
                             return result;
