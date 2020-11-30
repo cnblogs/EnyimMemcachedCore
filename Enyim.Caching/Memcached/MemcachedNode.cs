@@ -576,6 +576,7 @@ namespace Enyim.Caching.Memcached
                             message = "Timeout to reset an acquired socket. InstanceId " + retval.InstanceId;
                             _logger.LogError(message);
                             MarkAsDead();
+                            result.Value = retval;
                             result.Fail(message);
                             return result;
                         }
@@ -592,7 +593,8 @@ namespace Enyim.Caching.Memcached
                         message = "Failed to reset an acquired socket.";
                         _logger.LogError(message, e);
 
-                        this.MarkAsDead();
+                        MarkAsDead();
+                        result.Value = retval;
                         result.Fail(message, e);
                         return result;
                     }
@@ -945,7 +947,6 @@ namespace Enyim.Caching.Memcached
                 _logger.LogError(errorMsg);
                 return result;
             }
-
         }
 
         protected virtual async Task<bool> ExecuteOperationAsync(IOperation op, Action<bool> next)
