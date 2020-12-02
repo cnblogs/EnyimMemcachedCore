@@ -445,6 +445,8 @@ namespace Enyim.Caching.Memcached
                 // maybe we died while waiting
                 if (!this.isAlive)
                 {
+                    _semaphore.Release();
+
                     message = "Pool is dead, returning null. " + _endPoint;
                     if (_isDebugEnabled) _logger.LogDebug(message);
                     result.Fail(message);
@@ -474,6 +476,8 @@ namespace Enyim.Caching.Memcached
                         _logger.LogError(message, e);
 
                         this.MarkAsDead();
+                        _semaphore.Release();
+
                         result.Fail(message, e);
                         return result;
                     }
