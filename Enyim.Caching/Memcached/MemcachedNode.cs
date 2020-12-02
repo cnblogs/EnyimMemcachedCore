@@ -551,10 +551,11 @@ namespace Enyim.Caching.Memcached
                 // maybe we died while waiting
                 if (!this.isAlive)
                 {
+                    _semaphore.Release();
+
                     message = "Pool is dead, returning null. " + _endPoint;
                     if (_isDebugEnabled) _logger.LogDebug(message);
                     result.Fail(message);
-
                     return result;
                 }
 
@@ -573,9 +574,11 @@ namespace Enyim.Caching.Memcached
                         }
                         else
                         {
+                            _semaphore.Release();
+                            retval.IsAlive = false;
+
                             message = "Timeout to reset an acquired socket. InstanceId " + retval.InstanceId;
                             _logger.LogError(message);
-                            MarkAsDead();
                             result.Fail(message);
                             return result;
                         }
@@ -589,10 +592,11 @@ namespace Enyim.Caching.Memcached
                     }
                     catch (Exception e)
                     {
+                        MarkAsDead();
+                        _semaphore.Release();
+
                         message = "Failed to reset an acquired socket.";
                         _logger.LogError(message, e);
-
-                        this.MarkAsDead();
                         result.Fail(message, e);
                         return result;
                     }
@@ -945,7 +949,6 @@ namespace Enyim.Caching.Memcached
                 _logger.LogError(errorMsg);
                 return result;
             }
-
         }
 
         protected virtual async Task<bool> ExecuteOperationAsync(IOperation op, Action<bool> next)
