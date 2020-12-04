@@ -5,6 +5,7 @@ using Enyim.Caching.Memcached.Results.Extensions;
 using Enyim.Collections;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -266,7 +267,7 @@ namespace Enyim.Caching.Memcached
             /// <summary>
             /// A list of already connected but free to use sockets
             /// </summary>
-            private InterlockedStack<PooledSocket> _freeItems;
+            private ConcurrentStack<PooledSocket> _freeItems;
 
             private bool isDisposed;
             private bool isAlive;
@@ -307,7 +308,7 @@ namespace Enyim.Caching.Memcached
                 this.maxItems = config.MaxPoolSize;
 
                 _semaphore = new SemaphoreSlim(maxItems, maxItems);
-                _freeItems = new InterlockedStack<PooledSocket>();
+                _freeItems = new ConcurrentStack<PooledSocket>();
 
                 _logger = logger;
                 _isDebugEnabled = _logger.IsEnabled(LogLevel.Debug);
