@@ -36,12 +36,16 @@ namespace Enyim.Caching.Tests
         {
             var key = GetUniqueKey("touch");
             await _client.AddAsync(key, "value", 1);
-            Assert.True((await _client.GetAsync<string>(key)).Success);
+            var operationResult = await _client.GetAsync<string>(key);
+            Assert.True(operationResult.Success);
+            Assert.NotEqual(0UL, operationResult.Cas);
             var result = await _client.TouchAsync(key, TimeSpan.FromSeconds(60));
             await Task.Delay(1010);
             Assert.True(result.Success, "Success was false");
             Assert.True((result.StatusCode ?? 0) == 0, "StatusCode was not null or 0");
-            Assert.True((await _client.GetAsync<string>(key)).Success);
+            operationResult = await _client.GetAsync<string>(key);
+            Assert.True(operationResult.Success);
+            Assert.NotEqual(0UL, operationResult.Cas);
         }
     }
 }

@@ -160,6 +160,25 @@ namespace Enyim.Caching
             }
         }
 
+        private bool CreateGetCommand(string key, out IGetOperationResult result, out IMemcachedNode node, out IGetOperation command)
+        {
+            result = new DefaultGetOperationResultFactory().Create();
+            var hashedKey = this.keyTransformer.Transform(key);
+
+            node = this.pool.Locate(hashedKey);
+            if (node == null)
+            {
+                var errorMessage = $"Unable to locate node with \"{key}\" key";
+                _logger.LogError(errorMessage);
+                result.Fail(errorMessage);
+                command = null;
+                return false;
+            }
+
+            command = this.pool.OperationFactory.Get(hashedKey);
+            return true;
+        }
+
         private bool CreateGetCommand<T>(string key, out IGetOperationResult<T> result, out IMemcachedNode node, out IGetOperation command)
         {
             result = new DefaultGetOperationResultFactory<T>().Create();
@@ -179,11 +198,12 @@ namespace Enyim.Caching
             return true;
         }
 
-        private IGetOperationResult<T> BuildGetCommandResult<T>(IGetOperationResult<T> result, IGetOperation command, IOperationResult commandResult)
+        private IGetOperationResult BuildGetCommandResult(IGetOperationResult result, IGetOperation command, IOperationResult commandResult)
         {
             if (commandResult.Success)
             {
-                result.Value = transcoder.Deserialize<T>(command.Result);
+                result.Value = transcoder.Deserialize(command.Result);
+                result.Cas = command.CasValue;
                 result.Pass();
             }
             else
@@ -192,6 +212,43 @@ namespace Enyim.Caching
             }
 
             return result;
+        }
+
+        private IGetOperationResult<T> BuildGetCommandResult<T>(IGetOperationResult<T> result, IGetOperation command, IOperationResult commandResult)
+        {
+            if (commandResult.Success)
+            {
+                result.Value = transcoder.Deserialize<T>(command.Result);
+                result.Cas = command.CasValue;
+                result.Pass();
+            }
+            else
+            {
+                commandResult.Combine(result);
+            }
+
+            return result;
+        }
+
+        public async Task<IGetOperationResult> GetAsync(string key)
+        {
+            if (!CreateGetCommand(key, out var result, out var node, out var command))
+            {
+                _logger.LogInformation($"Failed to CreateGetCommand for '{key}' key");
+                return result;
+            }
+
+            try
+            {
+                var commandResult = await node.ExecuteAsync(command);
+                return BuildGetCommandResult(result, command, commandResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
+                result.Fail(ex.Message, ex);
+                return result;
+            }
         }
 
         public async Task<IGetOperationResult<T>> GetAsync<T>(string key)

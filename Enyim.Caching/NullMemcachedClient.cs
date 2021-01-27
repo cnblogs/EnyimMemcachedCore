@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
@@ -102,6 +100,13 @@ namespace Enyim.Caching
         public T Get<T>(string key)
         {
             return default(T);
+        }
+
+        public Task<IGetOperationResult> GetAsync(string key)
+        {
+            var result = new DefaultGetOperationResultFactory().Create();
+            result.Success = false;
+            return Task.FromResult(result);
         }
 
         public async Task<IGetOperationResult<T>> GetAsync<T>(string key)

@@ -17,6 +17,7 @@ namespace Enyim.Caching
         bool Replace(string key, object value, int cacheSeconds);
         Task<bool> ReplaceAsync(string key, object value, int cacheSeconds);
 
+        Task<IGetOperationResult> GetAsync(string key);
         Task<IGetOperationResult<T>> GetAsync<T>(string key);
         Task<T> GetValueAsync<T>(string key);
         Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator);
