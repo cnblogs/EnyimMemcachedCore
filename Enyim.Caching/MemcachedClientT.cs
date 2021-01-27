@@ -120,6 +120,11 @@ namespace Enyim.Caching
             return _memcachedClient.Get<T1>(keys);
         }
 
+        public Task<IGetOperationResult> GetAsync(string key)
+        {
+            return _memcachedClient.GetAsync(key);
+        }
+
         public Task<IGetOperationResult<T1>> GetAsync<T1>(string key)
         {
             return _memcachedClient.GetAsync<T1>(key);
