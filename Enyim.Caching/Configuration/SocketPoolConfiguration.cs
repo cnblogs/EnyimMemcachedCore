@@ -6,93 +6,106 @@ using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
 {
-	public class SocketPoolConfiguration : ISocketPoolConfiguration
-	{
-		private int minPoolSize = 10;
-		private int maxPoolSize = 20;
-		private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
-		private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
-		private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
-		private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
-		private INodeFailurePolicyFactory policyFactory = new FailImmediatelyPolicyFactory();
+    public class SocketPoolConfiguration : ISocketPoolConfiguration
+    {
+        private int minPoolSize = 5;
+        private int maxPoolSize = 100;
+        private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
+        private TimeSpan _initPoolTimeout = new TimeSpan(0, 1, 0);
+        private INodeFailurePolicyFactory FailurePolicyFactory = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
-		int ISocketPoolConfiguration.MinPoolSize
-		{
-			get { return this.minPoolSize; }
-			set { this.minPoolSize = value; }
-		}
+        int ISocketPoolConfiguration.MinPoolSize
+        {
+            get { return this.minPoolSize; }
+            set { this.minPoolSize = value; }
+        }
 
-		/// <summary>
-		/// Gets or sets a value indicating the maximum amount of sockets per server in the socket pool.
-		/// </summary>
-		/// <returns>The maximum amount of sockets per server in the socket pool. The default is 20.</returns>
-		/// <remarks>It should be 0.75 * (number of threads) for optimal performance.</remarks>
-		int ISocketPoolConfiguration.MaxPoolSize
-		{
-			get { return this.maxPoolSize; }
-			set { this.maxPoolSize = value; }
-		}
+        /// <summary>
+        /// Gets or sets a value indicating the maximum amount of sockets per server in the socket pool.
+        /// </summary>
+        /// <returns>The maximum amount of sockets per server in the socket pool. The default is 20.</returns>
+        /// <remarks>It should be 0.75 * (number of threads) for optimal performance.</remarks>
+        int ISocketPoolConfiguration.MaxPoolSize
+        {
+            get { return this.maxPoolSize; }
+            set { this.maxPoolSize = value; }
+        }
 
-		TimeSpan ISocketPoolConfiguration.ConnectionTimeout
-		{
-			get { return this.connectionTimeout; }
-			set
-			{
-				if (value < TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException("value", "value must be positive");
+        TimeSpan ISocketPoolConfiguration.ConnectionTimeout
+        {
+            get { return this.connectionTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-				this.connectionTimeout = value;
-			}
-		}
+                this.connectionTimeout = value;
+            }
+        }
 
-		TimeSpan ISocketPoolConfiguration.ReceiveTimeout
-		{
-			get { return this.receiveTimeout; }
-			set
-			{
-				if (value < TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException("value", "value must be positive");
+        TimeSpan ISocketPoolConfiguration.ReceiveTimeout
+        {
+            get { return this.receiveTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-				this.receiveTimeout = value;
-			}
-		}
+                this.receiveTimeout = value;
+            }
+        }
 
-		TimeSpan ISocketPoolConfiguration.QueueTimeout
-		{
-			get { return this.queueTimeout; }
-			set
-			{
-				if (value < TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException("value", "value must be positive");
+        TimeSpan ISocketPoolConfiguration.QueueTimeout
+        {
+            get { return this.queueTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-				this.queueTimeout = value;
-			}
-		}
+                this.queueTimeout = value;
+            }
+        }
 
-		TimeSpan ISocketPoolConfiguration.DeadTimeout
-		{
-			get { return this.deadTimeout; }
-			set
-			{
-				if (value < TimeSpan.Zero)
-					throw new ArgumentOutOfRangeException("value", "value must be positive");
+        TimeSpan ISocketPoolConfiguration.InitPoolTimeout
+        {
+            get { return _initPoolTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-				this.deadTimeout = value;
-			}
-		}
+                _initPoolTimeout = value;
+            }
+        }
 
-		INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
-		{
-			get { return this.policyFactory; }
-			set
-			{
-				if (value == null)
-					throw new ArgumentNullException("value");
+        TimeSpan ISocketPoolConfiguration.DeadTimeout
+        {
+            get { return this.deadTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-				this.policyFactory = value;
-			}
-		}
-	}
+                this.deadTimeout = value;
+            }
+        }
+
+        INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
+        {
+            get { return this.FailurePolicyFactory; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+
+                this.FailurePolicyFactory = value;
+            }
+        }
+    }
 }
 
 #region [ License information          ]

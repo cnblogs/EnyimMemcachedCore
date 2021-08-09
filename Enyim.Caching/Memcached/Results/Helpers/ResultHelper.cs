@@ -7,29 +7,28 @@ using Enyim.Caching.Memcached.Results.Factories;
 namespace Enyim.Caching.Memcached.Results.Helpers
 {
 
-	public static class ResultHelper
-	{
+    public static class ResultHelper
+    {
 
-		public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
-		{
+        public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
+        {
+            if (data != null && data.Count > 0)
+            {
+                try
+                {
+                    return message +
+                        (!string.IsNullOrEmpty(message) ? ": " : "") +
+                        Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
+                }
+                catch (Exception ex)
+                {
+                    return ex.GetBaseException().Message;
+                }
+            }
 
-			if (data != null && data.Count > 0)
-			{
-				try
-				{
-					return message +
-						(! string.IsNullOrEmpty(message) ? ": " : "") +
-						Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
-				}
-				catch (Exception ex)
-				{
-					return ex.GetBaseException().Message;
-				}
-			}
-
-			return string.Empty;
-		}
-	}
+            return string.Empty;
+        }
+    }
 }
 
 #region [ License information          ]

@@ -15,7 +15,7 @@ namespace Enyim.Caching.Memcached
 
         IOperationResult Execute(IOperation op);
         Task<IOperationResult> ExecuteAsync(IOperation op);
-        bool ExecuteAsync(IOperation op, Action<bool> next);
+        Task<bool> ExecuteAsync(IOperation op, Action<bool> next);
 
         //	PooledSocket CreateSocket(TimeSpan connectionTimeout, TimeSpan receiveTimeout);
 

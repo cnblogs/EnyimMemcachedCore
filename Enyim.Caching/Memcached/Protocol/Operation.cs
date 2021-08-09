@@ -14,8 +14,8 @@ namespace Enyim.Caching.Memcached.Protocol
 
         internal protected abstract IList<ArraySegment<byte>> GetBuffer();
         internal protected abstract IOperationResult ReadResponse(PooledSocket socket);
-        internal protected abstract Task<IOperationResult> ReadResponseAsync(PooledSocket socket);
-        internal protected abstract bool ReadResponseAsync(PooledSocket socket, Action<bool> next);
+        internal protected abstract ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket);
+        internal protected abstract Task<bool> ReadResponseAsync(PooledSocket socket, Action<bool> next);
 
         IList<ArraySegment<byte>> IOperation.GetBuffer()
         {
@@ -32,9 +32,9 @@ namespace Enyim.Caching.Memcached.Protocol
             return await this.ReadResponseAsync(socket);
         }
 
-        bool IOperation.ReadResponseAsync(PooledSocket socket, Action<bool> next)
+        async Task<bool> IOperation.ReadResponseAsync(PooledSocket socket, Action<bool> next)
         {
-            return this.ReadResponseAsync(socket, next);
+            return await ReadResponseAsync(socket, next);
         }
 
         int IOperation.StatusCode
