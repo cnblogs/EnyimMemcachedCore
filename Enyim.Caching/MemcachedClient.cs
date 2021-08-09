@@ -579,12 +579,7 @@ namespace Enyim.Caching
 
             statusCode = -1;
 
-
-            if (value == null)
-            {
-                result.Fail("value is null");
-                return result;
-            }
+            //Removed null check on value parameter, in order to allow storing null
 
             if (node != null)
             {
@@ -629,11 +624,8 @@ namespace Enyim.Caching
 
             int statusCode = -1;
             ulong cas = 0;
-            if (value == null)
-            {
-                result.Fail("value is null");
-                return result;
-            }
+            
+            //Removed null check on value parameter, in order to allow storing null
 
             if (node != null)
             {
