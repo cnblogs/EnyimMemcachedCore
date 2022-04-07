@@ -21,6 +21,8 @@ namespace Enyim.Caching.Configuration
 
         public string Transcoder { get; set; }
 
+        public bool UseSslStream { get; set; }
+
         public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
         public MemcachedClientOptions Value => this;

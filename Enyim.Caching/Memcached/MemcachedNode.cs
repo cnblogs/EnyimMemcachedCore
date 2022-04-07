@@ -35,13 +35,16 @@ namespace Enyim.Caching.Memcached
         private bool isInitialized = false;
         private SemaphoreSlim poolInitSemaphore = new SemaphoreSlim(1, 1);
         private readonly TimeSpan _initPoolTimeout;
+        private bool _useSslStream;
 
         public MemcachedNode(
             EndPoint endpoint,
             ISocketPoolConfiguration socketPoolConfig,
-            ILogger logger)
+            ILogger logger,
+            bool useSslStream)
         {
             _endPoint = endpoint;
+            _useSslStream = useSslStream;
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
             _config = socketPoolConfig;
 
@@ -800,7 +803,7 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger, _useSslStream);
                 ps.Connect();
                 return ps;
             }
@@ -816,7 +819,7 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger, _useSslStream);
                 await ps.ConnectAsync();
                 return ps;
             }

@@ -116,6 +116,11 @@ namespace Enyim.Caching.Configuration
                 }
             }
 
+            if (options.UseSslStream != null)
+            {
+                UseSslStream = options.UseSslStream;
+            }
+
             if (!string.IsNullOrEmpty(options.KeyTransformer))
             {
                 try
@@ -179,26 +184,33 @@ namespace Enyim.Caching.Configuration
             Servers = new List<EndPoint>();
             foreach (var server in options.Servers)
             {
-                if (!IPAddress.TryParse(server.Address, out var address))
+                if (options.UseSslStream)
                 {
-                    address = Dns.GetHostAddresses(server.Address)
-                        .FirstOrDefault(i => i.AddressFamily == AddressFamily.InterNetwork);
-
-                    if (address == null)
-                    {
-                        _logger.LogError($"Could not resolve host '{server.Address}'.");
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Memcached server address - {address}");
-                    }
+                    AddServer(server.Address, server.Port);
                 }
                 else
                 {
-                    _logger.LogInformation($"Memcached server address - {server.Address }:{server.Port}");
-                }
+                    if (!IPAddress.TryParse(server.Address, out var address))
+                    {
+                        address = Dns.GetHostAddresses(server.Address)
+                            .FirstOrDefault(i => i.AddressFamily == AddressFamily.InterNetwork);
 
-                Servers.Add(new IPEndPoint(address, server.Port));
+                        if (address == null)
+                        {
+                            _logger.LogError($"Could not resolve host '{server.Address}'.");
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"Memcached server address - {address}");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Memcached server address - {server.Address }:{server.Port}");
+                    }
+
+                    Servers.Add(new IPEndPoint(address, server.Port));
+                }
             }
         }
 
@@ -326,6 +338,8 @@ namespace Enyim.Caching.Configuration
 
             throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
         }
+
+        public bool UseSslStream { get; private set; }
 
         #endregion
     }
