@@ -116,10 +116,7 @@ namespace Enyim.Caching.Configuration
                 }
             }
 
-            if (options.UseSslStream != null)
-            {
-                UseSslStream = options.UseSslStream;
-            }
+            UseSslStream = options.UseSslStream;
 
             if (!string.IsNullOrEmpty(options.KeyTransformer))
             {

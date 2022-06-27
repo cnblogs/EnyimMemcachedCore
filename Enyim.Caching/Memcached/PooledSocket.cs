@@ -427,8 +427,8 @@ namespace Enyim.Caching.Memcached
             {
                 try
                 {
-                    _inputStream.Write(data, offset, length);
-                    _inputStream.Flush();
+                    _sslStream.Write(data, offset, length);
+                    _sslStream.Flush();
                 }  
                 catch (Exception ex)
                 {
