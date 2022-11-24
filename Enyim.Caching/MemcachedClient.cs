@@ -27,6 +27,7 @@ namespace Enyim.Caching
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
         //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
         private ILogger<MemcachedClient> _logger;
+        private bool _suppressException;
 
         private IServerPool pool;
         private IMemcachedKeyTransformer keyTransformer;
@@ -51,6 +52,7 @@ namespace Enyim.Caching
                 throw new ArgumentNullException(nameof(configuration));
             }
 
+            _suppressException = configuration.SuppressException;
             this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
             this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
 
@@ -154,7 +156,10 @@ namespace Enyim.Caching
             }
             catch (Exception ex)
             {
+
                 _logger.LogError(0, ex, $"{nameof(PerformGet)}(\"{key}\")");
+                if (!_suppressException) throw;
+
                 result.Fail(ex.Message);
                 return result;
             }
@@ -246,6 +251,8 @@ namespace Enyim.Caching
             catch (Exception ex)
             {
                 _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
+                if (!_suppressException) throw;
+
                 result.Fail(ex.Message, ex);
                 return result;
             }
@@ -267,6 +274,8 @@ namespace Enyim.Caching
             catch (Exception ex)
             {
                 _logger.LogError(0, ex, $"{nameof(GetAsync)}(\"{key}\")");
+                if (!_suppressException) throw;
+
                 result.Fail(ex.Message, ex);
                 return result;
             }
@@ -300,6 +309,7 @@ namespace Enyim.Caching
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"{nameof(AddAsync)}(\"{key}\", ..., {cacheSeconds})");
+                    if (!_suppressException) throw;
                 }
             }
             return value;
@@ -594,6 +604,7 @@ namespace Enyim.Caching
                 catch (Exception e)
                 {
                     _logger.LogError("PerformStore", e);
+                    if (!_suppressException) throw;
 
                     result.Fail("PerformStore failed", e);
                     return result;
@@ -1221,6 +1232,7 @@ namespace Enyim.Caching
                     catch (Exception e)
                     {
                         _logger.LogError(0, e, "PerformMultiGet");
+                        if (!_suppressException) throw;
                     }
                 }));
             }

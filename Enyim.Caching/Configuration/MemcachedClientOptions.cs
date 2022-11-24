@@ -23,6 +23,8 @@ namespace Enyim.Caching.Configuration
 
         public bool UseSslStream { get; set; }
 
+        public bool SuppressException { get; set; } = true;
+
         public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
         public MemcachedClientOptions Value => this;

@@ -42,8 +42,9 @@ namespace Enyim.Caching.Configuration
 
         IServerPool CreatePool();
 
-        bool UseSslStream  { get; }
+        bool UseSslStream { get; }
 
+        bool SuppressException { get; }
     }
 }
 

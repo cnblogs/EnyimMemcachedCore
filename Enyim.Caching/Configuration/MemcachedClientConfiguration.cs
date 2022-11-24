@@ -117,6 +117,7 @@ namespace Enyim.Caching.Configuration
             }
 
             UseSslStream = options.UseSslStream;
+            SuppressException = options.SuppressException;
 
             if (!string.IsNullOrEmpty(options.KeyTransformer))
             {
@@ -203,7 +204,7 @@ namespace Enyim.Caching.Configuration
                     }
                     else
                     {
-                        _logger.LogInformation($"Memcached server address - {server.Address }:{server.Port}");
+                        _logger.LogInformation($"Memcached server address - {server.Address}:{server.Port}");
                     }
 
                     Servers.Add(new IPEndPoint(address, server.Port));
@@ -337,6 +338,8 @@ namespace Enyim.Caching.Configuration
         }
 
         public bool UseSslStream { get; private set; }
+
+        public bool SuppressException { get; private set; }
 
         #endregion
     }
