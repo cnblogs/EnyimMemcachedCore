@@ -1,4 +1,9 @@
-VERSION=$(git tag --sort=committerdate | tail -1)
-dotnet build /p:version=$VERSION -c Release Enyim.Caching
-dotnet pack -c Release /p:version=$VERSION Enyim.Caching
+#!/bin/bash
+set -e
 
+[ -z $1 ] && echo "Missing version" && exit 1
+
+version=$1
+project=Enyim.Caching
+dotnet build -p:version=$version -c Release $project
+dotnet pack $project -c Release -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg --include-source -p:Version=$version -o ./artifacts
