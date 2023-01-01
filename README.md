@@ -44,10 +44,11 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddEnyimMemcached();
-        //services.AddEnyimMemcached(Configuration);
-        //services.AddEnyimMemcached(Configuration, "enyimMemcached");
-        //services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
-        //services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
+        // services.AddEnyimMemcached("enyimMemcached");
+        // services.AddEnyimMemcached(Configuration);
+        // services.AddEnyimMemcached(Configuration, "enyimMemcached");
+        // services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
+        // services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
     }
     
     public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)

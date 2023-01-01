@@ -13,18 +13,21 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class EnyimMemcachedServiceCollectionExtensions
     {
-        /// <summary>
-        /// Add EnyimMemcached to the specified <see cref="IServiceCollection"/>.
-        /// Read configuration via IConfiguration.GetSection("enyimMemcached")
-        /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services)
+#if NET6_0_OR_GREATER
+        public static IServiceCollection AddEnyimMemcached(
+            this IServiceCollection services,
+            string sectionKey = "enyimMemcached",
+            bool asDistributedCache = true)
         {
-            return AddEnyimMemcachedInternal(services, null);
+            var config = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            return services.AddEnyimMemcached(config.GetSection(sectionKey), asDistributedCache);
         }
+#endif
 
-        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, Action<MemcachedClientOptions> setupAction)
+        public static IServiceCollection AddEnyimMemcached(
+            this IServiceCollection services,
+            Action<MemcachedClientOptions> setupAction,
+            bool asDistributedCache = true)
         {
             if (services == null)
             {
@@ -36,10 +39,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(setupAction));
             }
 
-            return AddEnyimMemcachedInternal(services, s => s.Configure(setupAction));
+            return services.AddEnyimMemcachedInternal(s => s.Configure(setupAction), asDistributedCache);
         }
 
-        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfigurationSection configurationSection)
+        public static IServiceCollection AddEnyimMemcached(
+            this IServiceCollection services,
+            IConfigurationSection configurationSection,
+            bool asDistributedCache)
         {
             if (services == null)
             {
@@ -56,10 +62,14 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException($"{configurationSection.Key} in appsettings.json");
             }
 
-            return AddEnyimMemcachedInternal(services, s => s.Configure<MemcachedClientOptions>(configurationSection));
+            return services.AddEnyimMemcachedInternal(s => s.Configure<MemcachedClientOptions>(configurationSection), asDistributedCache);
         }
 
-        public static IServiceCollection AddEnyimMemcached(this IServiceCollection services, IConfiguration configuration, string sectionKey = "enyimMemcached")
+        public static IServiceCollection AddEnyimMemcached(
+            this IServiceCollection services,
+            IConfiguration configuration,
+            string sectionKey = "enyimMemcached",
+            bool asDistributedCache = true)
         {
             if (services == null)
             {
@@ -77,10 +87,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException($"{sectionKey} in appsettings.json");
             }
 
-            return AddEnyimMemcachedInternal(services, s => s.Configure<MemcachedClientOptions>(section));
+            return services.AddEnyimMemcachedInternal(s => s.Configure<MemcachedClientOptions>(section), asDistributedCache);
         }
 
-        private static IServiceCollection AddEnyimMemcachedInternal(IServiceCollection services, Action<IServiceCollection> configure)
+        private static IServiceCollection AddEnyimMemcachedInternal(
+            this IServiceCollection services,
+            Action<IServiceCollection> configure,
+            bool asDistributedCache)
         {
             services.AddOptions();
             configure?.Invoke(services);
@@ -88,13 +101,26 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
             services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
             services.TryAddSingleton<IMemcachedClientConfiguration, MemcachedClientConfiguration>();
-            services.AddSingleton<MemcachedClient>();
+            services.TryAddSingleton<IMemcachedClient, MemcachedClient>();
 
-            services.AddSingleton<IMemcachedClient>(factory => factory.GetService<MemcachedClient>());
-            services.AddSingleton<IDistributedCache>(factory => factory.GetService<MemcachedClient>());
+            if (asDistributedCache)
+            {
+                services.TryAddSingleton<IDistributedCache>(sp =>
+                    sp.GetRequiredService<IMemcachedClient>() as MemcachedClient);
+            }
 
             return services;
         }
+
+#if NET6_0_OR_GREATER
+        public static IServiceCollection AddEnyimMemcached<T>(
+            this IServiceCollection services,
+            string sectionKey)
+        {
+            var config = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            return services.AddEnyimMemcached<T>(config, sectionKey);
+        }
+#endif
 
         public static IServiceCollection AddEnyimMemcached<T>(
             this IServiceCollection services,
@@ -106,7 +132,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<ITranscoder, DefaultTranscoder>();
             services.TryAddSingleton<IMemcachedKeyTransformer, DefaultKeyTransformer>();
 
-            services.AddSingleton<IMemcachedClient<T>>(sp =>
+            services.TryAddSingleton<IMemcachedClient<T>>(sp =>
             {
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
                 var options = sp.GetRequiredService<IOptionsMonitor<MemcachedClientOptions>>();
