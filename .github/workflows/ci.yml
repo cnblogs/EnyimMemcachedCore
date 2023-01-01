@@ -2,31 +2,22 @@ name: CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/dotnet/sdk:7.0
+
+    services:
+      memcached:
+        image: memcached
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: 7.0.x
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install libmemcached-dev memcached
-    - name: Start memcached daemons
-      run: |
-        memcached -d -p 11211
-    - name: Add memcached host to /etc/hosts
-      run: |
-        echo "127.0.0.1 memcached" | sudo tee -a /etc/hosts
+    - name: Checkout
+      uses: actions/checkout@v3
     - name: Build
       run: ./build.sh
     - name: Test
