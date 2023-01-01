@@ -25,9 +25,29 @@ namespace Enyim.Caching
             return _memcachedClient.Add(key, value, cacheSeconds);
         }
 
+        public bool Add(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.Add(key, value, cacheSeconds);
+        }
+
+        public bool Add(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.Add(key, value, timeSpan);
+        }
+
         public Task<bool> AddAsync(string key, object value, int cacheSeconds)
         {
             return _memcachedClient.AddAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> AddAsync(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.AddAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> AddAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.AddAsync(key, value, timeSpan);
         }
 
         public bool Append(string key, ArraySegment<byte> data)
@@ -225,9 +245,29 @@ namespace Enyim.Caching
             return _memcachedClient.Replace(key, value, cacheSeconds);
         }
 
+        public bool Replace(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.Replace(key, value, cacheSeconds);
+        }
+
+        public bool Replace(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.Replace(key, value, timeSpan);
+        }
+
         public Task<bool> ReplaceAsync(string key, object value, int cacheSeconds)
         {
             return _memcachedClient.ReplaceAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> ReplaceAsync(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.ReplaceAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> ReplaceAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.ReplaceAsync(key, value, timeSpan);
         }
 
         public bool Set(string key, object value, int cacheSeconds)
@@ -235,9 +275,29 @@ namespace Enyim.Caching
             return _memcachedClient.Set(key, value, cacheSeconds);
         }
 
+        public bool Set(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.Set(key, value, cacheSeconds);
+        }
+
+        public bool Set(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.Set(key, value, timeSpan);
+        }
+
         public Task<bool> SetAsync(string key, object value, int cacheSeconds)
         {
             return _memcachedClient.SetAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> SetAsync(string key, object value, uint cacheSeconds)
+        {
+            return _memcachedClient.SetAsync(key, value, cacheSeconds);
+        }
+
+        public Task<bool> SetAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return _memcachedClient.SetAsync(key, value, timeSpan);
         }
 
         public ServerStats Stats()
