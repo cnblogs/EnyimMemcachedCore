@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj" />
-    <ProjectReference Include="..\SampleWebApp\SampleWebApp.csproj" />
+    <ProjectReference Include="..\..\src\Enyim.Caching\Enyim.Caching.csproj" />
+    <ProjectReference Include="..\..\sample\SampleWebApp\SampleWebApp.csproj" />
   </ItemGroup>
 
 </Project>

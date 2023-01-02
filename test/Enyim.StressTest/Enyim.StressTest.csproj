@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj" />
+    <ProjectReference Include="..\..\src\Enyim.Caching\Enyim.Caching.csproj" />
   </ItemGroup>
 
 </Project>
