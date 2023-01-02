@@ -261,7 +261,27 @@ namespace Enyim.Caching
             return true;
         }
 
+        public bool Add(string key, object value, uint cacheSeconds)
+        {
+            return true;
+        }
+
+        public bool Add(string key, object value, TimeSpan timeSpan)
+        {
+            return true;
+        }
+
         public Task<bool> AddAsync(string key, object value, int cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> AddAsync(string key, object value, uint cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> AddAsync(string key, object value, TimeSpan timeSpan)
         {
             return Task.FromResult(true);
         }
@@ -271,7 +291,27 @@ namespace Enyim.Caching
             return true;
         }
 
+        public bool Set(string key, object value, uint cacheSeconds)
+        {
+            return true;
+        }
+
+        public bool Set(string key, object value, TimeSpan timeSpan)
+        {
+            return true;
+        }
+
         public Task<bool> SetAsync(string key, object value, int cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetAsync(string key, object value, uint cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> SetAsync(string key, object value, TimeSpan timeSpan)
         {
             return Task.FromResult(true);
         }
@@ -281,7 +321,27 @@ namespace Enyim.Caching
             return true;
         }
 
+        public bool Replace(string key, object value, uint cacheSeconds)
+        {
+            return true;
+        }
+
+        public bool Replace(string key, object value, TimeSpan timeSpan)
+        {
+            return true;
+        }
+
         public Task<bool> ReplaceAsync(string key, object value, int cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ReplaceAsync(string key, object value, uint cacheSeconds)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ReplaceAsync(string key, object value, TimeSpan timeSpan)
         {
             return Task.FromResult(true);
         }

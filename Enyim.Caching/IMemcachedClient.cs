@@ -9,13 +9,25 @@ namespace Enyim.Caching
     public interface IMemcachedClient : IDisposable
     {
         bool Add(string key, object value, int cacheSeconds);
+        bool Add(string key, object value, uint cacheSeconds);
+        bool Add(string key, object value, TimeSpan timeSpan);
         Task<bool> AddAsync(string key, object value, int cacheSeconds);
+        Task<bool> AddAsync(string key, object value, uint cacheSeconds);
+        Task<bool> AddAsync(string key, object value, TimeSpan timeSpan);
 
         bool Set(string key, object value, int cacheSeconds);
+        bool Set(string key, object value, uint cacheSeconds);
+        bool Set(string key, object value, TimeSpan timeSpan);
         Task<bool> SetAsync(string key, object value, int cacheSeconds);
+        Task<bool> SetAsync(string key, object value, uint cacheSeconds);
+        Task<bool> SetAsync(string key, object value, TimeSpan timeSpan);
 
         bool Replace(string key, object value, int cacheSeconds);
+        bool Replace(string key, object value, uint cacheSeconds);
+        bool Replace(string key, object value, TimeSpan timeSpan);
         Task<bool> ReplaceAsync(string key, object value, int cacheSeconds);
+        Task<bool> ReplaceAsync(string key, object value, uint cacheSeconds);
+        Task<bool> ReplaceAsync(string key, object value, TimeSpan timeSpan);
 
         Task<IGetOperationResult> GetAsync(string key);
         Task<IGetOperationResult<T>> GetAsync<T>(string key);

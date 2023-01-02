@@ -93,9 +93,29 @@ namespace Enyim.Caching
             return Store(StoreMode.Add, key, value, TimeSpan.FromSeconds(cacheSeconds));
         }
 
+        public bool Add(string key, object value, uint cacheSeconds)
+        {
+            return Store(StoreMode.Add, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public bool Add(string key, object value, TimeSpan timeSpan)
+        {
+            return Store(StoreMode.Add, key, value, timeSpan);
+        }
+
         public async Task<bool> AddAsync(string key, object value, int cacheSeconds)
         {
             return await StoreAsync(StoreMode.Add, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> AddAsync(string key, object value, uint cacheSeconds)
+        {
+            return await StoreAsync(StoreMode.Add, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> AddAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return await StoreAsync(StoreMode.Add, key, value, timeSpan);
         }
 
         public bool Set(string key, object value, int cacheSeconds)
@@ -103,9 +123,29 @@ namespace Enyim.Caching
             return Store(StoreMode.Set, key, value, TimeSpan.FromSeconds(cacheSeconds));
         }
 
+        public bool Set(string key, object value, uint cacheSeconds)
+        {
+            return Store(StoreMode.Set, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public bool Set(string key, object value, TimeSpan timeSpan)
+        {
+            return Store(StoreMode.Set, key, value, timeSpan);
+        }
+
         public async Task<bool> SetAsync(string key, object value, int cacheSeconds)
         {
             return await StoreAsync(StoreMode.Set, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> SetAsync(string key, object value, uint cacheSeconds)
+        {
+            return await StoreAsync(StoreMode.Set, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> SetAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return await StoreAsync(StoreMode.Set, key, value, timeSpan);
         }
 
         public bool Replace(string key, object value, int cacheSeconds)
@@ -113,9 +153,29 @@ namespace Enyim.Caching
             return Store(StoreMode.Replace, key, value, TimeSpan.FromSeconds(cacheSeconds));
         }
 
+        public bool Replace(string key, object value, uint cacheSeconds)
+        {
+            return Store(StoreMode.Replace, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public bool Replace(string key, object value, TimeSpan timeSpan)
+        {
+            return Store(StoreMode.Replace, key, value, timeSpan);
+        }
+
         public async Task<bool> ReplaceAsync(string key, object value, int cacheSeconds)
         {
             return await StoreAsync(StoreMode.Replace, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> ReplaceAsync(string key, object value, uint cacheSeconds)
+        {
+            return await StoreAsync(StoreMode.Replace, key, value, TimeSpan.FromSeconds(cacheSeconds));
+        }
+
+        public async Task<bool> ReplaceAsync(string key, object value, TimeSpan timeSpan)
+        {
+            return await StoreAsync(StoreMode.Replace, key, value, timeSpan);
         }
 
         /// <summary>
@@ -1384,11 +1444,6 @@ namespace Enyim.Caching
             return retval;
         }
 
-        protected static string GetExpiratonKey(string key)
-        {
-            return key + "-" + nameof(DistributedCacheEntryOptions);
-        }
-
         #endregion
         #region [ IDisposable                  ]
 
@@ -1417,90 +1472,6 @@ namespace Enyim.Caching
                 finally { this.pool = null; }
             }
         }
-
-        #region Implement IDistributedCache
-
-        byte[] IDistributedCache.Get(string key)
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.Get)}(\"{key}\")");
-
-            return Get<byte[]>(key);
-        }
-
-        async Task<byte[]> IDistributedCache.GetAsync(string key, CancellationToken token = default(CancellationToken))
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.GetAsync)}(\"{key}\")");
-
-            return await GetValueAsync<byte[]>(key);
-        }
-
-        void IDistributedCache.Set(string key, byte[] value, DistributedCacheEntryOptions options)
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.Set)}(\"{key}\")");
-
-            ulong cas = 0;
-            var expires = MemcachedClient.GetExpiration(options.SlidingExpiration, null, options.AbsoluteExpiration, options.AbsoluteExpirationRelativeToNow);
-            PerformStore(StoreMode.Set, key, value, expires, cas);
-            if (expires > 0)
-            {
-                PerformStore(StoreMode.Set, GetExpiratonKey(key), expires, expires, cas);
-            }
-        }
-
-        async Task IDistributedCache.SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.SetAsync)}(\"{key}\")");
-
-            var expires = MemcachedClient.GetExpiration(options.SlidingExpiration, null, options.AbsoluteExpiration, options.AbsoluteExpirationRelativeToNow);
-            await PerformStoreAsync(StoreMode.Set, key, value, expires);
-            if (expires > 0)
-            {
-                await PerformStoreAsync(StoreMode.Set, GetExpiratonKey(key), expires, expires);
-            }
-        }
-
-        void IDistributedCache.Refresh(string key)
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.Refresh)}(\"{key}\")");
-
-            var value = Get(key);
-            if (value != null)
-            {
-                var expirationValue = Get(GetExpiratonKey(key));
-                if (expirationValue != null)
-                {
-                    ulong cas = 0;
-                    PerformStore(StoreMode.Replace, key, value, uint.Parse(expirationValue.ToString()), cas);
-                }
-            }
-        }
-
-        async Task IDistributedCache.RefreshAsync(string key, CancellationToken token = default(CancellationToken))
-        {
-            _logger.LogInformation($"{nameof(IDistributedCache.RefreshAsync)}(\"{key}\")");
-
-            var result = await GetAsync<byte[]>(key);
-            if (result.Success)
-            {
-                var expirationResult = await GetAsync<uint>(GetExpiratonKey(key));
-                if (expirationResult.Success)
-                {
-                    await PerformStoreAsync(StoreMode.Replace, key, result.Value, expirationResult.Value);
-                }
-            }
-        }
-
-        void IDistributedCache.Remove(string key)
-        {
-            Remove(key);
-        }
-
-        async Task IDistributedCache.RemoveAsync(string key, CancellationToken token = default(CancellationToken))
-        {
-            await RemoveAsync(key);
-        }
-
-        #endregion
 
         #endregion
     }

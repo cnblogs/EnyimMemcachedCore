@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26228.9
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enyim.Caching", "Enyim.Caching\Enyim.Caching.csproj", "{0EC50FBB-03B7-4B76-9D72-AADCB8BB3A8B}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebApp.IntegrationTests", "SampleWebApp.IntegrationTests\SampleWebApp.IntegrationTests.csproj", "{281CA49A-FEA5-4008-8D3D-0C4E1C548B8C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enyim.StressTest", "Enyim.StressTest\Enyim.StressTest.csproj", "{ADA7F6B5-619D-4435-83BF-AD558823EC40}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedCacheTests", "DistributedCacheTets\DistributedCacheTests.csproj", "{450F1A40-F81B-4BEE-818B-3FCDE630D96F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{ADA7F6B5-619D-4435-83BF-AD558823EC40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADA7F6B5-619D-4435-83BF-AD558823EC40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADA7F6B5-619D-4435-83BF-AD558823EC40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{450F1A40-F81B-4BEE-818B-3FCDE630D96F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{450F1A40-F81B-4BEE-818B-3FCDE630D96F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{450F1A40-F81B-4BEE-818B-3FCDE630D96F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{450F1A40-F81B-4BEE-818B-3FCDE630D96F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -62,6 +68,7 @@ Global
 		{3DDAC26F-8B56-4F69-8C69-A3CB6CF6B12B} = {46CD2BBA-9846-42FA-823B-D03F68F81647}
 		{281CA49A-FEA5-4008-8D3D-0C4E1C548B8C} = {9954C92E-50E2-477C-AC47-31C857C46370}
 		{ADA7F6B5-619D-4435-83BF-AD558823EC40} = {46CD2BBA-9846-42FA-823B-D03F68F81647}
+		{450F1A40-F81B-4BEE-818B-3FCDE630D96F} = {46CD2BBA-9846-42FA-823B-D03F68F81647}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D8C07FE8-52FF-48B8-A079-A180058AABC6}
