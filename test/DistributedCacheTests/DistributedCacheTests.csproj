@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Enyim.Caching\Enyim.Caching.csproj" />
+    <ProjectReference Include="..\..\src\Enyim.Caching\Enyim.Caching.csproj" />
   </ItemGroup>
 
   <ItemGroup>
