@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            return this.Build().CreateBuffer();
+            return Build().CreateBuffer();
         }
 
         protected internal override Task<bool> ReadResponseAsync(PooledSocket socket, System.Action<bool> next)

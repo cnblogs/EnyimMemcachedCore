@@ -18,7 +18,7 @@ namespace Enyim.Caching.Configuration
     public class MemcachedClientConfiguration : IMemcachedClientConfiguration
     {
         // these are lazy initialized in the getters
-        private Type nodeLocator;
+        private Type _nodeLocator;
         private ITranscoder _transcoder;
         private IMemcachedKeyTransformer _keyTransformer;
         private ILogger<MemcachedClientConfiguration> _logger;
@@ -137,7 +137,7 @@ namespace Enyim.Caching.Configuration
             }
             else if (keyTransformer != null)
             {
-                this._keyTransformer = keyTransformer;
+                _keyTransformer = keyTransformer;
                 _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer.ToString()}'");
             }
 
@@ -167,7 +167,7 @@ namespace Enyim.Caching.Configuration
             }
             else if (transcoder != null)
             {
-                this._transcoder = transcoder;
+                _transcoder = transcoder;
                 _logger.LogDebug($"Use Transcoder Type : '{transcoder.ToString()}'");
             }
 
@@ -218,7 +218,7 @@ namespace Enyim.Caching.Configuration
         /// <param name="address">The address and the port of the server in the format 'host:port'.</param>
         public void AddServer(string address)
         {
-            this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
+            Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
         }
 
         /// <summary>
@@ -228,7 +228,7 @@ namespace Enyim.Caching.Configuration
         /// <param name="port">The port number of the memcached instance.</param>
         public void AddServer(string host, int port)
         {
-            this.Servers.Add(new DnsEndPoint(host, port));
+            Servers.Add(new DnsEndPoint(host, port));
         }
 
         /// <summary>
@@ -251,8 +251,8 @@ namespace Enyim.Caching.Configuration
         /// </summary>
         public IMemcachedKeyTransformer KeyTransformer
         {
-            get { return this._keyTransformer ?? (this._keyTransformer = new DefaultKeyTransformer()); }
-            set { this._keyTransformer = value; }
+            get { return _keyTransformer ?? (_keyTransformer = new DefaultKeyTransformer()); }
+            set { _keyTransformer = value; }
         }
 
         /// <summary>
@@ -261,11 +261,11 @@ namespace Enyim.Caching.Configuration
         /// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
         public Type NodeLocator
         {
-            get { return this.nodeLocator; }
+            get { return _nodeLocator; }
             set
             {
                 ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
-                this.nodeLocator = value;
+                _nodeLocator = value;
             }
         }
 
@@ -293,48 +293,48 @@ namespace Enyim.Caching.Configuration
 
         IList<EndPoint> IMemcachedClientConfiguration.Servers
         {
-            get { return this.Servers; }
+            get { return Servers; }
         }
 
         ISocketPoolConfiguration IMemcachedClientConfiguration.SocketPool
         {
-            get { return this.SocketPool; }
+            get { return SocketPool; }
         }
 
         IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
         {
-            get { return this.Authentication; }
+            get { return Authentication; }
         }
 
         IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
         {
-            return this.KeyTransformer;
+            return KeyTransformer;
         }
 
         IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
         {
-            var f = this.NodeLocatorFactory;
+            var f = NodeLocatorFactory;
             if (f != null) return f.Create();
 
-            return this.NodeLocator == null
+            return NodeLocator == null
                     ? new SingleNodeLocator()
-                    : (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
+                    : (IMemcachedNodeLocator)FastActivator.Create(NodeLocator);
         }
 
         ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
         {
-            return this.Transcoder;
+            return Transcoder;
         }
 
         IServerPool IMemcachedClientConfiguration.CreatePool()
         {
-            switch (this.Protocol)
+            switch (Protocol)
             {
                 case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger);
                 case MemcachedProtocol.Binary: return new BinaryPool(this, _logger);
             }
 
-            throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
+            throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)Protocol);
         }
 
         public bool UseSslStream { get; private set; }

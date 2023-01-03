@@ -25,13 +25,12 @@ namespace Enyim.Caching
         /// Represents a value which indicates that an item should never expire.
         /// </summary>
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
-        //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
         private ILogger<MemcachedClient> _logger;
         private bool _suppressException;
 
-        private IServerPool pool;
-        private IMemcachedKeyTransformer keyTransformer;
-        private ITranscoder transcoder;
+        private IServerPool _pool;
+        private IMemcachedKeyTransformer _keyTransformer;
+        private ITranscoder _transcoder;
 
         public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
         public IGetOperationResultFactory GetOperationResultFactory { get; set; }
@@ -39,9 +38,9 @@ namespace Enyim.Caching
         public IConcatOperationResultFactory ConcatOperationResultFactory { get; set; }
         public IRemoveOperationResultFactory RemoveOperationResultFactory { get; set; }
 
-        protected IServerPool Pool { get { return this.pool; } }
-        protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
-        protected ITranscoder Transcoder { get { return this.transcoder; } }
+        protected IServerPool Pool { get { return _pool; } }
+        protected IMemcachedKeyTransformer KeyTransformer { get { return _keyTransformer; } }
+        protected ITranscoder Transcoder { get { return _transcoder; } }
 
         public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration)
         {
@@ -53,11 +52,11 @@ namespace Enyim.Caching
             }
 
             _suppressException = configuration.SuppressException;
-            this.keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
-            this.transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
+            _keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
+            _transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
 
-            this.pool = configuration.CreatePool();
-            this.StartPool();
+            _pool = configuration.CreatePool();
+            StartPool();
 
             StoreOperationResultFactory = new DefaultStoreOperationResultFactory();
             GetOperationResultFactory = new DefaultGetOperationResultFactory();
@@ -73,17 +72,17 @@ namespace Enyim.Caching
             if (keyTransformer == null) throw new ArgumentNullException("keyTransformer");
             if (transcoder == null) throw new ArgumentNullException("transcoder");
 
-            this.keyTransformer = keyTransformer;
-            this.transcoder = transcoder;
+            _keyTransformer = keyTransformer;
+            _transcoder = transcoder;
 
-            this.pool = pool;
-            this.StartPool();
+            _pool = pool;
+            StartPool();
         }
 
         private void StartPool()
         {
-            this.pool.NodeFailed += (n) => { var f = this.NodeFailed; if (f != null) f(n); };
-            this.pool.Start();
+            _pool.NodeFailed += (n) => { var f = NodeFailed; if (f != null) f(n); };
+            _pool.Start();
         }
 
         public event Action<IMemcachedNode> NodeFailed;
@@ -187,7 +186,7 @@ namespace Enyim.Caching
         {
             object tmp;
 
-            return this.TryGet(key, out tmp) ? tmp : null;
+            return TryGet(key, out tmp) ? tmp : null;
         }
 
         /// <summary>
@@ -228,9 +227,9 @@ namespace Enyim.Caching
         private bool CreateGetCommand(string key, out IGetOperationResult result, out IMemcachedNode node, out IGetOperation command)
         {
             result = new DefaultGetOperationResultFactory().Create();
-            var hashedKey = this.keyTransformer.Transform(key);
+            var hashedKey = _keyTransformer.Transform(key);
 
-            node = this.pool.Locate(hashedKey);
+            node = _pool.Locate(hashedKey);
             if (node == null)
             {
                 var errorMessage = $"Unable to locate node with \"{key}\" key";
@@ -240,16 +239,16 @@ namespace Enyim.Caching
                 return false;
             }
 
-            command = this.pool.OperationFactory.Get(hashedKey);
+            command = _pool.OperationFactory.Get(hashedKey);
             return true;
         }
 
         private bool CreateGetCommand<T>(string key, out IGetOperationResult<T> result, out IMemcachedNode node, out IGetOperation command)
         {
             result = new DefaultGetOperationResultFactory<T>().Create();
-            var hashedKey = this.keyTransformer.Transform(key);
+            var hashedKey = _keyTransformer.Transform(key);
 
-            node = this.pool.Locate(hashedKey);
+            node = _pool.Locate(hashedKey);
             if (node == null)
             {
                 var errorMessage = $"Unable to locate node with \"{key}\" key";
@@ -259,7 +258,7 @@ namespace Enyim.Caching
                 return false;
             }
 
-            command = this.pool.OperationFactory.Get(hashedKey);
+            command = _pool.OperationFactory.Get(hashedKey);
             return true;
         }
 
@@ -267,7 +266,7 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
-                result.Value = transcoder.Deserialize(command.Result);
+                result.Value = _transcoder.Deserialize(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
             }
@@ -283,7 +282,7 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
-                result.Value = transcoder.Deserialize<T>(command.Result);
+                result.Value = _transcoder.Deserialize<T>(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
             }
@@ -385,7 +384,7 @@ namespace Enyim.Caching
         {
             ulong cas = 0;
 
-            return this.PerformTryGet(key, out cas, out value).Success;
+            return PerformTryGet(key, out cas, out value).Success;
         }
 
         /// <summary>
@@ -398,19 +397,19 @@ namespace Enyim.Caching
         {
             ulong cas = 0;
 
-            return this.PerformTryGet(key, out cas, out value).Success;
+            return PerformTryGet(key, out cas, out value).Success;
         }
 
         public CasResult<object> GetWithCas(string key)
         {
-            return this.GetWithCas<object>(key);
+            return GetWithCas<object>(key);
         }
 
         public CasResult<T> GetWithCas<T>(string key)
         {
             CasResult<T> tmp;
 
-            return this.TryGetWithCas(key, out tmp)
+            return TryGetWithCas(key, out tmp)
                     ? new CasResult<T> { Cas = tmp.Cas, Result = tmp.Result }
                     : new CasResult<T> { Cas = tmp.Cas, Result = default };
         }
@@ -420,7 +419,7 @@ namespace Enyim.Caching
             object tmp;
             ulong cas;
 
-            var retval = this.PerformTryGet(key, out cas, out tmp);
+            var retval = PerformTryGet(key, out cas, out tmp);
 
             value = new CasResult<object> { Cas = cas, Result = tmp };
 
@@ -438,8 +437,8 @@ namespace Enyim.Caching
 
         protected virtual IGetOperationResult PerformTryGet(string key, out ulong cas, out object value)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = GetOperationResultFactory.Create();
 
             cas = 0;
@@ -447,12 +446,12 @@ namespace Enyim.Caching
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Get(hashedKey);
+                var command = _pool.OperationFactory.Get(hashedKey);
                 var commandResult = node.Execute(command);
 
                 if (commandResult.Success)
                 {
-                    result.Value = value = this.transcoder.Deserialize(command.Result);
+                    result.Value = value = _transcoder.Deserialize(command.Result);
                     result.Cas = cas = command.CasValue;
 
                     result.Pass();
@@ -474,8 +473,8 @@ namespace Enyim.Caching
 
         protected virtual IGetOperationResult PerformTryGet<T>(string key, out ulong cas, out T value)
         {
-            var hashedKey = keyTransformer.Transform(key);
-            var node = pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = GetOperationResultFactory.Create();
 
             cas = 0;
@@ -483,12 +482,12 @@ namespace Enyim.Caching
 
             if (node != null)
             {
-                var command = pool.OperationFactory.Get(hashedKey);
+                var command = _pool.OperationFactory.Get(hashedKey);
                 var commandResult = node.Execute(command);
 
                 if (commandResult.Success)
                 {
-                    result.Value = value = transcoder.Deserialize<T>(command.Result);
+                    result.Value = value = _transcoder.Deserialize<T>(command.Result);
                     result.Cas = cas = command.CasValue;
 
                     result.Pass();
@@ -522,7 +521,7 @@ namespace Enyim.Caching
             ulong tmp = 0;
             int status;
 
-            return this.PerformStore(mode, key, value, 0, ref tmp, out status).Success;
+            return PerformStore(mode, key, value, 0, ref tmp, out status).Success;
         }
 
         /// <summary>
@@ -538,17 +537,17 @@ namespace Enyim.Caching
             ulong tmp = 0;
             int status;
 
-            return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
+            return PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
         }
 
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
         {
-            return (await this.PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt))).Success;
+            return (await PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt))).Success;
         }
 
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
-            return (await this.PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(validFor, null))).Success;
+            return (await PerformStoreAsync(mode, key, value, MemcachedClient.GetExpiration(validFor, null))).Success;
         }
 
         /// <summary>
@@ -564,7 +563,7 @@ namespace Enyim.Caching
             ulong tmp = 0;
             int status;
 
-            return this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status).Success;
+            return PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), ref tmp, out status).Success;
         }
 
         /// <summary>
@@ -577,7 +576,7 @@ namespace Enyim.Caching
         /// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
         public CasResult<bool> Cas(StoreMode mode, string key, object value, ulong cas)
         {
-            var result = this.PerformStore(mode, key, value, 0, cas);
+            var result = PerformStore(mode, key, value, 0, cas);
             return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
 
         }
@@ -593,7 +592,7 @@ namespace Enyim.Caching
         /// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
         public CasResult<bool> Cas(StoreMode mode, string key, object value, TimeSpan validFor, ulong cas)
         {
-            var result = this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
+            var result = PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), cas);
             return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
         }
 
@@ -608,7 +607,7 @@ namespace Enyim.Caching
         /// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
         public CasResult<bool> Cas(StoreMode mode, string key, object value, DateTime expiresAt, ulong cas)
         {
-            var result = this.PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
+            var result = PerformStore(mode, key, value, MemcachedClient.GetExpiration(null, expiresAt), cas);
             return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
         }
 
@@ -622,7 +621,7 @@ namespace Enyim.Caching
         /// <returns>A CasResult object containing the version of the item and the result of the operation (true if the item was successfully stored in the cache; false otherwise).</returns>
         public CasResult<bool> Cas(StoreMode mode, string key, object value)
         {
-            var result = this.PerformStore(mode, key, value, 0, 0);
+            var result = PerformStore(mode, key, value, 0, 0);
             return new CasResult<bool> { Cas = result.Cas, Result = result.Success, StatusCode = result.StatusCode.Value };
         }
 
@@ -631,7 +630,7 @@ namespace Enyim.Caching
             ulong tmp = cas;
             int status;
 
-            var retval = this.PerformStore(mode, key, value, expires, ref tmp, out status);
+            var retval = PerformStore(mode, key, value, expires, ref tmp, out status);
             retval.StatusCode = status;
 
             if (retval.Success)
@@ -643,8 +642,8 @@ namespace Enyim.Caching
 
         protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = StoreOperationResultFactory.Create();
 
             statusCode = -1;
@@ -660,7 +659,7 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try { item = _transcoder.Serialize(value); }
                 catch (Exception e)
                 {
                     _logger.LogError("PerformStore", e);
@@ -670,7 +669,7 @@ namespace Enyim.Caching
                     return result;
                 }
 
-                var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
+                var command = _pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
                 var commandResult = node.Execute(command);
 
                 result.Cas = cas = command.CasValue;
@@ -686,7 +685,7 @@ namespace Enyim.Caching
                 return result;
             }
 
-            //if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
+            //if (performanceMonitor != null) performanceMonitor.Store(mode, 1, false);
 
             result.Fail("Unable to locate node");
             return result;
@@ -694,8 +693,8 @@ namespace Enyim.Caching
 
         protected async virtual Task<IStoreOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = StoreOperationResultFactory.Create();
 
             int statusCode = -1;
@@ -710,7 +709,7 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try { item = _transcoder.Serialize(value); }
                 catch (Exception e)
                 {
                     _logger.LogError(new EventId(), e, $"{nameof(PerformStoreAsync)} for '{key}' key");
@@ -719,7 +718,7 @@ namespace Enyim.Caching
                     return result;
                 }
 
-                var command = this.pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
+                var command = _pool.OperationFactory.Store(mode, hashedKey, item, expires, cas);
                 var commandResult = await node.ExecuteAsync(command);
 
                 result.Cas = cas = command.CasValue;
@@ -735,7 +734,7 @@ namespace Enyim.Caching
                 return result;
             }
 
-            //if (this.performanceMonitor != null) this.performanceMonitor.Store(mode, 1, false);
+            //if (performanceMonitor != null) performanceMonitor.Store(mode, 1, false);
 
             result.Fail("Unable to locate memcached node");
             return result;
@@ -756,7 +755,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Increment(string key, ulong defaultValue, ulong delta)
         {
-            return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, 0).Value;
+            return PerformMutate(MutationMode.Increment, key, defaultValue, delta, 0).Value;
         }
 
         /// <summary>
@@ -770,7 +769,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
         {
-            return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
+            return PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
         }
 
         /// <summary>
@@ -784,7 +783,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Increment(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
         {
-            return this.PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
+            return PerformMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
         }
 
         /// <summary>
@@ -798,7 +797,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, 0, cas);
+            var result = CasMutate(MutationMode.Increment, key, defaultValue, delta, 0, cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -814,7 +813,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+            var result = CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -830,7 +829,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Increment(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
+            var result = CasMutate(MutationMode.Increment, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -846,7 +845,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Decrement(string key, ulong defaultValue, ulong delta)
         {
-            return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, 0).Value;
+            return PerformMutate(MutationMode.Decrement, key, defaultValue, delta, 0).Value;
         }
 
         /// <summary>
@@ -860,7 +859,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Decrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor)
         {
-            return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
+            return PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null)).Value;
         }
 
         /// <summary>
@@ -874,7 +873,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public ulong Decrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt)
         {
-            return this.PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
+            return PerformMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt)).Value;
         }
 
         /// <summary>
@@ -888,7 +887,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
+            var result = CasMutate(MutationMode.Decrement, key, defaultValue, delta, 0, cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -904,7 +903,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, TimeSpan validFor, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
+            var result = CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(validFor, null), cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -920,7 +919,7 @@ namespace Enyim.Caching
         /// <remarks>If the client uses the Text protocol, the item must be inserted into the cache before it can be changed. It must be inserted as a <see cref="T:System.String"/>. Moreover the Text protocol only works with <see cref="System.UInt32"/> values, so return value -1 always indicates that the item was not found.</remarks>
         public CasResult<ulong> Decrement(string key, ulong defaultValue, ulong delta, DateTime expiresAt, ulong cas)
         {
-            var result = this.CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
+            var result = CasMutate(MutationMode.Decrement, key, defaultValue, delta, MemcachedClient.GetExpiration(null, expiresAt), cas);
             return new CasResult<ulong> { Cas = result.Cas, Result = result.Value, StatusCode = result.StatusCode.Value };
         }
 
@@ -955,13 +954,13 @@ namespace Enyim.Caching
 
         protected virtual IMutateOperationResult PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = MutateOperationResultFactory.Create();
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
+                var command = _pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
                 var commandResult = node.Execute(command);
 
                 result.Cas = cas = command.CasValue;
@@ -989,13 +988,13 @@ namespace Enyim.Caching
         protected virtual async Task<IMutateOperationResult> PerformMutateAsync(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires)
         {
             ulong cas = 0;
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = MutateOperationResultFactory.Create();
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
+                var command = _pool.OperationFactory.Mutate(mode, hashedKey, defaultValue, delta, expires, cas);
                 var commandResult = await node.ExecuteAsync(command);
 
                 result.Cas = cas = command.CasValue;
@@ -1034,7 +1033,7 @@ namespace Enyim.Caching
         {
             ulong cas = 0;
 
-            return this.PerformConcatenate(ConcatenationMode.Append, key, ref cas, data).Success;
+            return PerformConcatenate(ConcatenationMode.Append, key, ref cas, data).Success;
         }
 
         /// <summary>
@@ -1045,7 +1044,7 @@ namespace Enyim.Caching
         {
             ulong cas = 0;
 
-            return this.PerformConcatenate(ConcatenationMode.Prepend, key, ref cas, data).Success;
+            return PerformConcatenate(ConcatenationMode.Prepend, key, ref cas, data).Success;
         }
 
         /// <summary>
@@ -1080,13 +1079,13 @@ namespace Enyim.Caching
 
         protected virtual IConcatOperationResult PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var hashedKey = _keyTransformer.Transform(key);
+            var node = _pool.Locate(hashedKey);
             var result = ConcatOperationResultFactory.Create();
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Concat(mode, hashedKey, cas, data);
+                var command = _pool.OperationFactory.Concat(mode, hashedKey, cas, data);
                 var commandResult = node.Execute(command);
 
                 if (commandResult.Success)
@@ -1115,9 +1114,9 @@ namespace Enyim.Caching
         /// </summary>
         public void FlushAll()
         {
-            foreach (var node in this.pool.GetWorkingNodes())
+            foreach (var node in _pool.GetWorkingNodes())
             {
-                var command = this.pool.OperationFactory.Flush();
+                var command = _pool.OperationFactory.Flush();
 
                 node.Execute(command);
             }
@@ -1127,9 +1126,9 @@ namespace Enyim.Caching
         {
             var tasks = new List<Task>();
 
-            foreach (var node in this.pool.GetWorkingNodes())
+            foreach (var node in _pool.GetWorkingNodes())
             {
-                var command = this.pool.OperationFactory.Flush();
+                var command = _pool.OperationFactory.Flush();
 
                 tasks.Add(node.ExecuteAsync(command));
             }
@@ -1143,7 +1142,7 @@ namespace Enyim.Caching
         /// <returns></returns>
         public ServerStats Stats()
         {
-            return this.Stats(null);
+            return Stats(null);
         }
 
         public ServerStats Stats(string type)
@@ -1151,9 +1150,9 @@ namespace Enyim.Caching
             var results = new Dictionary<EndPoint, Dictionary<string, string>>();
             var tasks = new List<Task>();
 
-            foreach (var node in this.pool.GetWorkingNodes())
+            foreach (var node in _pool.GetWorkingNodes())
             {
-                var cmd = this.pool.OperationFactory.Stats(type);
+                var cmd = _pool.OperationFactory.Stats(type);
                 var action = new Func<IOperation, IOperationResult>(node.Execute);
                 var endpoint = node.EndPoint;
 
@@ -1219,19 +1218,19 @@ namespace Enyim.Caching
         /// <returns>a Dictionary holding all items indexed by their key.</returns>
         public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
         {
-            return PerformMultiGet<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
+            return PerformMultiGet<T>(keys, (mget, kvp) => _transcoder.Deserialize<T>(kvp.Value));
         }
 
         public async Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys)
         {
-            return await PerformMultiGetAsync<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
+            return await PerformMultiGetAsync<T>(keys, (mget, kvp) => _transcoder.Deserialize<T>(kvp.Value));
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
         {
             return PerformMultiGet(keys, (mget, kvp) => new CasResult<object>
             {
-                Result = this.transcoder.Deserialize(kvp.Value),
+                Result = _transcoder.Deserialize(kvp.Value),
                 Cas = mget.Cas[kvp.Key]
             });
         }
@@ -1240,7 +1239,7 @@ namespace Enyim.Caching
         {
             return await PerformMultiGetAsync(keys, (mget, kvp) => new CasResult<object>
             {
-                Result = this.transcoder.Deserialize(kvp.Value),
+                Result = _transcoder.Deserialize(kvp.Value),
                 Cas = mget.Cas[kvp.Key]
             });
         }
@@ -1250,7 +1249,7 @@ namespace Enyim.Caching
             // transform the keys and index them by hashed => original
             // the mget results will be mapped using this index
             var hashed = new Dictionary<string, string>();
-            foreach (var key in keys) hashed[this.keyTransformer.Transform(key)] = key;
+            foreach (var key in keys) hashed[_keyTransformer.Transform(key)] = key;
 
             var byServer = GroupByServer(hashed.Keys);
 
@@ -1263,7 +1262,7 @@ namespace Enyim.Caching
                 var node = slice.Key;
 
                 var nodeKeys = slice.Value;
-                var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+                var mget = _pool.OperationFactory.MultiGet(nodeKeys);
 
                 // run gets in parallel
                 var action = new Func<IOperation, IOperationResult>(node.Execute);
@@ -1313,7 +1312,7 @@ namespace Enyim.Caching
             var hashed = new Dictionary<string, string>();
             foreach (var key in keys)
             {
-                hashed[this.keyTransformer.Transform(key)] = key;
+                hashed[_keyTransformer.Transform(key)] = key;
             }
 
             var byServer = GroupByServer(hashed.Keys);
@@ -1326,7 +1325,7 @@ namespace Enyim.Caching
             {
                 var node = slice.Key;
                 var nodeKeys = slice.Value;
-                var mget = this.pool.OperationFactory.MultiGet(nodeKeys);
+                var mget = _pool.OperationFactory.MultiGet(nodeKeys);
                 var task = Task.Run(async () =>
                 {
                     if ((await node.ExecuteAsync(mget)).Success)
@@ -1354,7 +1353,7 @@ namespace Enyim.Caching
 
             foreach (var k in keys)
             {
-                var node = this.pool.Locate(k);
+                var node = _pool.Locate(k);
                 if (node == null) continue;
 
                 IList<string> list;
@@ -1455,7 +1454,7 @@ namespace Enyim.Caching
 
         void IDisposable.Dispose()
         {
-            this.Dispose();
+            Dispose();
         }
 
         /// <summary>
@@ -1466,10 +1465,10 @@ namespace Enyim.Caching
         {
             GC.SuppressFinalize(this);
 
-            if (this.pool != null)
+            if (_pool != null)
             {
-                try { this.pool.Dispose(); }
-                finally { this.pool = null; }
+                try { _pool.Dispose(); }
+                finally { _pool = null; }
             }
         }
 

@@ -8,20 +8,20 @@ namespace Enyim.Caching.Configuration
 {
     public class SocketPoolConfiguration : ISocketPoolConfiguration
     {
-        private int minPoolSize = 5;
-        private int maxPoolSize = 100;
-        private bool useSslStream = false;
-        private TimeSpan connectionTimeout = new TimeSpan(0, 0, 10);
-        private TimeSpan receiveTimeout = new TimeSpan(0, 0, 10);
-        private TimeSpan deadTimeout = new TimeSpan(0, 0, 10);
-        private TimeSpan queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
+        private int _minPoolSize = 5;
+        private int _maxPoolSize = 100;
+        private bool _useSslStream = false;
+        private TimeSpan _connectionTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan _receiveTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan _deadTimeout = new TimeSpan(0, 0, 10);
+        private TimeSpan _queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
         private TimeSpan _initPoolTimeout = new TimeSpan(0, 1, 0);
-        private INodeFailurePolicyFactory FailurePolicyFactory = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
+        private INodeFailurePolicyFactory _failurePolicyFactory = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
         int ISocketPoolConfiguration.MinPoolSize
         {
-            get { return this.minPoolSize; }
-            set { this.minPoolSize = value; }
+            get { return _minPoolSize; }
+            set { _minPoolSize = value; }
         }
 
         /// <summary>
@@ -31,43 +31,43 @@ namespace Enyim.Caching.Configuration
         /// <remarks>It should be 0.75 * (number of threads) for optimal performance.</remarks>
         int ISocketPoolConfiguration.MaxPoolSize
         {
-            get { return this.maxPoolSize; }
-            set { this.maxPoolSize = value; }
+            get { return _maxPoolSize; }
+            set { _maxPoolSize = value; }
         }
 
         TimeSpan ISocketPoolConfiguration.ConnectionTimeout
         {
-            get { return this.connectionTimeout; }
+            get { return _connectionTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
                     throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-                this.connectionTimeout = value;
+                _connectionTimeout = value;
             }
         }
 
         TimeSpan ISocketPoolConfiguration.ReceiveTimeout
         {
-            get { return this.receiveTimeout; }
+            get { return _receiveTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
                     throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-                this.receiveTimeout = value;
+                _receiveTimeout = value;
             }
         }
 
         TimeSpan ISocketPoolConfiguration.QueueTimeout
         {
-            get { return this.queueTimeout; }
+            get { return _queueTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
                     throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-                this.queueTimeout = value;
+                _queueTimeout = value;
             }
         }
 
@@ -85,25 +85,25 @@ namespace Enyim.Caching.Configuration
 
         TimeSpan ISocketPoolConfiguration.DeadTimeout
         {
-            get { return this.deadTimeout; }
+            get { return _deadTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
                     throw new ArgumentOutOfRangeException("value", "value must be positive");
 
-                this.deadTimeout = value;
+                _deadTimeout = value;
             }
         }
 
         INodeFailurePolicyFactory ISocketPoolConfiguration.FailurePolicyFactory
         {
-            get { return this.FailurePolicyFactory; }
+            get { return _failurePolicyFactory; }
             set
             {
                 if (value == null)
                     throw new ArgumentNullException("value");
 
-                this.FailurePolicyFactory = value;
+                _failurePolicyFactory = value;
             }
         }
     }

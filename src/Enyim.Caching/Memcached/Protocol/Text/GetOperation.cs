@@ -6,13 +6,13 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
     public class GetOperation : SingleItemOperation, IGetOperation
     {
-        private CacheItem result;
+        private CacheItem _result;
 
         internal GetOperation(string key) : base(key) { }
 
         protected internal override System.Collections.Generic.IList<System.ArraySegment<byte>> GetBuffer()
         {
-            var command = "get " + this.Key + TextSocketHelper.CommandTerminator;
+            var command = "get " + Key + TextSocketHelper.CommandTerminator;
 
             return TextSocketHelper.GetCommandBuffer(command);
         }
@@ -24,8 +24,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
             if (r == null) return result.Fail("Failed to read response");
 
-            this.result = r.Item;
-            this.Cas = r.CasValue;
+            _result = r.Item;
+            Cas = r.CasValue;
 
             GetHelper.FinishCurrent(socket);
 
@@ -34,7 +34,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
         CacheItem IGetOperation.Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
 
         protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
@@ -44,8 +44,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
             if (r == null) return new ValueTask<IOperationResult>(result.Fail("Failed to read response"));
 
-            this.result = r.Item;
-            this.Cas = r.CasValue;
+            _result = r.Item;
+            Cas = r.CasValue;
 
             GetHelper.FinishCurrent(socket);
 

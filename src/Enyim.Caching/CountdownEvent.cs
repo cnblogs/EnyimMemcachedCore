@@ -9,57 +9,57 @@ using System.Diagnostics;
 
 namespace Enyim.Caching
 {
-	public class CountdownEvent : IDisposable
-	{
-		private int count;
-		private ManualResetEvent mre;
+    public class CountdownEvent : IDisposable
+    {
+        private int _count;
+        private ManualResetEvent _mre;
 
-		public CountdownEvent(int count)
-		{
-			this.count = count;
-			this.mre = new ManualResetEvent(false);
-		}
+        public CountdownEvent(int count)
+        {
+            _count = count;
+            _mre = new ManualResetEvent(false);
+        }
 
-		public void Signal()
-		{
-			if (this.count == 0) throw new InvalidOperationException("Counter underflow");
+        public void Signal()
+        {
+            if (_count == 0) throw new InvalidOperationException("Counter underflow");
 
-			int tmp = Interlocked.Decrement(ref this.count);
+            int tmp = Interlocked.Decrement(ref _count);
 
-			if (tmp == 0)
-			{ if (!this.mre.Set()) throw new InvalidOperationException("couldn't signal"); }
-			else if (tmp < 0)
-				throw new InvalidOperationException("Counter underflow");
-		}
+            if (tmp == 0)
+            { if (!_mre.Set()) throw new InvalidOperationException("couldn't signal"); }
+            else if (tmp < 0)
+                throw new InvalidOperationException("Counter underflow");
+        }
 
-		public void Wait()
-		{
-			if (this.count == 0) return;
+        public void Wait()
+        {
+            if (_count == 0) return;
 
-			this.mre.WaitOne();
-		}
+            _mre.WaitOne();
+        }
 
-		~CountdownEvent()
-		{
-			this.Dispose();
-		}
+        ~CountdownEvent()
+        {
+            Dispose();
+        }
 
-		void IDisposable.Dispose()
-		{
-			this.Dispose();
-		}
+        void IDisposable.Dispose()
+        {
+            Dispose();
+        }
 
-		public void Dispose()
-		{
-			GC.SuppressFinalize(this);
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
 
-			if (this.mre != null)
-			{
-                this.mre.Dispose();
-				this.mre = null;
-			}
-		}
-	}
+            if (_mre != null)
+            {
+                _mre.Dispose();
+                _mre = null;
+            }
+        }
+    }
 }
 
 #region [ License information          ]

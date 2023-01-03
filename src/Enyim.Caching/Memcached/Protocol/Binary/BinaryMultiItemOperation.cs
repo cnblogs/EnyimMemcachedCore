@@ -11,11 +11,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            var keys = this.Keys;
+            var keys = Keys;
             var retval = new List<ArraySegment<byte>>(keys.Count * 2);
 
             foreach (var k in keys)
-                this.Build(k).CreateBuffer(retval);
+                Build(k).CreateBuffer(retval);
 
             return retval;
         }

@@ -9,40 +9,40 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
     public class StoreOperation : BinarySingleItemOperation, IStoreOperation
     {
-        private readonly StoreMode mode;
-        private CacheItem value;
-        private readonly uint expires;
+        private readonly StoreMode _mode;
+        private CacheItem _value;
+        private readonly uint _expires;
 
         public StoreOperation(StoreMode mode, string key, CacheItem value, uint expires) :
             base(key)
         {
-            this.mode = mode;
-            this.value = value;
-            this.expires = expires;
+            _mode = mode;
+            _value = value;
+            _expires = expires;
         }
 
         protected override BinaryRequest Build()
         {
             OpCode op;
-            switch (this.mode)
+            switch (_mode)
             {
                 case StoreMode.Add: op = OpCode.Add; break;
                 case StoreMode.Set: op = OpCode.Set; break;
                 case StoreMode.Replace: op = OpCode.Replace; break;
-                default: throw new ArgumentOutOfRangeException("mode", mode + " is not supported");
+                default: throw new ArgumentOutOfRangeException("mode", _mode + " is not supported");
             }
 
             var extra = new byte[8];
 
-            BinaryConverter.EncodeUInt32((uint)this.value.Flags, extra, 0);
-            BinaryConverter.EncodeUInt32(expires, extra, 4);
+            BinaryConverter.EncodeUInt32((uint)_value.Flags, extra, 0);
+            BinaryConverter.EncodeUInt32(_expires, extra, 4);
 
             var request = new BinaryRequest(op)
             {
-                Key = this.Key,
-                Cas = this.Cas,
+                Key = Key,
+                Cas = Cas,
                 Extra = new ArraySegment<byte>(extra),
-                Data = this.value.Data
+                Data = _value.Data
             };
 
             return request;
@@ -52,7 +52,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var result = new BinaryOperationResult();
 
-            this.StatusCode = response.StatusCode;
+            StatusCode = response.StatusCode;
             if (response.StatusCode == 0)
             {
                 return result.Pass();
@@ -66,12 +66,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         StoreMode IStoreOperation.Mode
         {
-            get { return this.mode; }
+            get { return _mode; }
         }
 
         protected internal override Task<bool> ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
         {
-            throw new System.NotSupportedException();
+            throw new NotSupportedException();
         }
     }
 }

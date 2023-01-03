@@ -4,30 +4,30 @@ using System.Text;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-	/// <summary>
-	/// SASL auth step.
-	/// </summary>
-	public class SaslContinue : SaslStep
-	{
-		private byte[] continuation;
+    /// <summary>
+    /// SASL auth step.
+    /// </summary>
+    public class SaslContinue : SaslStep
+    {
+        private byte[] _continuation;
 
-		public SaslContinue(ISaslAuthenticationProvider provider, byte[] continuation)
-			: base(provider)
-		{
-			this.continuation = continuation;
-		}
+        public SaslContinue(ISaslAuthenticationProvider provider, byte[] continuation)
+            : base(provider)
+        {
+            _continuation = continuation;
+        }
 
-		protected override BinaryRequest Build()
-		{
-			var request = new BinaryRequest(OpCode.SaslStep)
-			{
-				Key = this.Provider.Type,
-				Data = new ArraySegment<byte>(this.Provider.Continue(this.continuation))
-			};
+        protected override BinaryRequest Build()
+        {
+            var request = new BinaryRequest(OpCode.SaslStep)
+            {
+                Key = Provider.Type,
+                Data = new ArraySegment<byte>(Provider.Continue(_continuation))
+            };
 
-			return request;
-		}
-	}
+            return request;
+        }
+    }
 }
 
 #region [ License information          ]

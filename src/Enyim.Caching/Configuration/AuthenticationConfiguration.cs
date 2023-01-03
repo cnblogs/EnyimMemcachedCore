@@ -6,22 +6,22 @@ namespace Enyim.Caching.Configuration
 {
     public class AuthenticationConfiguration : IAuthenticationConfiguration
     {
-        private Type authenticator;
-        private Dictionary<string, object> parameters;
+        private Type _authenticator;
+        private Dictionary<string, object> _parameters;
 
         Type IAuthenticationConfiguration.Type
         {
-            get { return this.authenticator; }
+            get { return _authenticator; }
             set
             {
                 ConfigurationHelper.CheckForInterface(value, typeof(ISaslAuthenticationProvider));
-                this.authenticator = value;
+                _authenticator = value;
             }
         }
 
         Dictionary<string, object> IAuthenticationConfiguration.Parameters
         {
-            get { return this.parameters ?? (this.parameters = new Dictionary<string, object>()); }
+            get { return _parameters ?? (_parameters = new Dictionary<string, object>()); }
         }
     }
 }

@@ -20,12 +20,12 @@ namespace Enyim.Caching.Memcached
 
         CacheItem ITranscoder.Serialize(object value)
         {
-            return this.Serialize(value);
+            return Serialize(value);
         }
 
         object ITranscoder.Deserialize(CacheItem item)
         {
-            return this.Deserialize(item);
+            return Deserialize(item);
         }
 
         public virtual T Deserialize<T>(CacheItem item)
@@ -37,7 +37,7 @@ namespace Enyim.Caching.Memcached
                 {
                     if (typeof(T) == typeof(Guid))
                     {
-                       return (T)(object)new Guid((string)value);
+                        return (T)(object)new Guid((string)value);
                     }
                     else
                     {
@@ -89,24 +89,24 @@ namespace Enyim.Caching.Memcached
 
             switch (code)
             {
-                case (TypeCode)2: data = this.SerializeNull(); break; // TypeCode.DBNull
-                case TypeCode.String: data = this.SerializeString(value.ToString()); break;
-                case TypeCode.Boolean: data = this.SerializeBoolean((Boolean)value); break;
-                case TypeCode.SByte: data = this.SerializeSByte((SByte)value); break;
-                case TypeCode.Byte: data = this.SerializeByte((Byte)value); break;
-                case TypeCode.Int16: data = this.SerializeInt16((Int16)value); break;
-                case TypeCode.Int32: data = this.SerializeInt32((Int32)value); break;
-                case TypeCode.Int64: data = this.SerializeInt64((Int64)value); break;
-                case TypeCode.UInt16: data = this.SerializeUInt16((UInt16)value); break;
-                case TypeCode.UInt32: data = this.SerializeUInt32((UInt32)value); break;
-                case TypeCode.UInt64: data = this.SerializeUInt64((UInt64)value); break;
-                case TypeCode.Char: data = this.SerializeChar((Char)value); break;
-                case TypeCode.DateTime: data = this.SerializeDateTime((DateTime)value); break;
-                case TypeCode.Double: data = this.SerializeDouble((Double)value); break;
-                case TypeCode.Single: data = this.SerializeSingle((Single)value); break;
+                case (TypeCode)2: data = SerializeNull(); break; // TypeCode.DBNull
+                case TypeCode.String: data = SerializeString(value.ToString()); break;
+                case TypeCode.Boolean: data = SerializeBoolean((Boolean)value); break;
+                case TypeCode.SByte: data = SerializeSByte((SByte)value); break;
+                case TypeCode.Byte: data = SerializeByte((Byte)value); break;
+                case TypeCode.Int16: data = SerializeInt16((Int16)value); break;
+                case TypeCode.Int32: data = SerializeInt32((Int32)value); break;
+                case TypeCode.Int64: data = SerializeInt64((Int64)value); break;
+                case TypeCode.UInt16: data = SerializeUInt16((UInt16)value); break;
+                case TypeCode.UInt32: data = SerializeUInt32((UInt32)value); break;
+                case TypeCode.UInt64: data = SerializeUInt64((UInt64)value); break;
+                case TypeCode.Char: data = SerializeChar((Char)value); break;
+                case TypeCode.DateTime: data = SerializeDateTime((DateTime)value); break;
+                case TypeCode.Double: data = SerializeDouble((Double)value); break;
+                case TypeCode.Single: data = SerializeSingle((Single)value); break;
                 default:
                     code = TypeCode.Object;
-                    data = this.SerializeObject(value);
+                    data = SerializeObject(value);
                     break;
             }
 
@@ -163,26 +163,26 @@ namespace Enyim.Caching.Memcached
                             : DeserializeString(data);
 
                 case (TypeCode)2: return null; // TypeCode.DBNull
-                case TypeCode.String: return this.DeserializeString(data);
-                case TypeCode.Boolean: return this.DeserializeBoolean(data);
-                case TypeCode.Int16: return this.DeserializeInt16(data);
-                case TypeCode.Int32: return this.DeserializeInt32(data);
-                case TypeCode.Int64: return this.DeserializeInt64(data);
-                case TypeCode.UInt16: return this.DeserializeUInt16(data);
-                case TypeCode.UInt32: return this.DeserializeUInt32(data);
-                case TypeCode.UInt64: return this.DeserializeUInt64(data);
-                case TypeCode.Char: return this.DeserializeChar(data);
-                case TypeCode.DateTime: return this.DeserializeDateTime(data);
-                case TypeCode.Double: return this.DeserializeDouble(data);
-                case TypeCode.Single: return this.DeserializeSingle(data);
-                case TypeCode.Byte: return this.DeserializeByte(data);
-                case TypeCode.SByte: return this.DeserializeSByte(data);
+                case TypeCode.String: return DeserializeString(data);
+                case TypeCode.Boolean: return DeserializeBoolean(data);
+                case TypeCode.Int16: return DeserializeInt16(data);
+                case TypeCode.Int32: return DeserializeInt32(data);
+                case TypeCode.Int64: return DeserializeInt64(data);
+                case TypeCode.UInt16: return DeserializeUInt16(data);
+                case TypeCode.UInt32: return DeserializeUInt32(data);
+                case TypeCode.UInt64: return DeserializeUInt64(data);
+                case TypeCode.Char: return DeserializeChar(data);
+                case TypeCode.DateTime: return DeserializeDateTime(data);
+                case TypeCode.Double: return DeserializeDouble(data);
+                case TypeCode.Single: return DeserializeSingle(data);
+                case TypeCode.Byte: return DeserializeByte(data);
+                case TypeCode.SByte: return DeserializeSByte(data);
 
                 // backward compatibility
                 // earlier versions serialized decimals with TypeCode.Decimal
                 // even though they were saved by BinaryFormatter
                 case TypeCode.Decimal:
-                case TypeCode.Object: return this.DeserializeObject(data);
+                case TypeCode.Object: return DeserializeObject(data);
                 default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
             }
         }

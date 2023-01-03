@@ -239,14 +239,14 @@ namespace Enyim.Caching.Memcached
         /// <remarks>Use the IDisposable.Dispose method if you want to release this instance back into the pool.</remarks>
         public void Destroy()
         {
-            this.Dispose(true);
+            Dispose(true);
         }
 
         ~PooledSocket()
         {
             try
             {
-                this.Dispose(true);
+                Dispose(true);
             }
             catch
             {
@@ -279,7 +279,7 @@ namespace Enyim.Caching.Memcached
                     _inputStream = null;
                     _sslStream = null;
                     _socket = null;
-                    this.CleanupCallback = null;
+                    CleanupCallback = null;
                 }
                 catch (Exception e)
                 {
@@ -288,7 +288,7 @@ namespace Enyim.Caching.Memcached
             }
             else
             {
-                Action<PooledSocket> cc = this.CleanupCallback;
+                Action<PooledSocket> cc = CleanupCallback;
 
                 if (cc != null)
                     cc(this);
@@ -297,7 +297,7 @@ namespace Enyim.Caching.Memcached
 
         void IDisposable.Dispose()
         {
-            this.Dispose(false);
+            Dispose(false);
         }
 
         private void CheckDisposed()
@@ -312,7 +312,7 @@ namespace Enyim.Caching.Memcached
         /// <remarks>This method blocks and will not return until the value is read.</remarks>
         public int ReadByte()
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             try
             {
@@ -331,7 +331,7 @@ namespace Enyim.Caching.Memcached
 
         public int ReadByteAsync()
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             try
             {
@@ -349,7 +349,7 @@ namespace Enyim.Caching.Memcached
 
         public async Task ReadAsync(byte[] buffer, int offset, int count)
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             int read = 0;
             int shouldRead = count;
@@ -389,7 +389,7 @@ namespace Enyim.Caching.Memcached
         /// <remarks>This method blocks and will not return until the specified amount of bytes are read.</remarks>
         public void Read(byte[] buffer, int offset, int count)
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             int read = 0;
             int shouldRead = count;
@@ -421,7 +421,7 @@ namespace Enyim.Caching.Memcached
 
         public void Write(byte[] data, int offset, int length)
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             if (_useSslStream)
             {
@@ -429,7 +429,7 @@ namespace Enyim.Caching.Memcached
                 {
                     _sslStream.Write(data, offset, length);
                     _sslStream.Flush();
-                }  
+                }
                 catch (Exception ex)
                 {
                     if (ex is IOException || ex is SocketException)
@@ -456,7 +456,7 @@ namespace Enyim.Caching.Memcached
 
         public void Write(IList<ArraySegment<byte>> buffers)
         {
-            this.CheckDisposed();
+            CheckDisposed();
 
             SocketError status;
 
@@ -501,7 +501,7 @@ namespace Enyim.Caching.Memcached
                 {
                     foreach (var buf in buffers)
                     {
-                        await _sslStream.WriteAsync(buf.Array,0,buf.Count);
+                        await _sslStream.WriteAsync(buf.Array, 0, buf.Count);
                     }
                     await _sslStream.FlushAsync();
                 }

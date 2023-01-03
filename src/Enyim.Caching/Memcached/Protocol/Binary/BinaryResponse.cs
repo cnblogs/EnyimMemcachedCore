@@ -36,20 +36,20 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         public BinaryResponse()
         {
-            this.StatusCode = -1;
+            StatusCode = -1;
         }
 
         public string GetStatusMessage()
         {
-            return this.Data.Array == null
+            return Data.Array == null
                     ? null
-                    : (this.responseMessage
-                        ?? (this.responseMessage = Encoding.ASCII.GetString(this.Data.Array, this.Data.Offset, this.Data.Count)));
+                    : (responseMessage
+                        ?? (responseMessage = Encoding.ASCII.GetString(Data.Array, Data.Offset, Data.Count)));
         }
 
         public unsafe bool Read(PooledSocket socket)
         {
-            this.StatusCode = -1;
+            StatusCode = -1;
 
             if (!socket.IsAlive)
                 return false;
@@ -66,16 +66,16 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 var data = new byte[dataLength];
                 socket.Read(data, 0, dataLength);
 
-                this.Extra = new ArraySegment<byte>(data, 0, extraLength);
-                this.Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
+                Extra = new ArraySegment<byte>(data, 0, extraLength);
+                Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
             }
 
-            return this.StatusCode == 0;
+            return StatusCode == 0;
         }
 
         public async Task<bool> ReadAsync(PooledSocket socket)
         {
-            this.StatusCode = -1;
+            StatusCode = -1;
 
             if (!socket.IsAlive) return false;
 
@@ -91,11 +91,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 var data = new byte[dataLength];
                 await socket.ReadAsync(data, 0, dataLength);
 
-                this.Extra = new ArraySegment<byte>(data, 0, extraLength);
-                this.Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
+                Extra = new ArraySegment<byte>(data, 0, extraLength);
+                Data = new ArraySegment<byte>(data, extraLength, data.Length - extraLength);
             }
 
-            return this.StatusCode == 0;
+            return StatusCode == 0;
         }
 
         private unsafe void DeserializeHeader(byte[] header, out int dataLength, out int extraLength)
@@ -105,13 +105,13 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 if (buffer[0] != MAGIC_VALUE)
                     throw new InvalidOperationException("Expected magic value " + MAGIC_VALUE + ", received: " + buffer[0]);
 
-                this.DataType = buffer[HEADER_DATATYPE];
-                this.Opcode = buffer[HEADER_OPCODE];
-                this.StatusCode = BinaryConverter.DecodeUInt16(buffer, HEADER_STATUS);
+                DataType = buffer[HEADER_DATATYPE];
+                Opcode = buffer[HEADER_OPCODE];
+                StatusCode = BinaryConverter.DecodeUInt16(buffer, HEADER_STATUS);
 
-                this.KeyLength = BinaryConverter.DecodeUInt16(buffer, HEADER_KEY);
-                this.CorrelationId = BinaryConverter.DecodeInt32(buffer, HEADER_OPAQUE);
-                this.CAS = BinaryConverter.DecodeUInt64(buffer, HEADER_CAS);
+                KeyLength = BinaryConverter.DecodeUInt16(buffer, HEADER_KEY);
+                CorrelationId = BinaryConverter.DecodeInt32(buffer, HEADER_OPAQUE);
+                CAS = BinaryConverter.DecodeUInt64(buffer, HEADER_CAS);
 
                 dataLength = BinaryConverter.DecodeInt32(buffer, HEADER_BODY);
                 extraLength = buffer[HEADER_EXTRA];

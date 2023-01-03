@@ -6,80 +6,80 @@ using System.Security.Cryptography;
 
 namespace Enyim
 {
-	/// <summary>
-	///	This is Jenkin's "One at A time Hash".
-	///	http://en.wikipedia.org/wiki/Jenkins_hash_function
-	/// 
-	///	Coming from libhashkit.
-	/// </summary>
-	/// <remarks>Does not support block based hashing.</remarks>
-	internal class HashkitOneAtATime : HashAlgorithm, IUIntHashAlgorithm
-	{
-		public HashkitOneAtATime()
-		{
-		}
-	
+    /// <summary>
+    ///	This is Jenkin's "One at A time Hash".
+    ///	http://en.wikipedia.org/wiki/Jenkins_hash_function
+    /// 
+    ///	Coming from libhashkit.
+    /// </summary>
+    /// <remarks>Does not support block based hashing.</remarks>
+    internal class HashkitOneAtATime : HashAlgorithm, IUIntHashAlgorithm
+    {
+        public HashkitOneAtATime()
+        {
+        }
 
-		public override void Initialize() { }
 
-		protected override void HashCore(byte[] array, int ibStart, int cbSize)
-		{
-			if (array == null) throw new ArgumentNullException("array");
-			if (ibStart < 0 || ibStart > array.Length) throw new ArgumentOutOfRangeException("ibStart");
-			if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("cbSize");
+        public override void Initialize() { }
 
-			HashkitOneAtATime.UnsafeHashCore(array, ibStart, cbSize);
-		}
+        protected override void HashCore(byte[] array, int ibStart, int cbSize)
+        {
+            if (array == null) throw new ArgumentNullException("array");
+            if (ibStart < 0 || ibStart > array.Length) throw new ArgumentOutOfRangeException("ibStart");
+            if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("cbSize");
 
-		protected override byte[] HashFinal()
-		{
-			return BitConverter.GetBytes(this.CurrentHash);
-		}
+            HashkitOneAtATime.UnsafeHashCore(array, ibStart, cbSize);
+        }
 
-		public uint CurrentHash { get; private set; }
+        protected override byte[] HashFinal()
+        {
+            return BitConverter.GetBytes(CurrentHash);
+        }
 
-		#region [ UnsafeHashCore               ]
+        public uint CurrentHash { get; private set; }
 
-		// see the murmur hash about stream support
-		private static unsafe uint UnsafeHashCore(byte[] data, int offset, int count)
-		{
-			uint hash = 0;
+        #region [ UnsafeHashCore               ]
 
-			fixed (byte* start = &(data[offset]))
-			{
-				var ptr = start;
+        // see the murmur hash about stream support
+        private static unsafe uint UnsafeHashCore(byte[] data, int offset, int count)
+        {
+            uint hash = 0;
 
-				while (count > 0)
-				{
-					hash += *ptr;
-					hash += (hash << 10);
-					hash ^= (hash >> 6);
+            fixed (byte* start = &(data[offset]))
+            {
+                var ptr = start;
 
-					count--;
-					ptr++;
-				}
-			}
+                while (count > 0)
+                {
+                    hash += *ptr;
+                    hash += (hash << 10);
+                    hash ^= (hash >> 6);
 
-			hash += (hash << 3);
-			hash ^= (hash >> 11);
-			hash += (hash << 15);
+                    count--;
+                    ptr++;
+                }
+            }
 
-			return hash;
-		}
-		#endregion
-		#region [ IUIntHash                    ]
+            hash += (hash << 3);
+            hash ^= (hash >> 11);
+            hash += (hash << 15);
 
-		uint IUIntHashAlgorithm.ComputeHash(byte[] data)
-		{
-			this.Initialize();
+            return hash;
+        }
+        #endregion
+        #region [ IUIntHash                    ]
 
-			this.HashCore(data, 0, data.Length);
+        uint IUIntHashAlgorithm.ComputeHash(byte[] data)
+        {
+            Initialize();
 
-			return this.CurrentHash;
-		}
+            HashCore(data, 0, data.Length);
 
-		#endregion
-	}
+            return CurrentHash;
+        }
+
+        #endregion
+    }
 }
 
 #region [ License information          ]

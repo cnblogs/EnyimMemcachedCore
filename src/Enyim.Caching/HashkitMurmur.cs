@@ -6,115 +6,115 @@ using System.Security.Cryptography;
 
 namespace Enyim
 {
-	/// <summary>
-	/// Murmur hash. Uses the same seed values as libhashkit.
-	/// </summary>
-	/// <remarks>Does not support block based hashing.</remarks>
-	internal class HashkitMurmur : HashAlgorithm, IUIntHashAlgorithm
-	{
-		public HashkitMurmur()
-		{
-			
-		}
-	
-		public override void Initialize() { }
+    /// <summary>
+    /// Murmur hash. Uses the same seed values as libhashkit.
+    /// </summary>
+    /// <remarks>Does not support block based hashing.</remarks>
+    internal class HashkitMurmur : HashAlgorithm, IUIntHashAlgorithm
+    {
+        public HashkitMurmur()
+        {
 
-		protected override void HashCore(byte[] array, int ibStart, int cbSize)
-		{
-			if (array == null) throw new ArgumentNullException("array");
-			if (ibStart < 0 || ibStart > array.Length) throw new ArgumentOutOfRangeException("ibStart");
-			if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("cbSize");
+        }
 
-			this.CurrentHash = HashkitMurmur.UnsafeHashCore(array, ibStart, cbSize);
-		}
+        public override void Initialize() { }
 
-		protected override byte[] HashFinal()
-		{
-			return BitConverter.GetBytes(this.CurrentHash);
-		}
+        protected override void HashCore(byte[] array, int ibStart, int cbSize)
+        {
+            if (array == null) throw new ArgumentNullException("array");
+            if (ibStart < 0 || ibStart > array.Length) throw new ArgumentOutOfRangeException("ibStart");
+            if (ibStart + cbSize > array.Length) throw new ArgumentOutOfRangeException("cbSize");
 
-		public uint CurrentHash { get; private set; }
+            CurrentHash = UnsafeHashCore(array, ibStart, cbSize);
+        }
 
-		#region [ UnsafeHashCore               ]
+        protected override byte[] HashFinal()
+        {
+            return BitConverter.GetBytes(CurrentHash);
+        }
 
-		// this could be rewritten to support streams tho
-		// cache the tail of the buffer if its length is not mod4 then merge with the next buffer (this is a perf hit since we cannot do our pointer magics)
-		// then the swicth and the last XORs could be moved into TransformFinal
-		// -- or --
-		// just cache tail and if we have a cache dvalue and the next block is not mod4 long then throw an exception (thus only allow random length blocks for the last one)
-		static unsafe uint UnsafeHashCore(byte[] data, int offset, int length)
-		{
-			const uint M = 0x5bd1e995;
-			const int R = 24;
+        public uint CurrentHash { get; private set; }
 
-			uint seed = (uint)(0xdeadbeef * length);
-			uint hash = (uint)(seed ^ length);
+        #region [ UnsafeHashCore               ]
 
-			int count = length >> 2;
+        // this could be rewritten to support streams tho
+        // cache the tail of the buffer if its length is not mod4 then merge with the next buffer (this is a perf hit since we cannot do our pointer magics)
+        // then the swicth and the last XORs could be moved into TransformFinal
+        // -- or --
+        // just cache tail and if we have a cache dvalue and the next block is not mod4 long then throw an exception (thus only allow random length blocks for the last one)
+        static unsafe uint UnsafeHashCore(byte[] data, int offset, int length)
+        {
+            const uint M = 0x5bd1e995;
+            const int R = 24;
 
-			fixed (byte* start = &(data[offset]))
-			{
-				uint* ptrUInt = (uint*)start;
+            uint seed = (uint)(0xdeadbeef * length);
+            uint hash = (uint)(seed ^ length);
 
-				while (count > 0)
-				{
-					uint current = *ptrUInt;
+            int count = length >> 2;
 
-					current = (uint)(current * M);
-					current ^= current >> R;
-					current = (uint)(current * M);
-					hash = (uint)(hash * M);
-					hash ^= current;
+            fixed (byte* start = &(data[offset]))
+            {
+                uint* ptrUInt = (uint*)start;
 
-					count--;
-					ptrUInt++;
-				}
+                while (count > 0)
+                {
+                    uint current = *ptrUInt;
 
-				switch (length & 3)
-				{
-					case 3:
-						// reverse the last 3 bytes and convert it to an uint
-						// so cast the last to into an UInt16 and get the 3rd as a byte
-						// ABC --> CBA; (UInt16)(AB) --> BA
-						//h ^= (uint)(*ptrByte);
-						//h ^= (uint)(ptrByte[1] << 8);
-						hash ^= (*(UInt16*)ptrUInt);
-						hash ^= (uint)(((byte*)ptrUInt)[2] << 16);
-						hash *= M;
-						break;
+                    current = (uint)(current * M);
+                    current ^= current >> R;
+                    current = (uint)(current * M);
+                    hash = (uint)(hash * M);
+                    hash ^= current;
 
-					case 2:
-						hash ^= (*(UInt16*)ptrUInt);
-						hash *= M;
-						break;
+                    count--;
+                    ptrUInt++;
+                }
 
-					case 1:
-						hash ^= (*((byte*)ptrUInt));
-						hash *= M;
-						break;
-				}
-			}
+                switch (length & 3)
+                {
+                    case 3:
+                        // reverse the last 3 bytes and convert it to an uint
+                        // so cast the last to into an UInt16 and get the 3rd as a byte
+                        // ABC --> CBA; (UInt16)(AB) --> BA
+                        //h ^= (uint)(*ptrByte);
+                        //h ^= (uint)(ptrByte[1] << 8);
+                        hash ^= (*(UInt16*)ptrUInt);
+                        hash ^= (uint)(((byte*)ptrUInt)[2] << 16);
+                        hash *= M;
+                        break;
 
-			hash ^= hash >> 13;
-			hash *= M;
-			hash ^= hash >> 15;
+                    case 2:
+                        hash ^= (*(UInt16*)ptrUInt);
+                        hash *= M;
+                        break;
 
-			return hash;
-		}
-		#endregion
-		#region [ IUIntHash                    ]
+                    case 1:
+                        hash ^= (*((byte*)ptrUInt));
+                        hash *= M;
+                        break;
+                }
+            }
 
-		uint IUIntHashAlgorithm.ComputeHash(byte[] data)
-		{
-			this.Initialize();
+            hash ^= hash >> 13;
+            hash *= M;
+            hash ^= hash >> 15;
 
-			this.HashCore(data, 0, data.Length);
+            return hash;
+        }
+        #endregion
+        #region [ IUIntHash                    ]
 
-			return this.CurrentHash;
-		}
+        uint IUIntHashAlgorithm.ComputeHash(byte[] data)
+        {
+            Initialize();
 
-		#endregion
-	}
+            HashCore(data, 0, data.Length);
+
+            return CurrentHash;
+        }
+
+        #endregion
+    }
 }
 
 #region [ License information          ]

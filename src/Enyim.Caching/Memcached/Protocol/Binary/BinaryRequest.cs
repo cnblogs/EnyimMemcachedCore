@@ -7,8 +7,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
     public class BinaryRequest
     {
-        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryRequest));
-        private static int InstanceCounter;
+        private static readonly ILog _log = LogManager.GetLogger(typeof(BinaryRequest));
+        private static int _instanceCounter;
 
         public byte Operation;
         public readonly int CorrelationId;
@@ -20,9 +20,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         public BinaryRequest(byte commandCode)
         {
-            this.Operation = commandCode;
+            Operation = commandCode;
             // session id
-            this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
+            CorrelationId = Interlocked.Increment(ref _instanceCounter);
         }
 
         public IList<ArraySegment<byte>> CreateBuffer()
@@ -33,18 +33,18 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         public IList<ArraySegment<byte>> CreateBuffer(IList<ArraySegment<byte>> appendTo)
         {
             // key size 
-            byte[] keyData = BinaryConverter.EncodeKey(this.Key);
+            byte[] keyData = BinaryConverter.EncodeKey(Key);
             int keyLength = keyData == null ? 0 : keyData.Length;
 
             if (keyLength > 0xffff) throw new InvalidOperationException("KeyTooLong");
 
             // extra size
-            ArraySegment<byte> extras = this.Extra;
+            ArraySegment<byte> extras = Extra;
             int extraLength = extras.Array == null ? 0 : extras.Count;
             if (extraLength > 0xff) throw new InvalidOperationException("ExtraTooLong");
 
             // body size
-            ArraySegment<byte> body = this.Data;
+            ArraySegment<byte> body = Data;
             int bodyLength = body.Array == null ? 0 : body.Count;
 
             // total payload size
@@ -54,7 +54,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             Span<byte> header = stackalloc byte[24];
 
             header[0x00] = 0x80; // magic
-            header[0x01] = this.Operation;
+            header[0x01] = Operation;
 
             // key length
             header[0x02] = (byte)(keyLength >> 8);
@@ -66,8 +66,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             // 5 -- data type, 0 (RAW)
             // 6,7 -- reserved, always 0
 
-            header[0x06] = (byte)(this.Reserved >> 8);
-            header[0x07] = (byte)(this.Reserved & 255);
+            header[0x06] = (byte)(Reserved >> 8);
+            header[0x07] = (byte)(Reserved & 255);
 
             // body length
             header[0x08] = (byte)(totalLength >> 24);
@@ -75,12 +75,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             header[0x0a] = (byte)(totalLength >> 8);
             header[0x0b] = (byte)(totalLength & 255);
 
-            header[0x0c] = (byte)(this.CorrelationId >> 24);
-            header[0x0d] = (byte)(this.CorrelationId >> 16);
-            header[0x0e] = (byte)(this.CorrelationId >> 8);
-            header[0x0f] = (byte)(this.CorrelationId & 255);
+            header[0x0c] = (byte)(CorrelationId >> 24);
+            header[0x0d] = (byte)(CorrelationId >> 16);
+            header[0x0e] = (byte)(CorrelationId >> 8);
+            header[0x0f] = (byte)(CorrelationId & 255);
 
-            ulong cas = this.Cas;
+            ulong cas = Cas;
             // CAS
             if (cas > 0)
             {

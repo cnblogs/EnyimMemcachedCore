@@ -10,19 +10,19 @@ namespace Enyim.Collections
     [Obsolete]
     public class InterlockedStack<TItem>
     {
-        private Node head;
+        private Node _head;
 
         public InterlockedStack()
         {
-            this.head = new Node(default(TItem));
+            _head = new Node(default(TItem));
         }
 
         public void Push(TItem item)
         {
             var node = new Node(item);
 
-            do { node.Next = this.head.Next; }
-            while (Interlocked.CompareExchange(ref this.head.Next, node, node.Next) != node.Next);
+            do { node.Next = _head.Next; }
+            while (Interlocked.CompareExchange(ref _head.Next, node, node.Next) != node.Next);
         }
 
         public bool TryPop(out TItem value)
@@ -32,10 +32,10 @@ namespace Enyim.Collections
 
             do
             {
-                node = head.Next;
+                node = _head.Next;
                 if (node == null) return false;
             }
-            while (Interlocked.CompareExchange(ref head.Next, node.Next, node) != node);
+            while (Interlocked.CompareExchange(ref _head.Next, node.Next, node) != node);
 
             value = node.Value;
 
@@ -51,7 +51,7 @@ namespace Enyim.Collections
 
             public Node(TItem value)
             {
-                this.Value = value;
+                Value = value;
             }
         }
 

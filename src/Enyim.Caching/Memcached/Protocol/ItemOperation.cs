@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Protocol
     {
         protected SingleItemOperation(string key)
         {
-            this.Key = key;
+            Key = key;
         }
 
         public string Key { get; private set; }
@@ -22,12 +22,12 @@ namespace Enyim.Caching.Memcached.Protocol
         /// </summary>
         string ISingleItemOperation.Key
         {
-            get { return this.Key; }
+            get { return Key; }
         }
 
         ulong ISingleItemOperation.CasValue
         {
-            get { return this.Cas; }
+            get { return Cas; }
         }
     }
 }

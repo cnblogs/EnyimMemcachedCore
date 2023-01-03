@@ -14,9 +14,9 @@
 //    /// </summary>
 //    public class JsonVBucketConfig : IVBucketConfiguration
 //    {
-//        private Func<HashAlgorithm> factory;
-//        private IPEndPoint[] servers;
-//        private VBucket[] buckets;
+//        private Func<HashAlgorithm> _factory;
+//        private IPEndPoint[] _servers;
+//        private VBucket[] _buckets;
 
 //        public JsonVBucketConfig(string json)
 //        {
@@ -25,11 +25,11 @@
 //            if (config.numReplicas < 0)
 //                throw new ArgumentException("Invalid numReplicas: " + config.numReplicas, "json");
 
-//            if (hashFactory.TryGetValue(config.hashAlgorithm, out this.factory))
+//            if (hashFactory.TryGetValue(config.hashAlgorithm, out _factory))
 //                throw new ArgumentException("Unknown hash algorithm: " + config.hashAlgorithm, "json");
 
-//            this.servers = config.serverList.Select(endpoint => ConfigurationHelper.ResolveToEndPoint(endpoint)).ToArray();
-//            this.buckets = config.vBucketMap.Select((bucket, index) =>
+//            _servers = config.serverList.Select(endpoint => ConfigurationHelper.ResolveToEndPoint(endpoint)).ToArray();
+//            _buckets = config.vBucketMap.Select((bucket, index) =>
 //                            {
 //                                if (bucket == null || bucket.Length != config.numReplicas + 1)
 //                                    throw new ArgumentException("Invalid bucket definition at index " + index, "json");
@@ -58,12 +58,12 @@
 
 //        IList<IPEndPoint> IVBucketConfiguration.Servers
 //        {
-//            get { return this.servers; }
+//            get { return _servers; }
 //        }
 
 //        IList<VBucket> IVBucketConfiguration.Buckets
 //        {
-//            get { return this.buckets; }
+//            get { return _buckets; }
 //        }
 
 //        #endregion
