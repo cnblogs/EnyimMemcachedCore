@@ -3,177 +3,177 @@ using System.Threading;
 
 namespace Enyim.Collections
 {
-	/// <summary>
-	/// Implements a non-locking queue.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public class InterlockedQueue<T>
-	{
-		private Node headNode;
-		private Node tailNode;
+    /// <summary>
+    /// Implements a non-locking queue.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class InterlockedQueue<T>
+    {
+        private Node _headNode;
+        private Node _tailNode;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="T:InterlockedQueue"/> class.
-		/// </summary>
-		public InterlockedQueue()
-		{
-			Node node = new Node(default(T));
+        /// <summary>
+        /// Initializes a new instance of the <see cref="T:InterlockedQueue"/> class.
+        /// </summary>
+        public InterlockedQueue()
+        {
+            Node node = new Node(default(T));
 
-			this.headNode = node;
-			this.tailNode = node;
-		}
+            _headNode = node;
+            _tailNode = node;
+        }
 
-		/// <summary>
-		/// Removes and returns the item at the beginning of the <see cref="T:InterlockedQueue"/>.
-		/// </summary>
-		/// <param name="value">The object that is removed from the beginning of the <see cref="T:InterlockedQueue"/>.</param>
-		/// <returns><value>true</value> if an item was successfully dequeued; otherwise <value>false</value>.</returns>
-		public bool Dequeue(out T value)
-		{
-			Node head;
-			Node tail;
-			Node next;
+        /// <summary>
+        /// Removes and returns the item at the beginning of the <see cref="T:InterlockedQueue"/>.
+        /// </summary>
+        /// <param name="value">The object that is removed from the beginning of the <see cref="T:InterlockedQueue"/>.</param>
+        /// <returns><value>true</value> if an item was successfully dequeued; otherwise <value>false</value>.</returns>
+        public bool Dequeue(out T value)
+        {
+            Node head;
+            Node tail;
+            Node next;
 
-			while (true)
-			{
-				// read head
-				head = this.headNode;
-				tail = this.tailNode;
-				next = head.Next;
+            while (true)
+            {
+                // read head
+                head = _headNode;
+                tail = _tailNode;
+                next = head.Next;
 
-				// Are head, tail, and next consistent?
-				if (Object.ReferenceEquals(this.headNode, head))
-				{
-					// is tail falling behind
-					if (Object.ReferenceEquals(head, tail))
-					{
-						// is the queue empty?
-						if (Object.ReferenceEquals(next, null))
-						{
-							value = default(T);
+                // Are head, tail, and next consistent?
+                if (Object.ReferenceEquals(_headNode, head))
+                {
+                    // is tail falling behind
+                    if (Object.ReferenceEquals(head, tail))
+                    {
+                        // is the queue empty?
+                        if (Object.ReferenceEquals(next, null))
+                        {
+                            value = default(T);
 
-							// queue is empty and cannot dequeue
-							return false;
-						}
+                            // queue is empty and cannot dequeue
+                            return false;
+                        }
 
-						Interlocked.CompareExchange<Node>(
-							ref this.tailNode,
-							next,
-							tail);
-					}
-					else // No need to deal with tail
-					{
-						// read value before CAS otherwise another deque might try to free the next node
-						value = next.Value;
+                        Interlocked.CompareExchange<Node>(
+                            ref _tailNode,
+                            next,
+                            tail);
+                    }
+                    else // No need to deal with tail
+                    {
+                        // read value before CAS otherwise another deque might try to free the next node
+                        value = next.Value;
 
-						// try to swing the head to the next node
-						if (Interlocked.CompareExchange<Node>(
-							ref this.headNode,
-							next,
-							head) == head)
-						{
-							return true;
-						}
-					}
-				}
-			}
-		}
+                        // try to swing the head to the next node
+                        if (Interlocked.CompareExchange<Node>(
+                            ref _headNode,
+                            next,
+                            head) == head)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
 
-		public bool Peek(out T value)
-		{
-			Node head;
-			Node tail;
-			Node next;
+        public bool Peek(out T value)
+        {
+            Node head;
+            Node tail;
+            Node next;
 
-			while (true)
-			{
-				// read head
-				head = this.headNode;
-				tail = this.tailNode;
-				next = head.Next;
+            while (true)
+            {
+                // read head
+                head = _headNode;
+                tail = _tailNode;
+                next = head.Next;
 
-				// Are head, tail, and next consistent?
-				if (Object.ReferenceEquals(this.headNode, head))
-				{
-					// is tail falling behind
-					if (Object.ReferenceEquals(head, tail))
-					{
-						// is the queue empty?
-						if (Object.ReferenceEquals(next, null))
-						{
-							value = default(T);
+                // Are head, tail, and next consistent?
+                if (Object.ReferenceEquals(_headNode, head))
+                {
+                    // is tail falling behind
+                    if (Object.ReferenceEquals(head, tail))
+                    {
+                        // is the queue empty?
+                        if (Object.ReferenceEquals(next, null))
+                        {
+                            value = default(T);
 
-							// queue is empty
-							return false;
-						}
+                            // queue is empty
+                            return false;
+                        }
 
-						Interlocked.CompareExchange<Node>(
-							ref this.tailNode,
-							next,
-							tail);
-					}
-					else // No need to deal with tail
-					{
-						// read value before CAS otherwise another deque might try to free the next node
-						value = next.Value;
-						return true;
-					}
-				}
-			}
-		}
+                        Interlocked.CompareExchange<Node>(
+                            ref _tailNode,
+                            next,
+                            tail);
+                    }
+                    else // No need to deal with tail
+                    {
+                        // read value before CAS otherwise another deque might try to free the next node
+                        value = next.Value;
+                        return true;
+                    }
+                }
+            }
+        }
 
-		/// <summary>
-		/// Adds an object to the end of the <see cref="T:InterlockedQueue"/>.
-		/// </summary>
-		/// <param name="value">The item to be added to the <see cref="T:InterlockedQueue"/>. The value can be <value>null</value>.</param>
-		public void Enqueue(T value)
-		{
-			// Allocate a new node from the free list
-			Node valueNode = new Node(value);
+        /// <summary>
+        /// Adds an object to the end of the <see cref="T:InterlockedQueue"/>.
+        /// </summary>
+        /// <param name="value">The item to be added to the <see cref="T:InterlockedQueue"/>. The value can be <value>null</value>.</param>
+        public void Enqueue(T value)
+        {
+            // Allocate a new node from the free list
+            Node valueNode = new Node(value);
 
-			while (true)
-			{
-				Node tail = this.tailNode;
-				Node next = tail.Next;
+            while (true)
+            {
+                Node tail = _tailNode;
+                Node next = tail.Next;
 
-				// are tail and next consistent
-				if (Object.ReferenceEquals(tail, this.tailNode))
-				{
-					// was tail pointing to the last node?
-					if (Object.ReferenceEquals(next, null))
-					{
-						if (Object.ReferenceEquals(
-								Interlocked.CompareExchange(ref tail.Next, valueNode, next),
-								next
-								)
-							)
-						{
-							Interlocked.CompareExchange(ref this.tailNode, valueNode, tail);
-							break;
-						}
-					}
-					else // tail was not pointing to last node
-					{
-						// try to swing Tail to the next node
-						Interlocked.CompareExchange<Node>(ref this.tailNode, next, tail);
-					}
-				}
-			}
-		}
+                // are tail and next consistent
+                if (Object.ReferenceEquals(tail, _tailNode))
+                {
+                    // was tail pointing to the last node?
+                    if (Object.ReferenceEquals(next, null))
+                    {
+                        if (Object.ReferenceEquals(
+                                Interlocked.CompareExchange(ref tail.Next, valueNode, next),
+                                next
+                                )
+                            )
+                        {
+                            Interlocked.CompareExchange(ref _tailNode, valueNode, tail);
+                            break;
+                        }
+                    }
+                    else // tail was not pointing to last node
+                    {
+                        // try to swing Tail to the next node
+                        Interlocked.CompareExchange<Node>(ref _tailNode, next, tail);
+                    }
+                }
+            }
+        }
 
-		#region [ Node                        ]
-		private class Node
-		{
-			public readonly T Value;
-			public Node Next;
+        #region [ Node                        ]
+        private class Node
+        {
+            public readonly T Value;
+            public Node Next;
 
-			public Node(T value)
-			{
-				this.Value = value;
-			}
-		}
-		#endregion
-	}
+            public Node(T value)
+            {
+                Value = value;
+            }
+        }
+        #endregion
+    }
 }
 
 #region [ License information          ]

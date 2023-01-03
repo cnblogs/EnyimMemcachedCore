@@ -9,19 +9,19 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
     public class StoreOperationBase : SingleItemOperation
     {
-        private static readonly ArraySegment<byte> DataTerminator = new ArraySegment<byte>(new byte[2] { (byte)'\r', (byte)'\n' });
-        private readonly StoreCommand command;
-        private CacheItem value;
-        private readonly uint expires;
-        private readonly ulong cas;
+        private static readonly ArraySegment<byte> _dataTerminator = new ArraySegment<byte>(new byte[2] { (byte)'\r', (byte)'\n' });
+        private readonly StoreCommand _command;
+        private CacheItem _value;
+        private readonly uint _expires;
+        private readonly ulong _cas;
 
         internal StoreOperationBase(StoreCommand mode, string key, CacheItem value, uint expires, ulong cas)
             : base(key)
         {
-            this.command = mode;
-            this.value = value;
-            this.expires = expires;
-            this.cas = cas;
+            _command = mode;
+            _value = value;
+            _expires = expires;
+            _cas = cas;
         }
 
         protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
@@ -30,7 +30,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             var sb = new StringBuilder(128);
             var buffers = new List<ArraySegment<byte>>(3);
 
-            switch (this.command)
+            switch (_command)
             {
                 case StoreCommand.Add: sb.Append("add "); break;
                 case StoreCommand.Replace: sb.Append("replace "); break;
@@ -38,30 +38,30 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 case StoreCommand.Append: sb.Append("append "); break;
                 case StoreCommand.Prepend: sb.Append("prepend "); break;
                 case StoreCommand.CheckAndSet: sb.Append("cas "); break;
-                default: throw new MemcachedClientException(command + " is not supported.");
+                default: throw new MemcachedClientException(_command + " is not supported.");
             }
 
-            sb.Append(this.Key);
+            sb.Append(Key);
             sb.Append(" ");
-            sb.Append(this.value.Flags.ToString(CultureInfo.InvariantCulture));
+            sb.Append(_value.Flags.ToString(CultureInfo.InvariantCulture));
             sb.Append(" ");
-            sb.Append(this.expires.ToString(CultureInfo.InvariantCulture));
+            sb.Append(_expires.ToString(CultureInfo.InvariantCulture));
             sb.Append(" ");
 
-            var data = this.value.Data;
+            var data = _value.Data;
             sb.Append(Convert.ToString(data.Count, CultureInfo.InvariantCulture));
 
-            if (command == StoreCommand.CheckAndSet)
+            if (_command == StoreCommand.CheckAndSet)
             {
                 sb.Append(" ");
-                sb.Append(Convert.ToString(this.cas, CultureInfo.InvariantCulture));
+                sb.Append(Convert.ToString(_cas, CultureInfo.InvariantCulture));
             }
 
             sb.Append(TextSocketHelper.CommandTerminator);
 
             TextSocketHelper.GetCommandBuffer(sb.ToString(), buffers);
             buffers.Add(data);
-            buffers.Add(StoreOperationBase.DataTerminator);
+            buffers.Add(StoreOperationBase._dataTerminator);
 
             return buffers;
         }

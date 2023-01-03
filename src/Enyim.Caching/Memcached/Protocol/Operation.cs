@@ -19,17 +19,17 @@ namespace Enyim.Caching.Memcached.Protocol
 
         IList<ArraySegment<byte>> IOperation.GetBuffer()
         {
-            return this.GetBuffer();
+            return GetBuffer();
         }
 
         IOperationResult IOperation.ReadResponse(PooledSocket socket)
         {
-            return this.ReadResponse(socket);
+            return ReadResponse(socket);
         }
 
         async Task<IOperationResult> IOperation.ReadResponseAsync(PooledSocket socket)
         {
-            return await this.ReadResponseAsync(socket);
+            return await ReadResponseAsync(socket);
         }
 
         async Task<bool> IOperation.ReadResponseAsync(PooledSocket socket, Action<bool> next)
@@ -39,7 +39,7 @@ namespace Enyim.Caching.Memcached.Protocol
 
         int IOperation.StatusCode
         {
-            get { return this.StatusCode; }
+            get { return StatusCode; }
         }
 
         public int StatusCode { get; protected set; }

@@ -22,11 +22,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var response = new BinaryResponse();
             var retval = response.Read(socket);
 
-            this.StatusCode = StatusCode;
+            StatusCode = StatusCode;
             var result = new BinaryOperationResult()
             {
                 Success = retval,
-                StatusCode = this.StatusCode
+                StatusCode = StatusCode
             };
 
             result.PassOrFail(retval, "Failed to read response");
@@ -38,11 +38,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var response = new BinaryResponse();
             var retval = await response.ReadAsync(socket);
 
-            this.StatusCode = StatusCode;
+            StatusCode = StatusCode;
             var result = new BinaryOperationResult()
             {
                 Success = retval,
-                StatusCode = this.StatusCode
+                StatusCode = StatusCode
             };
 
             result.PassOrFail(retval, "Failed to read response");

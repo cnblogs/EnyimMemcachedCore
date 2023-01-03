@@ -1,15 +1,15 @@
 
 namespace Enyim.Caching.Memcached
 {
-	public abstract class KeyTransformerBase : IMemcachedKeyTransformer
-	{
-		public abstract string Transform(string key);
+    public abstract class KeyTransformerBase : IMemcachedKeyTransformer
+    {
+        public abstract string Transform(string key);
 
-		string IMemcachedKeyTransformer.Transform(string key)
-		{
-			return this.Transform(key);
-		}
-	}
+        string IMemcachedKeyTransformer.Transform(string key)
+        {
+            return Transform(key);
+        }
+    }
 }
 
 #region [ License information          ]

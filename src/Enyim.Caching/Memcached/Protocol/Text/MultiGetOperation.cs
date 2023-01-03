@@ -10,9 +10,9 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
     public class MultiGetOperation : MultiItemOperation, IMultiGetOperation
     {
-        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MultiGetOperation));
+        private static readonly ILog _log = LogManager.GetLogger(typeof(MultiGetOperation));
 
-        private Dictionary<string, CacheItem> result;
+        private Dictionary<string, CacheItem> _result;
 
         public MultiGetOperation(IList<string> keys) : base(keys) { }
 
@@ -48,18 +48,18 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             }
             catch (Exception e)
             {
-                log.Error(e);
+                _log.Error(e);
             }
 
-            this.result = retval;
-            this.Cas = cas;
+            _result = retval;
+            Cas = cas;
 
             return new TextOperationResult().Pass();
         }
 
         Dictionary<string, CacheItem> IMultiGetOperation.Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
 
         protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
@@ -85,11 +85,11 @@ namespace Enyim.Caching.Memcached.Protocol.Text
             }
             catch (Exception e)
             {
-                log.Error(e);
+                _log.Error(e);
             }
 
-            this.result = retval;
-            this.Cas = cas;
+            _result = retval;
+            Cas = cas;
 
             return new ValueTask<IOperationResult>(new TextOperationResult().Pass());
         }

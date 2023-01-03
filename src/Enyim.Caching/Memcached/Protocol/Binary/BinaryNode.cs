@@ -17,7 +17,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
     public class BinaryNode : MemcachedNode
     {
         private readonly ILogger _logger;
-        readonly ISaslAuthenticationProvider authenticationProvider;
+        readonly ISaslAuthenticationProvider _authenticationProvider;
 
         public BinaryNode(
             EndPoint endpoint,
@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             bool useSslStream)
             : base(endpoint, config, logger, useSslStream)
         {
-            this.authenticationProvider = authenticationProvider;
+            _authenticationProvider = authenticationProvider;
             _logger = logger;
         }
 
@@ -38,11 +38,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var retval = base.CreateSocket();
 
-            if (this.authenticationProvider != null && !Auth(retval))
+            if (_authenticationProvider != null && !Auth(retval))
             {
-                _logger.LogError("Authentication failed: " + this.EndPoint);
+                _logger.LogError("Authentication failed: " + EndPoint);
 
-                throw new SecurityException("auth failed: " + this.EndPoint);
+                throw new SecurityException("auth failed: " + EndPoint);
             }
 
             return retval;
@@ -52,11 +52,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var retval = await base.CreateSocketAsync();
 
-            if (this.authenticationProvider != null && !(await AuthAsync(retval)))
+            if (_authenticationProvider != null && !(await AuthAsync(retval)))
             {
-                _logger.LogError("Authentication failed: " + this.EndPoint);
+                _logger.LogError("Authentication failed: " + EndPoint);
 
-                throw new SecurityException("auth failed: " + this.EndPoint);
+                throw new SecurityException("auth failed: " + EndPoint);
             }
 
             return retval;
@@ -69,7 +69,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         /// <returns></returns>
         private bool Auth(PooledSocket socket)
         {
-            SaslStep currentStep = new SaslStart(this.authenticationProvider);
+            SaslStep currentStep = new SaslStart(_authenticationProvider);
 
             socket.Write(currentStep.GetBuffer());
 
@@ -78,7 +78,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 // challenge-response authentication
                 if (currentStep.StatusCode == 0x21)
                 {
-                    currentStep = new SaslContinue(this.authenticationProvider, currentStep.Data);
+                    currentStep = new SaslContinue(_authenticationProvider, currentStep.Data);
                     socket.Write(currentStep.GetBuffer());
                 }
                 else
@@ -95,7 +95,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         private async Task<bool> AuthAsync(PooledSocket socket)
         {
-            SaslStep currentStep = new SaslStart(this.authenticationProvider);
+            SaslStep currentStep = new SaslStart(_authenticationProvider);
 
             await socket.WriteAsync(currentStep.GetBuffer());
 
@@ -104,7 +104,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 // challenge-response authentication
                 if (currentStep.StatusCode == 0x21)
                 {
-                    currentStep = new SaslContinue(this.authenticationProvider, currentStep.Data);
+                    currentStep = new SaslContinue(_authenticationProvider, currentStep.Data);
                     await socket.WriteAsync(currentStep.GetBuffer());
                 }
                 else

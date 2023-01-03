@@ -10,28 +10,28 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
     public class MutatorOperation : SingleItemOperation, IMutatorOperation
     {
-        private readonly MutationMode mode;
-        private readonly ulong delta;
-        private ulong result;
+        private readonly MutationMode _mode;
+        private readonly ulong _delta;
+        private ulong _result;
 
         internal MutatorOperation(MutationMode mode, string key, ulong delta)
             : base(key)
         {
-            this.delta = delta;
-            this.mode = mode;
+            _delta = delta;
+            _mode = mode;
         }
 
         public ulong Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
 
         protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            var command = (this.mode == MutationMode.Increment ? "incr " : "decr ")
-                            + this.Key
+            var command = (_mode == MutationMode.Increment ? "incr " : "decr ")
+                            + Key
                             + " "
-                            + this.delta.ToString(CultureInfo.InvariantCulture)
+                            + _delta.ToString(CultureInfo.InvariantCulture)
                             + TextSocketHelper.CommandTerminator;
 
             return TextSocketHelper.GetCommandBuffer(command);
@@ -47,18 +47,18 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 return result.Fail("Failed to read response. Item not found");
 
             result.Success =
-                UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+                UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out _result);
             return result;
         }
 
         MutationMode IMutatorOperation.Mode
         {
-            get { return this.mode; }
+            get { return _mode; }
         }
 
         ulong IMutatorOperation.Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
 
         protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
@@ -71,7 +71,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 return new ValueTask<IOperationResult>(result.Fail("Failed to read response.  Item not found"));
 
             result.Success =
-                UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out this.result);
+                UInt64.TryParse(response, NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite, CultureInfo.InvariantCulture, out _result);
             return new ValueTask<IOperationResult>(result);
         }
 

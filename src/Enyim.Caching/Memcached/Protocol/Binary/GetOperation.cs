@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
     public class GetOperation : BinarySingleItemOperation, IGetOperation
     {
         private readonly ILogger _logger;
-        private CacheItem result;
+        private CacheItem _result;
 
         public GetOperation(string key, ILogger logger) : base(key)
         {
@@ -21,8 +21,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var request = new BinaryRequest(OpCode.Get)
             {
-                Key = this.Key,
-                Cas = this.Cas
+                Key = Key,
+                Cas = Cas
             };
 
             return request;
@@ -33,27 +33,27 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var status = response.StatusCode;
             var result = new BinaryOperationResult();
 
-            this.StatusCode = status;
+            StatusCode = status;
 
             if (status == 0)
             {
                 int flags = BinaryConverter.DecodeInt32(response.Extra, 0);
-                this.result = new CacheItem((ushort)flags, response.Data);
-                this.Cas = response.CAS;
+                _result = new CacheItem((ushort)flags, response.Data);
+                Cas = response.CAS;
 
 #if EVEN_MORE_LOGGING
                 if(_logger.IsEnabled(LogLevel.Debug))
-			        _logger.LogDebug("Get succeeded for key '{0}'.", this.Key);
+			        _logger.LogDebug("Get succeeded for key '{0}'.", Key);
 #endif
 
                 return result.Pass();
             }
 
-            this.Cas = 0;
+            Cas = 0;
 
 #if EVEN_MORE_LOGGING
             if(_logger.IsEnabled(LogLevel.Debug))
-			    _logger.LogDebug("Get failed for key '{0}'. Reason: {1}", this.Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
+			    _logger.LogDebug("Get failed for key '{0}'. Reason: {1}", Key, Encoding.ASCII.GetString(response.Data.Array, response.Data.Offset, response.Data.Count));
 #endif
 
             var message = ResultHelper.ProcessResponseData(response.Data);
@@ -62,7 +62,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         CacheItem IGetOperation.Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
     }
 }

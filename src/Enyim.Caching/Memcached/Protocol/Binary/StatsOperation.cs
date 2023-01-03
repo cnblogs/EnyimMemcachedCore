@@ -10,21 +10,21 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 {
     public class StatsOperation : BinaryOperation, IStatsOperation
     {
-        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
+        private static readonly ILog _log = LogManager.GetLogger(typeof(StatsOperation));
 
-        private readonly string type;
-        private Dictionary<string, string> result;
+        private readonly string _type;
+        private Dictionary<string, string> _result;
 
         public StatsOperation(string type)
         {
-            this.type = type;
+            _type = type;
         }
 
         protected override BinaryRequest Build()
         {
             var request = new BinaryRequest(OpCode.Stat);
-            if (!String.IsNullOrEmpty(this.type))
-                request.Key = this.type;
+            if (!string.IsNullOrEmpty(_type))
+                request.Key = _type;
 
             return request;
         }
@@ -46,8 +46,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 serverData[key] = value;
             }
 
-            this.result = serverData;
-            this.StatusCode = response.StatusCode;
+            _result = serverData;
+            StatusCode = response.StatusCode;
 
             var result = new BinaryOperationResult()
             {
@@ -75,8 +75,8 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 serverData[key] = value;
             }
 
-            this.result = serverData;
-            this.StatusCode = response.StatusCode;
+            _result = serverData;
+            StatusCode = response.StatusCode;
 
             var result = new BinaryOperationResult()
             {
@@ -89,7 +89,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         Dictionary<string, string> IStatsOperation.Result
         {
-            get { return this.result; }
+            get { return _result; }
         }
     }
 }

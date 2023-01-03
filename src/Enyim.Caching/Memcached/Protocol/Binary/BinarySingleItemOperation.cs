@@ -14,7 +14,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            return this.Build().CreateBuffer();
+            return Build().CreateBuffer();
         }
 
         protected abstract IOperationResult ProcessResponse(BinaryResponse response);
@@ -24,18 +24,18 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var response = new BinaryResponse();
             var retval = response.Read(socket);
 
-            this.Cas = response.CAS;
-            this.StatusCode = response.StatusCode;
+            Cas = response.CAS;
+            StatusCode = response.StatusCode;
 
             var result = new BinaryOperationResult()
             {
                 Success = retval,
-                Cas = this.Cas,
-                StatusCode = this.StatusCode
+                Cas = Cas,
+                StatusCode = StatusCode
             };
 
             IOperationResult responseResult;
-            if (!(responseResult = this.ProcessResponse(response)).Success)
+            if (!(responseResult = ProcessResponse(response)).Success)
             {
                 result.InnerResult = responseResult;
                 responseResult.Combine(result);
@@ -49,18 +49,18 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var response = new BinaryResponse();
             var retval = await response.ReadAsync(socket);
 
-            this.Cas = response.CAS;
-            this.StatusCode = response.StatusCode;
+            Cas = response.CAS;
+            StatusCode = response.StatusCode;
 
             var result = new BinaryOperationResult()
             {
                 Success = retval,
-                Cas = this.Cas,
-                StatusCode = this.StatusCode
+                Cas = Cas,
+                StatusCode = StatusCode
             };
 
             IOperationResult responseResult;
-            if (!(responseResult = this.ProcessResponse(response)).Success)
+            if (!(responseResult = ProcessResponse(response)).Success)
             {
                 result.InnerResult = responseResult;
                 responseResult.Combine(result);

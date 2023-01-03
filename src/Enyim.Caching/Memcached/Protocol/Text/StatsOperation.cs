@@ -9,21 +9,21 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 {
     public class StatsOperation : Operation, IStatsOperation
     {
-        private static Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(StatsOperation));
+        private static ILog _log = LogManager.GetLogger(typeof(StatsOperation));
 
-        private readonly string type;
-        private Dictionary<string, string> result;
+        private readonly string _type;
+        private Dictionary<string, string> _result;
 
         public StatsOperation(string type)
         {
-            this.type = type;
+            _type = type;
         }
 
         protected internal override IList<ArraySegment<byte>> GetBuffer()
         {
-            var command = String.IsNullOrEmpty(this.type)
+            var command = string.IsNullOrEmpty(_type)
                             ? "stats" + TextSocketHelper.CommandTerminator
-                            : "stats " + this.type + TextSocketHelper.CommandTerminator;
+                            : "stats " + _type + TextSocketHelper.CommandTerminator;
 
             return TextSocketHelper.GetCommandBuffer(command);
         }
@@ -43,8 +43,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 // expected response is STAT item_name item_value
                 if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
                 {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Unknow response: " + line);
+                    if (_log.IsWarnEnabled)
+                        _log.Warn("Unknow response: " + line);
 
                     continue;
                 }
@@ -53,8 +53,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 string[] parts = line.Remove(0, 5).Split(' ');
                 if (parts.Length != 2)
                 {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Unknow response: " + line);
+                    if (_log.IsWarnEnabled)
+                        _log.Warn("Unknow response: " + line);
 
                     continue;
                 }
@@ -63,14 +63,14 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 serverData[parts[0]] = parts[1];
             }
 
-            this.result = serverData;
+            _result = serverData;
 
             return new TextOperationResult().Pass();
         }
 
         Dictionary<string, string> IStatsOperation.Result
         {
-            get { return result; }
+            get { return _result; }
         }
 
         protected internal override ValueTask<IOperationResult> ReadResponseAsync(PooledSocket socket)
@@ -88,8 +88,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 // expected response is STAT item_name item_value
                 if (line.Length < 6 || String.Compare(line, 0, "STAT ", 0, 5, StringComparison.Ordinal) != 0)
                 {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Unknow response: " + line);
+                    if (_log.IsWarnEnabled)
+                        _log.Warn("Unknow response: " + line);
 
                     continue;
                 }
@@ -98,8 +98,8 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 string[] parts = line.Remove(0, 5).Split(' ');
                 if (parts.Length != 2)
                 {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Unknow response: " + line);
+                    if (_log.IsWarnEnabled)
+                        _log.Warn("Unknow response: " + line);
 
                     continue;
                 }
@@ -108,7 +108,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
                 serverData[parts[0]] = parts[1];
             }
 
-            this.result = serverData;
+            _result = serverData;
 
             return new ValueTask<IOperationResult>(new TextOperationResult().Pass());
         }

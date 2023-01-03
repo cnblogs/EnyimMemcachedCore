@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Protocol.Text
 
         protected internal override System.Collections.Generic.IList<ArraySegment<byte>> GetBuffer()
         {
-            var command = "delete " + this.Key + TextSocketHelper.CommandTerminator;
+            var command = "delete " + Key + TextSocketHelper.CommandTerminator;
 
             return TextSocketHelper.GetCommandBuffer(command);
         }

@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
     {
         protected SaslStep(ISaslAuthenticationProvider provider)
         {
-            this.Provider = provider;
+            Provider = provider;
         }
 
         protected ISaslAuthenticationProvider Provider { get; private set; }
@@ -22,12 +22,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
             var retval = response.Read(socket);
 
-            this.StatusCode = response.StatusCode;
-            this.Data = response.Data.Array;
+            StatusCode = response.StatusCode;
+            Data = response.Data.Array;
 
             var result = new BinaryOperationResult
             {
-                StatusCode = this.StatusCode
+                StatusCode = StatusCode
             };
 
             result.PassOrFail(retval, "Failed to read response");
@@ -40,12 +40,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
             var retval = await response.ReadAsync(socket);
 
-            this.StatusCode = response.StatusCode;
-            this.Data = response.Data.Array;
+            StatusCode = response.StatusCode;
+            Data = response.Data.Array;
 
             var result = new BinaryOperationResult
             {
-                StatusCode = this.StatusCode
+                StatusCode = StatusCode
             };
 
             result.PassOrFail(retval, "Failed to read response");

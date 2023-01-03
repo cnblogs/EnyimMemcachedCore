@@ -5,21 +5,21 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-	public class StoreOperation : StoreOperationBase, IStoreOperation
-	{
-		private StoreMode mode;
+    public class StoreOperation : StoreOperationBase, IStoreOperation
+    {
+        private StoreMode _mode;
 
-		internal StoreOperation(StoreMode mode, string key, CacheItem value, uint expires)
-			: base((StoreCommand)mode, key, value, expires, 0)
-		{
-			this.mode = mode;
-		}
+        internal StoreOperation(StoreMode mode, string key, CacheItem value, uint expires)
+            : base((StoreCommand)mode, key, value, expires, 0)
+        {
+            _mode = mode;
+        }
 
-		StoreMode IStoreOperation.Mode
-		{
-			get { return this.mode; }
-		}
-	}
+        StoreMode IStoreOperation.Mode
+        {
+            get { return _mode; }
+        }
+    }
 }
 
 #region [ License information          ]
