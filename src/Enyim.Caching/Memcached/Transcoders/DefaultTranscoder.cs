@@ -91,19 +91,19 @@ namespace Enyim.Caching.Memcached
             {
                 case (TypeCode)2: data = SerializeNull(); break; // TypeCode.DBNull
                 case TypeCode.String: data = SerializeString(value.ToString()); break;
-                case TypeCode.Boolean: data = SerializeBoolean((Boolean)value); break;
-                case TypeCode.SByte: data = SerializeSByte((SByte)value); break;
-                case TypeCode.Byte: data = SerializeByte((Byte)value); break;
-                case TypeCode.Int16: data = SerializeInt16((Int16)value); break;
-                case TypeCode.Int32: data = SerializeInt32((Int32)value); break;
-                case TypeCode.Int64: data = SerializeInt64((Int64)value); break;
-                case TypeCode.UInt16: data = SerializeUInt16((UInt16)value); break;
-                case TypeCode.UInt32: data = SerializeUInt32((UInt32)value); break;
-                case TypeCode.UInt64: data = SerializeUInt64((UInt64)value); break;
-                case TypeCode.Char: data = SerializeChar((Char)value); break;
+                case TypeCode.Boolean: data = SerializeBoolean((bool)value); break;
+                case TypeCode.SByte: data = SerializeSByte((sbyte)value); break;
+                case TypeCode.Byte: data = SerializeByte((byte)value); break;
+                case TypeCode.Int16: data = SerializeInt16((short)value); break;
+                case TypeCode.Int32: data = SerializeInt32((int)value); break;
+                case TypeCode.Int64: data = SerializeInt64((long)value); break;
+                case TypeCode.UInt16: data = SerializeUInt16((ushort)value); break;
+                case TypeCode.UInt32: data = SerializeUInt32((uint)value); break;
+                case TypeCode.UInt64: data = SerializeUInt64((ulong)value); break;
+                case TypeCode.Char: data = SerializeChar((char)value); break;
                 case TypeCode.DateTime: data = SerializeDateTime((DateTime)value); break;
-                case TypeCode.Double: data = SerializeDouble((Double)value); break;
-                case TypeCode.Single: data = SerializeSingle((Single)value); break;
+                case TypeCode.Double: data = SerializeDouble((double)value); break;
+                case TypeCode.Single: data = SerializeSingle((float)value); break;
                 default:
                     code = TypeCode.Object;
                     data = SerializeObject(value);
@@ -280,47 +280,47 @@ namespace Enyim.Caching.Memcached
         #endregion
         #region [ Typed deserialization        ]
 
-        protected virtual String DeserializeString(ArraySegment<byte> value)
+        protected virtual string DeserializeString(ArraySegment<byte> value)
         {
             return Encoding.UTF8.GetString(value.Array, value.Offset, value.Count);
         }
 
-        protected virtual Boolean DeserializeBoolean(ArraySegment<byte> value)
+        protected virtual bool DeserializeBoolean(ArraySegment<byte> value)
         {
             return BitConverter.ToBoolean(value.Array, value.Offset);
         }
 
-        protected virtual Int16 DeserializeInt16(ArraySegment<byte> value)
+        protected virtual short DeserializeInt16(ArraySegment<byte> value)
         {
             return BitConverter.ToInt16(value.Array, value.Offset);
         }
 
-        protected virtual Int32 DeserializeInt32(ArraySegment<byte> value)
+        protected virtual int DeserializeInt32(ArraySegment<byte> value)
         {
             return BitConverter.ToInt32(value.Array, value.Offset);
         }
 
-        protected virtual Int64 DeserializeInt64(ArraySegment<byte> value)
+        protected virtual long DeserializeInt64(ArraySegment<byte> value)
         {
             return BitConverter.ToInt64(value.Array, value.Offset);
         }
 
-        protected virtual UInt16 DeserializeUInt16(ArraySegment<byte> value)
+        protected virtual ushort DeserializeUInt16(ArraySegment<byte> value)
         {
             return BitConverter.ToUInt16(value.Array, value.Offset);
         }
 
-        protected virtual UInt32 DeserializeUInt32(ArraySegment<byte> value)
+        protected virtual uint DeserializeUInt32(ArraySegment<byte> value)
         {
             return BitConverter.ToUInt32(value.Array, value.Offset);
         }
 
-        protected virtual UInt64 DeserializeUInt64(ArraySegment<byte> value)
+        protected virtual ulong DeserializeUInt64(ArraySegment<byte> value)
         {
             return BitConverter.ToUInt64(value.Array, value.Offset);
         }
 
-        protected virtual Char DeserializeChar(ArraySegment<byte> value)
+        protected virtual char DeserializeChar(ArraySegment<byte> value)
         {
             return BitConverter.ToChar(value.Array, value.Offset);
         }
@@ -330,24 +330,24 @@ namespace Enyim.Caching.Memcached
             return DateTime.FromBinary(BitConverter.ToInt64(value.Array, value.Offset));
         }
 
-        protected virtual Double DeserializeDouble(ArraySegment<byte> value)
+        protected virtual double DeserializeDouble(ArraySegment<byte> value)
         {
             return BitConverter.ToDouble(value.Array, value.Offset);
         }
 
-        protected virtual Single DeserializeSingle(ArraySegment<byte> value)
+        protected virtual float DeserializeSingle(ArraySegment<byte> value)
         {
             return BitConverter.ToSingle(value.Array, value.Offset);
         }
 
-        protected virtual Byte DeserializeByte(ArraySegment<byte> data)
+        protected virtual byte DeserializeByte(ArraySegment<byte> data)
         {
             return data.Array[data.Offset];
         }
 
-        protected virtual SByte DeserializeSByte(ArraySegment<byte> data)
+        protected virtual sbyte DeserializeSByte(ArraySegment<byte> data)
         {
-            return (SByte)data.Array[data.Offset];
+            return (sbyte)data.Array[data.Offset];
         }
 
         protected virtual object DeserializeObject(ArraySegment<byte> value)
