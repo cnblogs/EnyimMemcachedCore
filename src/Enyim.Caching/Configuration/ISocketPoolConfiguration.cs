@@ -68,6 +68,16 @@ namespace Enyim.Caching.Configuration
             set;
         }
 
+        /// <summary>
+        /// Gets or sets a value that specified the amount of time after which a pooled socket will be discarded. Discarding will only happen at the time when the socket is picked up from the socket pool, e.g. it depends on usage.
+        /// </summary>
+        /// <returns>The value of the connection idle timeout.</returns>
+        TimeSpan ConnectionIdleTimeout
+        {
+            get;
+            set;
+        }
+
         TimeSpan InitPoolTimeout { get; set; }
 
         INodeFailurePolicyFactory FailurePolicyFactory { get; set; }

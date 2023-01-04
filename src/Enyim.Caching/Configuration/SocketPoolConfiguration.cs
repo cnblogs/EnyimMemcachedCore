@@ -15,6 +15,7 @@ namespace Enyim.Caching.Configuration
         private TimeSpan _receiveTimeout = new TimeSpan(0, 0, 10);
         private TimeSpan _deadTimeout = new TimeSpan(0, 0, 10);
         private TimeSpan _queueTimeout = new TimeSpan(0, 0, 0, 0, 100);
+        private TimeSpan _connectionIdleTimeout = TimeSpan.Zero;
         private TimeSpan _initPoolTimeout = new TimeSpan(0, 1, 0);
         private INodeFailurePolicyFactory _failurePolicyFactory = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
@@ -92,6 +93,18 @@ namespace Enyim.Caching.Configuration
                     throw new ArgumentOutOfRangeException("value", "value must be positive");
 
                 _deadTimeout = value;
+            }
+        }
+
+        TimeSpan ISocketPoolConfiguration.ConnectionIdleTimeout
+        {
+            get { return _connectionIdleTimeout; }
+            set
+            {
+                if (value < TimeSpan.Zero)
+                    throw new ArgumentOutOfRangeException("value", "value must be positive");
+
+                _connectionIdleTimeout = value;
             }
         }
 
