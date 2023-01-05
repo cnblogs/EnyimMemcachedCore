@@ -42,4 +42,8 @@
       </ItemGroup>
     </Otherwise>
   </Choose>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="2.4.59" />
+  </ItemGroup>
 </Project>

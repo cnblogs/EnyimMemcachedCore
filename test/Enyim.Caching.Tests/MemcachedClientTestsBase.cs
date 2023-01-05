@@ -1,6 +1,7 @@
 ﻿using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Transcoders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,9 +25,10 @@ namespace Enyim.Caching.Tests
             {
                 options.AddServer("memcached", 11211);
                 onAddEnyimMemcached?.Invoke(options);
+                options.Transcoder = nameof(MessagePackTranscoder);
             });
 
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning).AddConsole());
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             _client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
         }

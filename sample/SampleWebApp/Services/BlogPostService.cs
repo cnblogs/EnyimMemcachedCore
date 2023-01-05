@@ -8,9 +8,21 @@ namespace Enyim.Caching.SampleWebApp.Services
 {
     public class BlogPostService : IBlogPostService
     {
-        public async ValueTask<IEnumerable<BlogPost>> GetRecent(int itemCount)
+        public async ValueTask<Dictionary<string, List<BlogPost>>> GetRecent(int itemCount)
         {
-            return new List<BlogPost> { new BlogPost { Title = "Hello World", Body = "EnyimCachingCore" } };
+            var dict = new Dictionary<string, List<BlogPost>>();
+            var posts = new List<BlogPost>
+            {
+                new BlogPost
+                {
+                    Title = "Hello World",
+                    Body = "EnyimCachingCore"
+                }
+            };
+
+            dict.Add(DateTime.Today.ToString("yyyy-MM-dd"), posts);
+
+            return dict;
         }
     }
 }

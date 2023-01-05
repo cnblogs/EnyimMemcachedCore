@@ -8,6 +8,6 @@ namespace Enyim.Caching.SampleWebApp.Services
 {
     public interface IBlogPostService
     {
-        ValueTask<IEnumerable<BlogPost>> GetRecent(int itemCount);
+        ValueTask<Dictionary<string, List<BlogPost>>> GetRecent(int itemCount);
     }
 }

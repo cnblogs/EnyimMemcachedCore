@@ -14,7 +14,7 @@ namespace MemcachedTest
 {
     public abstract class MemcachedClientTest
     {
-        private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(MemcachedClientTest));
+        private static readonly ILog _log = LogManager.GetLogger(typeof(MemcachedClientTest));
         public const string TestObjectKey = "Hello_World";
 
         protected virtual MemcachedClient GetClient(MemcachedProtocol protocol = MemcachedProtocol.Binary, bool useBinaryFormatterTranscoder = false)
@@ -24,14 +24,11 @@ namespace MemcachedTest
             {
                 options.AddServer("memcached", 11211);
                 options.Protocol = protocol;
-                //if (useBinaryFormatterTranscoder)
-                //{
-                //    options.Transcoder = "BinaryFormatterTranscoder";
-                //}
+                options.Transcoder = "MessagePackTranscoder";
             });
-            if(useBinaryFormatterTranscoder)
+            if (useBinaryFormatterTranscoder)
             {
-                services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
+                services.AddSingleton<ITranscoder, BinaryFormatterTranscoder>();
             }
 
             services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
@@ -216,44 +213,44 @@ namespace MemcachedTest
         {
             using (MemcachedClient client = GetClient())
             {
-                log.Debug("Cache should be empty.");
+                _log.Debug("Cache should be empty.");
 
                 var cacheKey = $"{nameof(AddSetReplaceTest)}-{Guid.NewGuid()}";
 
                 Assert.True(client.Store(StoreMode.Set, cacheKey, "1"), "Initialization failed");
 
-                log.Debug("Setting VALUE to 1.");
+                _log.Debug("Setting VALUE to 1.");
 
                 Assert.Equal("1", client.Get(cacheKey));
 
-                log.Debug("Adding VALUE; this should return false.");
+                _log.Debug("Adding VALUE; this should return false.");
                 Assert.False(client.Store(StoreMode.Add, cacheKey, "2"), "Add should have failed");
 
-                log.Debug("Checking if VALUE is still '1'.");
+                _log.Debug("Checking if VALUE is still '1'.");
                 Assert.Equal("1", client.Get(cacheKey));
 
-                log.Debug("Replacing VALUE; this should return true.");
+                _log.Debug("Replacing VALUE; this should return true.");
                 Assert.True(client.Store(StoreMode.Replace, cacheKey, "4"), "Replace failed");
 
-                log.Debug("Checking if VALUE is '4' so it got replaced.");
+                _log.Debug("Checking if VALUE is '4' so it got replaced.");
                 Assert.Equal("4", client.Get(cacheKey));
 
-                log.Debug("Removing VALUE.");
+                _log.Debug("Removing VALUE.");
                 Assert.True(client.Remove(cacheKey), "Remove failed");
 
-                log.Debug("Replacing VALUE; this should return false.");
+                _log.Debug("Replacing VALUE; this should return false.");
                 Assert.False(client.Store(StoreMode.Replace, cacheKey, "8"), "Replace should not have succeeded");
 
-                log.Debug("Checking if VALUE is 'null' so it was not replaced.");
+                _log.Debug("Checking if VALUE is 'null' so it was not replaced.");
                 Assert.Null(client.Get(cacheKey));
 
-                log.Debug("Adding VALUE; this should return true.");
+                _log.Debug("Adding VALUE; this should return true.");
                 Assert.True(client.Store(StoreMode.Add, cacheKey, "16"), "Item should have been Added");
 
-                log.Debug("Checking if VALUE is '16' so it was added.");
+                _log.Debug("Checking if VALUE is '16' so it was added.");
                 Assert.Equal("16", client.Get(cacheKey));
 
-                log.Debug("Passed AddSetReplaceTest.");
+                _log.Debug("Passed AddSetReplaceTest.");
             }
         }
 
@@ -336,7 +333,7 @@ namespace MemcachedTest
                 await Task.WhenAll(tasks);
 
                 foreach (var task in tasks)
-                { 
+                {
                     Assert.True(await task, "Store failed");
                 }
 
@@ -356,14 +353,14 @@ namespace MemcachedTest
                     tasks.Add(client.RemoveAsync(key));
                 }
 
-                await Task.WhenAll(tasks);                
+                await Task.WhenAll(tasks);
             }
         }
 
         [Fact]
         public void IncrementLongTest()
         {
-            var initialValue = 56UL * (ulong)System.Math.Pow(10, 11) + 1234;
+            var initialValue = 56UL * (ulong)Math.Pow(10, 11) + 1234;
 
             using (MemcachedClient client = GetClient())
             {

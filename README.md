@@ -12,7 +12,8 @@ This is a .NET Core client library for Memcached migrated from [EnyimMemcached](
         "Address": "memcached",
         "Port": 11211
       }
-    ]
+    ],
+    "Transcoder": "MessagePackTranscoder"
   }
 }
 ```
