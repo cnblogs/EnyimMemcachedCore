@@ -18,8 +18,12 @@ namespace MemcachedTest
         public void TestIfCalled()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options => options.AddServer("memcached", 11212));
-            services.AddLogging();
+            services.AddEnyimMemcached(options =>
+            {
+                options.AddServer("memcached", 11212);
+                options.Transcoder = "MessagePackTranscoder";
+            });
+            services.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
             IServiceProvider serviceProvider = services.BuildServiceProvider();
 
             var config = serviceProvider.GetService<IMemcachedClientConfiguration>();

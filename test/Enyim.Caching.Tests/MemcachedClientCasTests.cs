@@ -47,7 +47,7 @@ namespace Enyim.Caching.Tests
             var storeResult = Store(StoreMode.Add, key, comment);
             StoreAssertPass(storeResult);
 
-            var casResult1 = await _client.GetAsync(key);
+            var casResult1 = await _client.GetAsync<Comment>(key);
             GetAssertPass(casResult1, comment);
 
             var casResult2 = await _client.GetAsync<Comment>(key);

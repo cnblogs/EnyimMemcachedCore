@@ -31,9 +31,9 @@ namespace SampleWebApp.IntegrationTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             var memcachedClient = _factory.Server.Host.Services.GetRequiredService<IMemcachedClient>();
-            var posts = await memcachedClient.GetValueAsync<IEnumerable<BlogPost>>(HomeController.CacheKey);
-            Assert.NotNull(posts);
-            Assert.NotEmpty(posts.First().Title);
+            var postsDict = await memcachedClient.GetValueAsync<Dictionary<string, List<BlogPost>>>(HomeController.CacheKey);
+            Assert.NotNull(postsDict);
+            Assert.NotEmpty(postsDict.First().Value.First().Title);
 
             await memcachedClient.RemoveAsync(HomeController.CacheKey);
         }

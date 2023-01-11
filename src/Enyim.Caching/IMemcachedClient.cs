@@ -29,15 +29,18 @@ namespace Enyim.Caching
         Task<bool> ReplaceAsync(string key, object value, uint cacheSeconds);
         Task<bool> ReplaceAsync(string key, object value, TimeSpan timeSpan);
 
+        [Obsolete("Use GetAsync<T> instead")]
         Task<IGetOperationResult> GetAsync(string key);
         Task<IGetOperationResult<T>> GetAsync<T>(string key);
         Task<T> GetValueAsync<T>(string key);
         Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator);
+        [Obsolete("Use Get<T> instead")]
         object Get(string key);
         T Get<T>(string key);
         IDictionary<string, T> Get<T>(IEnumerable<string> keys);
         Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys);
 
+        [Obsolete("Use TryGet<T> instead")]
         bool TryGet(string key, out object value);
         bool TryGet<T>(string key, out T value);
         bool TryGetWithCas(string key, out CasResult<object> value);

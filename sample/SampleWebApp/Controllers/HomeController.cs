@@ -48,7 +48,7 @@ namespace Enyim.Caching.SampleWebApp.Controllers
 
         public async Task<IActionResult> Postbody()
         {
-            var postbody = (await _blogPostService.GetRecent(10)).First()?.Body;
+            var postbody = (await _blogPostService.GetRecent(10)).First().Value.FirstOrDefault()?.Body;
             await _postbodyMemcachedClient.AddAsync(PostbodyCacheKey, postbody, 10);
             var result = await _postbodyMemcachedClient.GetAsync<string>(PostbodyCacheKey);
             return result.Success ? Ok() : StatusCode(500);
