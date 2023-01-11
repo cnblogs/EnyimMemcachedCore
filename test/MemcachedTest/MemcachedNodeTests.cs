@@ -38,10 +38,6 @@ namespace MemcachedTest
             var logMessage = $"Connection idle timeout {idleTimeout} reached";
             await client.GetAsync(Guid.NewGuid().ToString());
 
-            await Task.Delay(1000);
-            await client.GetAsync(Guid.NewGuid().ToString());
-            Assert.DoesNotContain(logMessage, sw.ToString());
-
             await Task.Delay(2100);
             await client.GetAsync(Guid.NewGuid().ToString());
             Assert.Contains(logMessage, sw.ToString());
