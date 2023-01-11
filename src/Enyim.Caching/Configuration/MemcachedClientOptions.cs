@@ -72,6 +72,7 @@ namespace Enyim.Caching.Configuration
         public TimeSpan ReceiveTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
+        public TimeSpan ConnectionIdleTimeout { get; set; } = TimeSpan.Zero;
         public TimeSpan InitPoolTimeout { get; set; } = new TimeSpan(0, 1, 0);
         public INodeFailurePolicyFactory FailurePolicyFactory { get; set; } = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
@@ -93,6 +94,7 @@ namespace Enyim.Caching.Configuration
             CheckTimeout(nameof(ReceiveTimeout), ReceiveTimeout);
             CheckTimeout(nameof(DeadTimeout), DeadTimeout);
             CheckTimeout(nameof(QueueTimeout), QueueTimeout);
+            CheckTimeout(nameof(ConnectionIdleTimeout), ConnectionIdleTimeout);
         }
 
         private void CheckTimeout(string paramName, TimeSpan value)

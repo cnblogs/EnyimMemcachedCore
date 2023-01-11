@@ -54,7 +54,7 @@ namespace MemcachedTest
         {
             IServiceCollection services = new ServiceCollection();
             services.AddEnyimMemcached(options => options.AddServer("localhost", 11212));
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Debug).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning).AddConsole());
             IServiceProvider serviceProvider = services.BuildServiceProvider();
 
             var config = serviceProvider.GetService<IMemcachedClientConfiguration>();
