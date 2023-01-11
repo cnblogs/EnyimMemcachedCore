@@ -27,7 +27,7 @@ namespace Enyim.Caching.Memcached
     public class MemcachedNode : IMemcachedNode
     {
         private readonly ILogger _logger;
-        private static readonly object SyncRoot = new Object();
+        private static readonly object SyncRoot = new();
         private bool _isDisposed;
         private readonly EndPoint _endPoint;
         private readonly ISocketPoolConfiguration _config;
@@ -48,8 +48,8 @@ namespace Enyim.Caching.Memcached
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
             _config = socketPoolConfig;
 
-            if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= Int32.MaxValue)
-                throw new InvalidOperationException("ConnectionTimeout must be < Int32.MaxValue");
+            if (socketPoolConfig.ConnectionTimeout.TotalMilliseconds >= int.MaxValue)
+                throw new InvalidOperationException("ConnectionTimeout must be < int.MaxValue");
 
             if (socketPoolConfig.InitPoolTimeout.TotalSeconds < 1)
             {
@@ -270,7 +270,7 @@ namespace Enyim.Caching.Memcached
             /// <summary>
             /// A list of already connected but free to use sockets
             /// </summary>
-            private ConcurrentStack<(PooledSocket socket, DateTime pushedUtc)> _freeItems;
+            private ConcurrentStack<PooledSocket> _freeItems;
 
             private bool _isDisposed;
             private bool _isAlive;
@@ -315,7 +315,7 @@ namespace Enyim.Caching.Memcached
                 _maxItems = config.MaxPoolSize;
 
                 _semaphore = new SemaphoreSlim(_maxItems, _maxItems);
-                _freeItems = new ConcurrentStack<(PooledSocket socket, DateTime pushedUtc)>();
+                _freeItems = new ConcurrentStack<PooledSocket>();
 
                 _logger = logger;
                 _isDebugEnabled = _logger.IsEnabled(LogLevel.Debug);
@@ -331,7 +331,7 @@ namespace Enyim.Caching.Memcached
                         {
                             try
                             {
-                                _freeItems.Push((CreateSocket(), DateTime.UtcNow));
+                                _freeItems.Push(CreateSocket());
                             }
                             catch (Exception ex)
                             {
@@ -350,7 +350,7 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError("Could not init pool.", new EventId(0), e);
+                    _logger.LogError(e, "Could not init pool.");
 
                     MarkAsDead();
                 }
@@ -366,7 +366,7 @@ namespace Enyim.Caching.Memcached
                         {
                             try
                             {
-                                _freeItems.Push((await CreateSocketAsync(), DateTime.UtcNow));
+                                _freeItems.Push(await CreateSocketAsync());
                             }
                             catch (Exception ex)
                             {
@@ -385,7 +385,7 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError("Could not init pool.", new EventId(0), e);
+                    _logger.LogError(e, "Could not init pool.");
 
                     MarkAsDead();
                 }
@@ -424,10 +424,9 @@ namespace Enyim.Caching.Memcached
             public IPooledSocketResult Acquire()
             {
                 var result = new PooledSocketResult();
-                var message = string.Empty;
-
                 if (_isDebugEnabled) _logger.LogDebug($"Acquiring stream from pool on node '{_endPoint}'");
 
+                string message;
                 if (!_isAlive || _isDisposed)
                 {
                     message = "Pool is dead or disposed, returning null. " + _endPoint;
@@ -437,8 +436,6 @@ namespace Enyim.Caching.Memcached
 
                     return result;
                 }
-
-                PooledSocket retval = null;
 
                 if (!_semaphore.Wait(_queueTimeout))
                 {
@@ -462,20 +459,23 @@ namespace Enyim.Caching.Memcached
                     return result;
                 }
 
+
+                PooledSocket socket;
                 // do we have free items?
-                if (TryPopPooledSocket(out retval))
+                if (TryPopPooledSocket(out socket))
                 {
                     #region [ get it from the pool         ]
 
                     try
                     {
-                        retval.Reset();
+                        socket.Reset();
 
-                        message = "Socket was reset. " + retval.InstanceId;
+                        message = "Socket was reset. " + socket.InstanceId;
                         if (_isDebugEnabled) _logger.LogDebug(message);
 
                         result.Pass(message);
-                        result.Value = retval;
+                        socket.UpdateLastUsed();
+                        result.Value = socket;
                         return result;
                     }
                     catch (Exception e)
@@ -501,9 +501,9 @@ namespace Enyim.Caching.Memcached
                 {
                     // okay, create the new item
                     var startTime = DateTime.Now;
-                    retval = CreateSocket();
+                    socket = CreateSocket();
                     _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
-                    result.Value = retval;
+                    result.Value = socket;
                     result.Pass();
                 }
                 catch (Exception e)
@@ -548,7 +548,7 @@ namespace Enyim.Caching.Memcached
                     return result;
                 }
 
-                PooledSocket retval = null;
+                PooledSocket socket = null;
 
                 if (!await _semaphore.WaitAsync(_queueTimeout))
                 {
@@ -572,13 +572,13 @@ namespace Enyim.Caching.Memcached
                 }
 
                 // do we have free items?
-                if (TryPopPooledSocket(out retval))
+                if (TryPopPooledSocket(out socket))
                 {
                     #region [ get it from the pool         ]
 
                     try
                     {
-                        var resetTask = retval.ResetAsync();
+                        var resetTask = socket.ResetAsync();
 
                         if (await Task.WhenAny(resetTask, Task.Delay(_receiveTimeout)) == resetTask)
                         {
@@ -587,19 +587,20 @@ namespace Enyim.Caching.Memcached
                         else
                         {
                             _semaphore.Release();
-                            retval.IsAlive = false;
+                            socket.IsAlive = false;
 
-                            message = "Timeout to reset an acquired socket. InstanceId " + retval.InstanceId;
+                            message = "Timeout to reset an acquired socket. InstanceId " + socket.InstanceId;
                             _logger.LogError(message);
                             result.Fail(message);
                             return result;
                         }
 
-                        message = "Socket was reset. InstanceId " + retval.InstanceId;
+                        message = "Socket was reset. InstanceId " + socket.InstanceId;
                         if (_isDebugEnabled) _logger.LogDebug(message);
 
                         result.Pass(message);
-                        result.Value = retval;
+                        socket.UpdateLastUsed();
+                        result.Value = socket;
                         return result;
                     }
                     catch (Exception e)
@@ -625,9 +626,9 @@ namespace Enyim.Caching.Memcached
                 {
                     // okay, create the new item
                     var startTime = DateTime.Now;
-                    retval = await CreateSocketAsync();
+                    socket = await CreateSocketAsync();
                     _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
-                    result.Value = retval;
+                    result.Value = socket;
                     result.Pass();
                 }
                 catch (Exception e)
@@ -693,7 +694,7 @@ namespace Enyim.Caching.Memcached
                         try
                         {
                             // mark the item as free
-                            _freeItems.Push((socket, DateTime.UtcNow));
+                            _freeItems.Push(socket);
                         }
                         finally
                         {
@@ -745,22 +746,28 @@ namespace Enyim.Caching.Memcached
 
             private bool TryPopPooledSocket(out PooledSocket pooledSocket)
             {
-                if (_freeItems.TryPop(out var pair)
-                    && (_connectionIdleTimeout == TimeSpan.Zero
-                        || pair.pushedUtc > DateTime.UtcNow.Subtract(_connectionIdleTimeout)))
+                if (_freeItems.TryPop(out var socket))
                 {
-                    pooledSocket = pair.socket;
+                    if (_connectionIdleTimeout > TimeSpan.Zero &&
+                        socket.LastUsed < DateTime.UtcNow.Subtract(_connectionIdleTimeout))
+                    {
+                        try
+                        {
+                            _logger.LogInformation("Connection idle timeout {idleTimeout} reached.", _connectionIdleTimeout);
+                            socket.Destroy();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Failed to destroy {nameof(PooledSocket)}");
+                        }
+
+                        pooledSocket = null;
+                        return false;
+                    }
+
+                    pooledSocket = socket;
                     return true;
                 }
-
-                if (pair.socket is not null)
-                {
-                    try { pair.socket.Destroy(); } catch { }
-                }
-
-                // If the top item is too old, then all items deeper in the stack must be even older,
-                // however due to concurrency we might get some fresh item on top too soon.
-                // So for simplicity's sake, let the remaining obsolete items be picked up at other times.
 
                 pooledSocket = null;
                 return false;
@@ -786,10 +793,10 @@ namespace Enyim.Caching.Memcached
                     _isAlive = false;
                     _isDisposed = true;
 
-                    while (_freeItems.TryPop(out var pair))
+                    while (_freeItems.TryPop(out var socket))
                     {
-                        try { pair.socket.Destroy(); }
-                        catch { }
+                        try { socket.Destroy(); }
+                        catch (Exception ex) { _logger.LogError(ex, $"failed to destroy {nameof(PooledSocket)}"); }
                     }
 
                     _ownerNode = null;

@@ -6,33 +6,31 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-
     public class MemcachedClientCasTests : MemcachedClientTestsBase
-	{
+    {
+        [Fact]
+        public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
+        {
+            var key = GetUniqueKey("cas");
+            var value = GetRandomString();
+            var storeResult = Store(StoreMode.Add, key, value);
+            StoreAssertPass(storeResult);
 
-		[Fact]
-		public void When_Storing_Item_With_Valid_Cas_Result_Is_Successful()
-		{
-			var key = GetUniqueKey("cas");
-			var value = GetRandomString();
-			var storeResult = Store(StoreMode.Add, key, value);
-			StoreAssertPass(storeResult);
+            var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas);
+            StoreAssertPass(casResult);
+        }
 
-			var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas);
-			StoreAssertPass(casResult);
-		}
+        [Fact]
+        public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
+        {
+            var key = GetUniqueKey("cas");
+            var value = GetRandomString();
+            var storeResult = Store(StoreMode.Add, key, value);
+            StoreAssertPass(storeResult);
 
-		[Fact]
-		public void When_Storing_Item_With_Invalid_Cas_Result_Is_Not_Successful()
-		{
-			var key = GetUniqueKey("cas");
-			var value = GetRandomString();
-			var storeResult = Store(StoreMode.Add, key, value);
-			StoreAssertPass(storeResult);
-
-			var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas - 1);
-			StoreAssertFail(casResult);
-		}
+            var casResult = _client.ExecuteCas(StoreMode.Set, key, value, storeResult.Cas - 1);
+            StoreAssertFail(casResult);
+        }
 
 
         [Fact]

@@ -176,6 +176,13 @@ namespace Enyim.Caching.Memcached
             get { return _socket.Available; }
         }
 
+        public DateTime LastUsed { get; set; } = DateTime.UtcNow;
+
+        public void UpdateLastUsed()
+        {
+            LastUsed = DateTime.UtcNow;
+        }
+
         public void Reset()
         {
             // _inputStream.Flush();
