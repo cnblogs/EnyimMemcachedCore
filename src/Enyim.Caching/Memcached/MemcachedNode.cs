@@ -160,7 +160,11 @@ namespace Enyim.Caching.Memcached
                         var startTime = DateTime.Now;
                         _internalPoolImpl.InitPool();
                         _isInitialized = true;
-                        _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        }
                     }
                 }
                 finally
@@ -204,7 +208,11 @@ namespace Enyim.Caching.Memcached
                         var startTime = DateTime.Now;
                         await _internalPoolImpl.InitPoolAsync();
                         _isInitialized = true;
-                        _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        }
                     }
                 }
                 finally
@@ -502,7 +510,12 @@ namespace Enyim.Caching.Memcached
                     // okay, create the new item
                     var startTime = DateTime.Now;
                     socket = CreateSocket();
-                    _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                    }
+
                     result.Value = socket;
                     result.Pass();
                 }
@@ -627,7 +640,12 @@ namespace Enyim.Caching.Memcached
                     // okay, create the new item
                     var startTime = DateTime.Now;
                     socket = await CreateSocketAsync();
-                    _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                    }
+
                     result.Value = socket;
                     result.Pass();
                 }
@@ -753,7 +771,11 @@ namespace Enyim.Caching.Memcached
                     {
                         try
                         {
-                            _logger.LogInformation("Connection idle timeout {idleTimeout} reached.", _connectionIdleTimeout);
+                            if (_logger.IsEnabled(LogLevel.Information))
+                            {
+                                _logger.LogInformation("Connection idle timeout {idleTimeout} reached.", _connectionIdleTimeout);
+                            }
+
                             socket.Destroy();
                         }
                         catch (Exception ex)
@@ -919,7 +941,10 @@ namespace Enyim.Caching.Memcached
 
         protected virtual async Task<IPooledSocketResult> ExecuteOperationAsync(IOperation op)
         {
-            _logger.LogDebug($"ExecuteOperationAsync({op})");
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"ExecuteOperationAsync({op})");
+            }
 
             var result = await AcquireAsync();
             if (result.Success && result.HasValue)
@@ -931,7 +956,10 @@ namespace Enyim.Caching.Memcached
                     //if Get, call BinaryRequest.CreateBuffer()
                     var b = op.GetBuffer();
 
-                    _logger.LogDebug("pooledSocket.WriteAsync...");
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug("pooledSocket.WriteAsync...");
+                    }
 
                     var writeSocketTask = pooledSocket.WriteAsync(b);
                     if (await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)) != writeSocketTask)
@@ -942,7 +970,10 @@ namespace Enyim.Caching.Memcached
                     await writeSocketTask;
 
                     //if Get, call BinaryResponse
-                    _logger.LogDebug($"{op}.ReadResponseAsync...");
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug($"{op}.ReadResponseAsync...");
+                    }
 
                     var readResponseTask = op.ReadResponseAsync(pooledSocket);
                     if (await Task.WhenAny(readResponseTask, Task.Delay(_config.ConnectionTimeout)) != readResponseTask)
@@ -958,7 +989,11 @@ namespace Enyim.Caching.Memcached
                     }
                     else
                     {
-                        _logger.LogInformation($"{op}.{nameof(op.ReadResponseAsync)} result: {readResult.Message}");
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation($"{op}.{nameof(op.ReadResponseAsync)} result: {readResult.Message}");
+                        }
+
                         readResult.Combine(result);
                     }
                     return result;
