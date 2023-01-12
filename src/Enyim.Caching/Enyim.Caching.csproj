@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>EnyimMemcachedCore is a Memcached client library for .NET Core. Usage: Add services.AddEnyimMemcached(...) and app.UseEnyimMemcached() in Startup. Add IMemcachedClient into constructor.</Description>
+    <Description>EnyimMemcachedCore is a Memcached client library for .NET. Add services.AddEnyimMemcached() in Startup. Inject IMemcachedClient into constructors.</Description>
     <Authors>cnblogs.com</Authors>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>EnyimMemcachedCore</AssemblyName>
     <PackageId>EnyimMemcachedCore</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>memcached;cache</PackageTags>
     <PackageProjectUrl>https://github.com/cnblogs/EnyimMemcachedCore</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/cnblogs/EnyimMemcachedCore</RepositoryUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
@@ -45,5 +47,9 @@
 
   <ItemGroup>
     <PackageReference Include="MessagePack" Version="2.4.59" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
