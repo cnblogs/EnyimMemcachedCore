@@ -989,9 +989,9 @@ namespace Enyim.Caching.Memcached
                     }
                     else
                     {
-                        if (_logger.IsEnabled(LogLevel.Information))
+                        if (_logger.IsEnabled(LogLevel.Debug))
                         {
-                            _logger.LogInformation($"{op}.{nameof(op.ReadResponseAsync)} result: {readResult.Message}");
+                            _logger.LogDebug($"{op}.{nameof(op.ReadResponseAsync)} result: {readResult.Message}");
                         }
 
                         readResult.Combine(result);
