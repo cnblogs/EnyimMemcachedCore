@@ -298,7 +298,11 @@ namespace Enyim.Caching
         {
             if (!CreateGetCommand(key, out var result, out var node, out var command))
             {
-                _logger.LogInformation($"Failed to CreateGetCommand for '{key}' key");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation($"Failed to CreateGetCommand for '{key}' key");
+                }
+
                 return result;
             }
 
@@ -321,7 +325,11 @@ namespace Enyim.Caching
         {
             if (!CreateGetCommand<T>(key, out var result, out var node, out var command))
             {
-                _logger.LogInformation($"Failed to CreateGetCommand for '{key}' key");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation($"Failed to CreateGetCommand for '{key}' key");
+                }
+
                 return result;
             }
 
@@ -351,11 +359,18 @@ namespace Enyim.Caching
             var result = await GetAsync<T>(key);
             if (result.Success)
             {
-                _logger.LogDebug($"Cache is hint. Key is '{key}'.");
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug($"Cache is hint. Key is '{key}'.");
+                }
+
                 return result.Value;
             }
 
-            _logger.LogDebug($"Cache is missed. Key is '{key}'.");
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug($"Cache is missed. Key is '{key}'.");
+            }
 
             var value = await generator?.Invoke();
             if (value != null)
@@ -363,7 +378,11 @@ namespace Enyim.Caching
                 try
                 {
                     await AddAsync(key, value, cacheSeconds);
-                    _logger.LogDebug($"Added value into cache. Key is '{key}'. " + value);
+
+                    if (_logger.IsEnabled(LogLevel.Debug))
+                    {
+                        _logger.LogDebug($"Added value into cache. Key is '{key}'. " + value);
+                    }
                 }
                 catch (Exception ex)
                 {
