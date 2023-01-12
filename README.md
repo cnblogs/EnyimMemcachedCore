@@ -1,6 +1,6 @@
 # Enyim Memcached Client
 
-This is a .NET Core client library for Memcached migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached). Available on Nuget https://www.nuget.org/packages/EnyimMemcachedCore
+This is a memcached client library for .NET migrated from [EnyimMemcached](https://github.com/enyim/EnyimMemcached).
 
 ## Configure
 ### The appsettings.json Without Authentication
