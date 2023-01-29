@@ -14,12 +14,14 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class EnyimMemcachedServiceCollectionExtensions
     {
 #if NET6_0_OR_GREATER
+        [Obsolete("Calling BuildServiceProvider has side affects")]
         public static IServiceCollection AddEnyimMemcached(
             this IServiceCollection services,
             string sectionKey = "enyimMemcached",
             bool asDistributedCache = true)
         {
             var config = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            config[""] = "";
             return services.AddEnyimMemcached(config.GetSection(sectionKey), asDistributedCache);
         }
 #endif
