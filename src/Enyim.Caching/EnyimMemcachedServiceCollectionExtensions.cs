@@ -67,11 +67,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(configurationSection));
             }
 
-            if (!configurationSection.Exists())
-            {
-                throw new ArgumentNullException($"{configurationSection.Key} in appsettings.json");
-            }
-
             return services.AddEnyimMemcachedInternal(
                 s => s.Configure<MemcachedClientOptions>(configurationSection), asDistributedCache);
         }
@@ -93,10 +88,6 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             var section = configuration.GetSection(sectionKey);
-            if (!section.Exists())
-            {
-                throw new ArgumentNullException($"{sectionKey} in appsettings.json");
-            }
 
             return services.AddEnyimMemcachedInternal(
                 s => s.Configure<MemcachedClientOptions>(section), asDistributedCache);
@@ -155,12 +146,6 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configuration == null)
             {
                 throw new ArgumentNullException(nameof(configuration));
-            }
-
-            var section = configuration.GetSection(sectionKey);
-            if (!section.Exists())
-            {
-                throw new ArgumentNullException($"{sectionKey} in appsettings.json");
             }
 
             return services.AddEnyimMemcached<T>(
