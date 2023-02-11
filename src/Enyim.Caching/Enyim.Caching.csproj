@@ -19,13 +19,7 @@
   </PropertyGroup>
 
   <Choose>
-    <When Condition="'$(TargetFramework)' == 'net6.0'">
-      <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
-      </ItemGroup>
-    </When>
-    <When Condition="'$(TargetFramework)' == 'net7.0'">
+    <When Condition="'$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'net7.0'">
       <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
