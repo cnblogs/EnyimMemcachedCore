@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached
         /// <summary>
         /// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
         /// </summary>
-        public static readonly EndPoint All = new IPEndPoint(IPAddress.Any, 0);
+        public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
         #region [ readonly int[] Optable       ]
         // defines which values can be summed and which not
         private static readonly int[] Optable =
@@ -60,10 +60,10 @@ namespace Enyim.Caching.Memcached
         /// <param name="server">The adress of the server. If <see cref="IPAddress.Any"/> is specified it will return the sum of all server stat values.</param>
         /// <param name="item">The stat to be returned</param>
         /// <returns>The value of the specified stat item</returns>
-        public long GetValue(IPEndPoint server, StatItem item)
+        public long GetValue(EndPoint server, StatItem item)
         {
             // asked for a specific server
-            if (server.Address != IPAddress.Any)
+            if (server is not IPEndPoint || ((IPEndPoint)server).Address != IPAddress.Any)
             {
                 // error check
                 string tmp = GetRaw(server, item);
@@ -85,7 +85,7 @@ namespace Enyim.Caching.Memcached
             long retval = 0;
 
             // sum & return
-            foreach (IPEndPoint ep in _results.Keys)
+            foreach (EndPoint ep in _results.Keys)
             {
                 retval += GetValue(ep, item);
             }
@@ -98,7 +98,7 @@ namespace Enyim.Caching.Memcached
         /// </summary>
         /// <param name="server">The adress of the server</param>
         /// <returns>The version of memcached</returns>
-        public Version GetVersion(IPEndPoint server)
+        public Version GetVersion(EndPoint server)
         {
             string version = GetRaw(server, StatItem.Version);
             if (String.IsNullOrEmpty(version))
@@ -112,7 +112,7 @@ namespace Enyim.Caching.Memcached
         /// </summary>
         /// <param name="server">The adress of the server</param>
         /// <returns>A value indicating how long the server is running</returns>
-        public TimeSpan GetUptime(IPEndPoint server)
+        public TimeSpan GetUptime(EndPoint server)
         {
             string uptime = GetRaw(server, StatItem.Uptime);
             if (String.IsNullOrEmpty(uptime))
@@ -131,7 +131,7 @@ namespace Enyim.Caching.Memcached
         /// <param name="server">The adress of the server</param>
         /// <param name="key">The name of the stat value</param>
         /// <returns>The value of the stat item</returns>
-        public string GetRaw(IPEndPoint server, string key)
+        public string GetRaw(EndPoint server, string key)
         {
             Dictionary<string, string> serverValues;
             string retval;
@@ -159,7 +159,7 @@ namespace Enyim.Caching.Memcached
         /// <param name="server">The adress of the server</param>
         /// <param name="item">The stat value to be returned</param>
         /// <returns>The value of the stat item</returns>
-        public string GetRaw(IPEndPoint server, StatItem item)
+        public string GetRaw(EndPoint server, StatItem item)
         {
             if ((int)item < StatKeys.Length && (int)item >= 0)
                 return GetRaw(server, StatKeys[(int)item]);
