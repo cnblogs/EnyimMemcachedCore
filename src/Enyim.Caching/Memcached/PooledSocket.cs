@@ -20,6 +20,7 @@ namespace Enyim.Caching.Memcached
 
         private bool _isAlive;
         private bool _useSslStream;
+        private bool _useIPv6;
         private Socket _socket;
         private readonly EndPoint _endpoint;
         private readonly int _connectionTimeout;
@@ -27,13 +28,14 @@ namespace Enyim.Caching.Memcached
         private NetworkStream _inputStream;
         private SslStream _sslStream;
 
-        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger, bool useSslStream)
+        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger, bool useSslStream, bool useIPv6)
         {
             _logger = logger;
             _isAlive = true;
             _useSslStream = useSslStream;
+            _useIPv6 = useIPv6;
 
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            var socket = new Socket(useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.NoDelay = true;
 
@@ -540,10 +542,10 @@ namespace Enyim.Caching.Memcached
             {
                 var dnsEndPoint = (DnsEndPoint)endpoint;
                 var address = Dns.GetHostAddresses(dnsEndPoint.Host).FirstOrDefault(ip =>
-                    ip.AddressFamily == AddressFamily.InterNetwork);
-                if (address == null)
-                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint));
-                return new IPEndPoint(address, dnsEndPoint.Port);
+                    ip.AddressFamily == (_useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork));
+                return address == null
+                    ? throw new ArgumentException(string.Format("Could not resolve host '{0}'.", endpoint))
+                    : new IPEndPoint(address, dnsEndPoint.Port);
             }
             else if (endpoint is IPEndPoint)
             {

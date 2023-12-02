@@ -44,6 +44,8 @@ namespace Enyim.Caching.Configuration
 
         bool UseSslStream { get; }
 
+        bool UseIPv6 { get; }
+
         bool SuppressException { get; }
     }
 }
