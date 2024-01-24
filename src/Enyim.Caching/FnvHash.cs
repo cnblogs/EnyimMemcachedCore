@@ -23,6 +23,7 @@ namespace Enyim
         public FNV64()
         {
             //base.HashSize = 64;
+            Initialize();
         }
 
         /// <summary>
@@ -109,6 +110,7 @@ namespace Enyim
         /// </summary>
         public FNV1()
         {
+            Initialize();
         }
 
         /// <summary>
