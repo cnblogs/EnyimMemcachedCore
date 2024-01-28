@@ -1,11 +1,11 @@
+using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Results;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Results;
 using Xunit;
 
 namespace Enyim.Caching.Tests
@@ -15,22 +15,22 @@ namespace Enyim.Caching.Tests
         [Fact]
         public void FNV1a()
         {
-            var fnv = new Enyim.FNV1a();
+            var fnv = new FNV1a();
 
             // FNV1a test vectors:
             // http://www.isthe.com/chongo/src/fnv/test_fnv.c
-            var testVectors = new List<Tuple<string, UInt32>>
+            var testVectors = new List<Tuple<string, uint>>
             {
-                new Tuple<string, uint>("",0x811c9dc5U),
-                new Tuple<string, uint>("a",0xe40c292cU),
-                new Tuple<string, uint>("b",0xe70c2de5U),
-                new Tuple<string, uint>("c",0xe60c2c52U),
-                new Tuple<string, uint>("d",0xe10c2473U),
-                new Tuple<string, uint>("e",0xe00c22e0U),
-                new Tuple<string, uint>("f",0xe30c2799U),
-                new Tuple<string, uint>("fo",0x6222e842U),
-                new Tuple<string, uint>("foo",0xa9f37ed7U),
-                new Tuple<string, uint>("foob",0x3f5076efU),
+                new("", 0x811c9dc5U),
+                new("a", 0xe40c292cU),
+                new("b", 0xe70c2de5U),
+                new("c", 0xe60c2c52U),
+                new("d", 0xe10c2473U),
+                new("e", 0xe00c22e0U),
+                new("f", 0xe30c2799U),
+                new("fo", 0x6222e842U),
+                new("foo", 0xa9f37ed7U),
+                new("foob", 0x3f5076efU),
             };
 
             foreach (var testVector in testVectors)
@@ -44,8 +44,8 @@ namespace Enyim.Caching.Tests
         [Fact]
         public void TestLocator()
         {
-            String[] servers = new[]
-            {
+            string[] servers =
+            [
                 "10.0.1.1:11211",
                 "10.0.1.2:11211",
                 "10.0.1.3:11211",
@@ -54,11 +54,11 @@ namespace Enyim.Caching.Tests
                 "10.0.1.6:11211",
                 "10.0.1.7:11211",
                 "10.0.1.8:11211",
-            };
+            ];
             int[] serverCount = new int[servers.Length];
 
             var nodes = servers.
-                            Select(s => new MockNode(new IPEndPoint(IPAddress.Parse(s.Substring(0, s.IndexOf(":"))), 11211))).
+                            Select(s => new MockNode(new IPEndPoint(IPAddress.Parse(s.AsSpan(0, s.IndexOf(":"))), 11211))).
                             Cast<IMemcachedNode>().
                             ToList();
 
@@ -98,7 +98,7 @@ namespace Enyim.Caching.Tests
     {
         public MockNode(IPEndPoint endpoint)
         {
-            this.EndPoint = endpoint;
+            EndPoint = endpoint;
         }
 
         public EndPoint EndPoint { get; private set; }
