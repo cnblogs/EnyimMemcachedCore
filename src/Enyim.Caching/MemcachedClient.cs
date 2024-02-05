@@ -681,7 +681,7 @@ namespace Enyim.Caching
                 try { item = _transcoder.Serialize(value); }
                 catch (Exception e)
                 {
-                    _logger.LogError("PerformStore", e);
+                    _logger.LogError(0, ex, "PerformStore failed ({err})", ex.Message);
                     if (!_suppressException) throw;
 
                     result.Fail("PerformStore failed", e);
