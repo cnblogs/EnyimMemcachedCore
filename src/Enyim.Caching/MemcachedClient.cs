@@ -5,11 +5,8 @@ using Enyim.Caching.Memcached.Results.Extensions;
 using Enyim.Caching.Memcached.Results.Factories;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -678,13 +675,17 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = _transcoder.Serialize(value); }
-                catch (Exception e)
+                try
                 {
-                    _logger.LogError(0, ex, "PerformStore failed ({err})", ex.Message);
+                    item = _transcoder.Serialize(value);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "PerformStore failed with '{key}' key", key);
+
                     if (!_suppressException) throw;
 
-                    result.Fail("PerformStore failed", e);
+                    result.Fail("PerformStore failed", ex);
                     return result;
                 }
 
