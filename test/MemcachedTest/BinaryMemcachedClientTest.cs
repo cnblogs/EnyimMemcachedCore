@@ -1,5 +1,6 @@
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -49,31 +50,31 @@ namespace MemcachedTest
         [Fact]
         public virtual void CASTest()
         {
-            using (MemcachedClient client = GetClient())
-            {
-                // store the item
-                var r1 = client.Cas(StoreMode.Set, "CasItem1", "foo");
+            using MemcachedClient client = GetClient();
+            var value = new List<string> { "foo" };
 
-                Assert.True(r1.Result, "Initial set failed.");
-                Assert.NotEqual(r1.Cas, (ulong)0);
+            // store the item
+            var r1 = client.Cas(StoreMode.Set, "CasItem1", value);
 
-                // get back the item and check the cas value (it should match the cas from the set)
-                var r2 = client.GetWithCas<string>("CasItem1");
+            Assert.True(r1.Result, "Initial set failed.");
+            Assert.NotEqual((ulong)0, r1.Cas);
 
-                Assert.Equal("foo", r2.Result);
-                Assert.Equal(r1.Cas, r2.Cas);
+            // get back the item and check the cas value (it should match the cas from the set)
+            var r2 = client.GetWithCas<List<string>>("CasItem1");
 
-                var r3 = client.Cas(StoreMode.Set, "CasItem1", "bar", r1.Cas - 1);
+            Assert.Equal("foo", r2.Result[0]);
+            Assert.Equal(r1.Cas, r2.Cas);
 
-                Assert.False(r3.Result, "Overwriting with 'bar' should have failed.");
+            value[0] = "bar";
+            var r3 = client.Cas(StoreMode.Set, "CasItem1", value, r1.Cas - 1);
+            Assert.False(r3.Result, "Overwriting with 'bar' should have failed.");
 
-                var r4 = client.Cas(StoreMode.Set, "CasItem1", "baz", r2.Cas);
+            value[0] = "baz";
+            var r4 = client.Cas(StoreMode.Set, "CasItem1", value, r2.Cas);
+            Assert.True(r4.Result, "Overwriting with 'baz' should have succeeded.");
 
-                Assert.True(r4.Result, "Overwriting with 'baz' should have succeeded.");
-
-                var r5 = client.GetWithCas<string>("CasItem1");
-                Assert.Equal("baz", r5.Result);
-            }
+            var r5 = client.GetWithCas<List<string>>("CasItem1");
+            Assert.Equal("baz", r5.Result[0]);
         }
 
         [Fact]

@@ -423,19 +423,14 @@ namespace Enyim.Caching
 
         public CasResult<T> GetWithCas<T>(string key)
         {
-            CasResult<T> tmp;
-
-            return TryGetWithCas(key, out tmp)
-                    ? new CasResult<T> { Cas = tmp.Cas, Result = tmp.Result }
-                    : new CasResult<T> { Cas = tmp.Cas, Result = default };
+            return TryGetWithCas<T>(key, out var value)
+                ? value
+                : new CasResult<T> { Cas = value.Cas, Result = default };
         }
 
         public bool TryGetWithCas(string key, out CasResult<object> value)
         {
-            object tmp;
-            ulong cas;
-
-            var retval = PerformTryGet(key, out cas, out tmp);
+            var retval = PerformTryGet(key, out ulong cas, out object tmp);
 
             value = new CasResult<object> { Cas = cas, Result = tmp };
 
