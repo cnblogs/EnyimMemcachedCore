@@ -1,14 +1,14 @@
-using System;
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Transcoders;
-using System.Collections.Generic;
-using System.Text;
-using Xunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace MemcachedTest
 {
@@ -24,7 +24,7 @@ namespace MemcachedTest
             {
                 options.AddServer("memcached", 11211);
                 options.Protocol = protocol;
-                options.Transcoder = "MessagePackTranscoder";
+                // options.Transcoder = "MessagePackTranscoder";
             });
             if (useBinaryFormatterTranscoder)
             {

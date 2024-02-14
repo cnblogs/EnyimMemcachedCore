@@ -1,12 +1,11 @@
-using System;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Runtime.Serialization;
-using Newtonsoft.Json.Bson;
-using System.Collections;
-using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
+using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace Enyim.Caching.Memcached
 {
@@ -16,7 +15,7 @@ namespace Enyim.Caching.Memcached
     public class DefaultTranscoder : ITranscoder
     {
         public const uint RawDataFlag = 0xfa52;
-        private static readonly ArraySegment<byte> NullArray = new ArraySegment<byte>(new byte[0]);
+        private static readonly ArraySegment<byte> NullArray = new([]);
 
         CacheItem ITranscoder.Serialize(object value)
         {
@@ -46,22 +45,18 @@ namespace Enyim.Caching.Memcached
                 }
                 else
                 {
-                    return default(T);
+                    return default;
                 }
             }
 
-            using (var ms = new MemoryStream(item.Data.ToArray()))
+            using var ms = new MemoryStream(item.Data.ToArray());
+            using var reader = new BsonDataReader(ms);
+            if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
             {
-                using (var reader = new BsonDataReader(ms))
-                {
-                    if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
-                    {
-                        reader.ReadRootValueAsArray = true;
-                    }
-                    var serializer = new JsonSerializer();
-                    return serializer.Deserialize<T>(reader);
-                }
+                reader.ReadRootValueAsArray = true;
             }
+            var serializer = new JsonSerializer();
+            return serializer.Deserialize<T>(reader);
         }
 
         protected virtual CacheItem Serialize(object value)
