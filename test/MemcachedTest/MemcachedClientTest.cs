@@ -1,6 +1,5 @@
 using Enyim.Caching;
 using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Transcoders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -17,7 +16,7 @@ namespace MemcachedTest
         private static readonly ILog _log = LogManager.GetLogger(typeof(MemcachedClientTest));
         public const string TestObjectKey = "Hello_World";
 
-        protected virtual MemcachedClient GetClient(MemcachedProtocol protocol = MemcachedProtocol.Binary, bool useBinaryFormatterTranscoder = false)
+        protected virtual MemcachedClient GetClient(MemcachedProtocol protocol = MemcachedProtocol.Binary)
         {
             IServiceCollection services = new ServiceCollection();
             services.AddEnyimMemcached(options =>
@@ -26,10 +25,6 @@ namespace MemcachedTest
                 options.Protocol = protocol;
                 // options.Transcoder = "MessagePackTranscoder";
             });
-            if (useBinaryFormatterTranscoder)
-            {
-                services.AddSingleton<ITranscoder, BinaryFormatterTranscoder>();
-            }
 
             services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning).AddConsole());
 
@@ -66,11 +61,6 @@ namespace MemcachedTest
             {
                 Assert.True(await client.StoreAsync(StoreMode.Set, TestObjectKey, td, DateTime.Now.AddSeconds(5)));
             }
-
-            using (MemcachedClient client = GetClient(MemcachedProtocol.Binary, true))
-            {
-                Assert.True(await client.StoreAsync(StoreMode.Set, TestObjectKey, td, DateTime.Now.AddSeconds(5)));
-            }
         }
 
         [Fact]
@@ -86,18 +76,6 @@ namespace MemcachedTest
             {
                 Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
 
-                TestData td2 = client.Get<TestData>(TestObjectKey);
-
-                Assert.NotNull(td2);
-                Assert.Equal("Hello", td2.FieldA);
-                Assert.Equal("World", td2.FieldB);
-                Assert.Equal(19810619, td2.FieldC);
-                Assert.True(td2.FieldD, "Object was corrupted.");
-            }
-
-            using (MemcachedClient client = GetClient(MemcachedProtocol.Binary, true))
-            {
-                Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
