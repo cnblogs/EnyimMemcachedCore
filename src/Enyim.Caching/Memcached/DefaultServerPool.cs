@@ -50,7 +50,7 @@ namespace Enyim.Caching.Memcached
 
         protected virtual IMemcachedNode CreateNode(EndPoint endpoint)
         {
-            return new MemcachedNode(endpoint, _configuration.SocketPool, _logger, _configuration.UseSslStream, _configuration.UseIPv6);
+            return new MemcachedNode(endpoint, _configuration.SocketPool, _logger, _configuration.UseSslStream, _configuration.UseIPv6, _configuration.SslClientAuth);
         }
 
         private void rezCallback(object state)

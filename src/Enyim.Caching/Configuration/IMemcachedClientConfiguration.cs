@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
 using Enyim.Caching.Memcached;
 
 namespace Enyim.Caching.Configuration
@@ -47,6 +48,8 @@ namespace Enyim.Caching.Configuration
         bool UseIPv6 { get; }
 
         bool SuppressException { get; }
+
+        SslClientAuthenticationOptions SslClientAuth { get; }
     }
 }
 

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Threading.Tasks;
 
 namespace Enyim.Caching.Configuration
@@ -26,6 +27,8 @@ namespace Enyim.Caching.Configuration
         public bool UseIPv6 { get; set; }
 
         public bool SuppressException { get; set; } = true;
+
+        public SslClientAuthenticationOptions SslClientAuth { get; set; }
 
         public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
