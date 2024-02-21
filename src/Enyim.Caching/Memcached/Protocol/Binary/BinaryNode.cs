@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Security;
 using System.Threading;
 using Enyim.Caching.Configuration;
 using Enyim.Collections;
@@ -25,8 +26,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             ISaslAuthenticationProvider authenticationProvider,
             ILogger logger,
             bool useSslStream,
-            bool useIPv6)
-            : base(endpoint, config, logger, useSslStream, useIPv6)
+            bool useIPv6,
+            SslClientAuthenticationOptions sslClientAuthOptions)
+            : base(endpoint, config, logger, useSslStream, useIPv6, sslClientAuthOptions)
         {
             _authenticationProvider = authenticationProvider;
             _logger = logger;
