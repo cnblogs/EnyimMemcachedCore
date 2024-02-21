@@ -2,9 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Security;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching.Configuration
 {
@@ -15,6 +13,8 @@ namespace Enyim.Caching.Configuration
         public SocketPoolOptions SocketPool { get; set; }
 
         public List<Server> Servers { get; set; } = new List<Server>();
+
+        public bool UseLegacyNodeLocator { get; set; }
 
         public Authentication Authentication { get; set; }
 
