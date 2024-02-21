@@ -10,7 +10,7 @@ namespace Enyim
     /// Calculation found at http://lists.danga.com/pipermail/memcached/2007-April/003846.html, but 
     /// it is pretty much available everywhere
     /// </remarks>
-    public class FNV64 : System.Security.Cryptography.HashAlgorithm, IUIntHashAlgorithm
+    public class FNV64 : HashAlgorithm, IUIntHashAlgorithm
     {
         protected const ulong Init = 0xcbf29ce484222325L;
         protected const ulong Prime = 0x100000001b3L;
@@ -20,10 +20,10 @@ namespace Enyim
         /// <summary>
         /// Initializes a new instance of the <see cref="T:FNV64"/> class.
         /// </summary>
-        public FNV64()
+        public FNV64(bool initialize)
         {
             //base.HashSize = 64;
-            Initialize();
+            if (initialize) Initialize();
         }
 
         /// <summary>
@@ -76,6 +76,8 @@ namespace Enyim
     /// </summary>
     public sealed class FNV64a : FNV64
     {
+        public FNV64a(bool initialize) : base(initialize) { }
+
         /// <summary>Routes data written to the object into the <see cref="T:FNV64" /> hash algorithm for computing the hash.</summary>
         /// <param name="array">The input data. </param>
         /// <param name="ibStart">The offset into the byte array from which to begin using data. </param>
@@ -108,9 +110,9 @@ namespace Enyim
         /// <summary>
         /// Initializes a new instance of the <see cref="T:FNV1a"/> class.
         /// </summary>
-        public FNV1()
+        public FNV1(bool initialize)
         {
-            Initialize();
+            if (initialize) Initialize();
         }
 
         /// <summary>
@@ -163,6 +165,8 @@ namespace Enyim
     /// </summary>
     public class FNV1a : FNV1
     {
+        public FNV1a(bool initialize) : base(initialize) { }
+
         /// <summary>Routes data written to the object into the <see cref="T:FNV1a" /> hash algorithm for computing the hash.</summary>
         /// <param name="array">The input data. </param>
         /// <param name="ibStart">The offset into the byte array from which to begin using data. </param>
@@ -185,6 +189,8 @@ namespace Enyim
     /// <remarks>Algorithm found at http://bretm.home.comcast.net/hash/6.html</remarks>
     public class ModifiedFNV : FNV1a
     {
+        public ModifiedFNV(bool initialize) : base(initialize) { }
+
         /// <summary>
         /// Returns the computed <see cref="T:ModifiedFNV" /> hash value after all data has been written to the object.
         /// </summary>

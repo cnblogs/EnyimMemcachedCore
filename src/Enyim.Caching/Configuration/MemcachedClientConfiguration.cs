@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Net;
 using Enyim.Caching.Memcached;
-using Enyim.Reflection;
 using Enyim.Caching.Memcached.Protocol.Binary;
+using Enyim.Caching.Memcached.Transcoders;
+using Enyim.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using Enyim.Caching.Memcached.Transcoders;
 
 namespace Enyim.Caching.Configuration
 {
@@ -150,7 +150,14 @@ namespace Enyim.Caching.Configuration
 
             if (NodeLocator == null)
             {
-                NodeLocator = options.Servers.Count > 1 ? typeof(DefaultNodeLocator) : typeof(SingleNodeLocator);
+                if (options.Servers.Count > 1)
+                {
+                    NodeLocator = options.UseLegacyNodeLocator ? typeof(LegacyNodeLocator) : typeof(DefaultNodeLocator);
+                }
+                else
+                {
+                    NodeLocator = typeof(SingleNodeLocator);
+                }
             }
 
             if (!string.IsNullOrEmpty(options.Transcoder))
