@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,10 +7,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Memcached
 {
@@ -38,11 +37,13 @@ namespace Enyim.Caching.Memcached
             _sslClientAuthOptions = sslClientAuthOptions;
 
             if (_useSslStream && _sslClientAuthOptions == null)
+            {
                 // When not provided, create a default instance with target host set to the endpoint's host
-                sslClientAuthOptions = new SslClientAuthenticationOptions
+                _sslClientAuthOptions = new SslClientAuthenticationOptions
                 {
                     TargetHost = ((DnsEndPoint)_endpoint).Host,
                 };
+            }
 
             var socket = new Socket(useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
