@@ -15,7 +15,7 @@ namespace Enyim.Caching.Tests
         [Fact]
         public void FNV1a()
         {
-            var fnv = new FNV1a();
+            var fnv = new FNV1a(true);
 
             // FNV1a test vectors:
             // http://www.isthe.com/chongo/src/fnv/test_fnv.c
