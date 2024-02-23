@@ -1,10 +1,43 @@
+using System;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
+
 namespace Enyim.Caching.Memcached
 {
     /// <summary>
     /// Default <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> implementation. Primitive types are manually serialized, the rest is serialized using <see cref="T:System.Runtime.Serialization.NetDataContractSerializer"/>.
     /// </summary>
     public class DataContractTranscoder : DefaultTranscoder
-    { }
+    {
+        protected override object DeserializeObject(ArraySegment<byte> value)
+        {
+            using (var ms = new MemoryStream(value.Array, value.Offset, value.Count))
+            {
+                using (var reader = new BsonDataReader(ms))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    return serializer.Deserialize(reader);
+                }
+            }
+        }
+
+        protected override ArraySegment<byte> SerializeObject(object value)
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var writer = new BsonDataWriter(ms))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(writer, value);
+                }
+
+                return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
+            }
+        }
+    }
 }
 
 #region [ License information          ]

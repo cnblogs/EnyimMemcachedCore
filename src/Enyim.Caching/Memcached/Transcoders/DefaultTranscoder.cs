@@ -1,7 +1,10 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
 using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Enyim.Caching.Memcached
@@ -13,12 +16,6 @@ namespace Enyim.Caching.Memcached
     {
         public const uint RawDataFlag = 0xfa52;
         private static readonly ArraySegment<byte> NullArray = new([]);
-
-        static DefaultTranscoder()
-        {
-            var objectSerializer = new ObjectSerializer(ObjectSerializer.AllAllowedTypes);
-            BsonSerializer.RegisterSerializer(objectSerializer);
-        }
 
         CacheItem ITranscoder.Serialize(object value)
         {
@@ -52,7 +49,14 @@ namespace Enyim.Caching.Memcached
                 }
             }
 
-            return BsonSerializer.Deserialize<T>(item.Data.ToArray());
+            using var ms = new MemoryStream(item.Data.ToArray());
+            using var reader = new BsonDataReader(ms);
+            if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
+            {
+                reader.ReadRootValueAsArray = true;
+            }
+            var serializer = new JsonSerializer();
+            return serializer.Deserialize<T>(reader);
         }
 
         protected virtual CacheItem Serialize(object value)
@@ -257,8 +261,15 @@ namespace Enyim.Caching.Memcached
 
         protected virtual ArraySegment<byte> SerializeObject(object value)
         {
-            var bson = value.ToBson();
-            return new ArraySegment<byte>(bson, 0, bson.Length);
+            using (var ms = new MemoryStream())
+            {
+                using (var writer = new BsonDataWriter(ms))
+                {
+                    var serializer = new JsonSerializer();
+                    serializer.Serialize(writer, value);
+                    return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
+                }
+            }
         }
 
         #endregion
@@ -336,7 +347,14 @@ namespace Enyim.Caching.Memcached
 
         protected virtual object DeserializeObject(ArraySegment<byte> value)
         {
-            return BsonSerializer.Deserialize<object>(value.Array);
+            using (var ms = new MemoryStream(value.Array, value.Offset, value.Count))
+            {
+                using (var reader = new BsonDataReader(ms))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    return serializer.Deserialize(reader);
+                }
+            }
         }
 
         #endregion
