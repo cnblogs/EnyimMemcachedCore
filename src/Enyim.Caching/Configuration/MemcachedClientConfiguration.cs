@@ -145,7 +145,7 @@ namespace Enyim.Caching.Configuration
             else if (keyTransformer != null)
             {
                 _keyTransformer = keyTransformer;
-                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer.ToString()}'");
+                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer}'");
             }
 
             if (NodeLocator == null)
@@ -158,6 +158,8 @@ namespace Enyim.Caching.Configuration
                 {
                     NodeLocator = typeof(SingleNodeLocator);
                 }
+
+                _logger.LogDebug($"Use NodeLocator: {NodeLocator}");
             }
 
             if (!string.IsNullOrEmpty(options.Transcoder))
