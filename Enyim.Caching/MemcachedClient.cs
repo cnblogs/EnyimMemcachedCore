@@ -165,7 +165,7 @@ namespace Enyim.Caching
             result = new DefaultGetOperationResultFactory().Create();
             var hashedKey = this.keyTransformer.Transform(key);
 
-            node = this.pool.Locate(hashedKey);
+            node = this.pool.LocateV2(hashedKey,key);
             if (node == null)
             {
                 var errorMessage = $"Unable to locate node with \"{key}\" key";
@@ -184,7 +184,7 @@ namespace Enyim.Caching
             result = new DefaultGetOperationResultFactory<T>().Create();
             var hashedKey = this.keyTransformer.Transform(key);
 
-            node = this.pool.Locate(hashedKey);
+            node = this.pool.LocateV2(hashedKey,key);
             if (node == null)
             {
                 var errorMessage = $"Unable to locate node with \"{key}\" key";
@@ -369,7 +369,7 @@ namespace Enyim.Caching
         protected virtual IGetOperationResult PerformTryGet(string key, out ulong cas, out object value)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey,key);
             var result = GetOperationResultFactory.Create();
 
             cas = 0;
@@ -405,7 +405,7 @@ namespace Enyim.Caching
         protected virtual IGetOperationResult PerformTryGet<T>(string key, out ulong cas, out T value)
         {
             var hashedKey = keyTransformer.Transform(key);
-            var node = pool.Locate(hashedKey);
+            var node = pool.LocateV2(hashedKey,key);
             var result = GetOperationResultFactory.Create();
 
             cas = 0;
@@ -574,7 +574,7 @@ namespace Enyim.Caching
         protected virtual IStoreOperationResult PerformStore(StoreMode mode, string key, object value, uint expires, ref ulong cas, out int statusCode)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey,key);
             var result = StoreOperationResultFactory.Create();
 
             statusCode = -1;
@@ -619,7 +619,7 @@ namespace Enyim.Caching
         protected async virtual Task<IStoreOperationResult> PerformStoreAsync(StoreMode mode, string key, object value, uint expires)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey, key);
             var result = StoreOperationResultFactory.Create();
 
             int statusCode = -1;
@@ -877,7 +877,7 @@ namespace Enyim.Caching
         protected virtual IMutateOperationResult PerformMutate(MutationMode mode, string key, ulong defaultValue, ulong delta, uint expires, ref ulong cas)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey, key);
             var result = MutateOperationResultFactory.Create();
 
             if (node != null)
@@ -911,7 +911,7 @@ namespace Enyim.Caching
         {
             ulong cas = 0;
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey, key);
             var result = MutateOperationResultFactory.Create();
 
             if (node != null)
@@ -1002,7 +1002,7 @@ namespace Enyim.Caching
         protected virtual IConcatOperationResult PerformConcatenate(ConcatenationMode mode, string key, ref ulong cas, ArraySegment<byte> data)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey,key);
             var result = ConcatOperationResultFactory.Create();
 
             if (node != null)

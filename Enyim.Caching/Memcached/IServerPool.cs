@@ -8,7 +8,8 @@ namespace Enyim.Caching.Memcached
 	/// </summary>
 	public interface IServerPool : IDisposable
 	{
-		IMemcachedNode Locate(string key);
+		IMemcachedNode Locate(string hashedkey);
+		IMemcachedNode LocateV2(string hashedkey, string key);
 		IOperationFactory OperationFactory { get; }
 		IEnumerable<IMemcachedNode> GetWorkingNodes();
 

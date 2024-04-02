@@ -458,7 +458,7 @@ namespace Enyim.Caching
 		public IRemoveOperationResult ExecuteRemove(string key)
 		{
 			var hashedKey = this.keyTransformer.Transform(key);
-			var node = this.pool.Locate(hashedKey);
+			var node = this.pool.LocateV2(hashedKey,key);
 			var result = RemoveOperationResultFactory.Create();
 
 			if (node != null)
@@ -486,7 +486,7 @@ namespace Enyim.Caching
         public async Task<IRemoveOperationResult> ExecuteRemoveAsync(string key)
         {
             var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.LocateV2(hashedKey,key);
             var result = RemoveOperationResultFactory.Create();
 
             if (node != null)

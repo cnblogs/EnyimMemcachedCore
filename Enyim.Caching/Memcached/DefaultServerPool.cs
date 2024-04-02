@@ -190,8 +190,14 @@ namespace Enyim.Caching.Memcached
         IMemcachedNode IServerPool.Locate(string key)
         {
             var node = this.nodeLocator.Locate(key);
-
             return node;
+        }
+
+        IMemcachedNode IServerPool.LocateV2(string hashedKey, string key)
+        {
+            var node = this.nodeLocator.Locate(hashedKey);
+            _logger.LogDebug("Chosen node for the key " + key + " is " + node.EndPoint.ToString() + ". Key's Hashed value is "+hashedKey);
+			return node;
         }
 
         IOperationFactory IServerPool.OperationFactory
