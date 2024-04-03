@@ -30,6 +30,7 @@ namespace Enyim.Caching.Memcached
 
         public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger, bool useSslStream, bool useIPv6, SslClientAuthenticationOptions sslClientAuthOptions)
         {
+            _endpoint = endpoint;
             _logger = logger;
             _isAlive = true;
             _useSslStream = useSslStream;
@@ -61,7 +62,6 @@ namespace Enyim.Caching.Memcached
             socket.SendTimeout = rcv;
 
             _socket = socket;
-            _endpoint = endpoint;
         }
 
         public void Connect()
