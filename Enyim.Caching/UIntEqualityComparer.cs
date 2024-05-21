@@ -5,14 +5,14 @@ namespace Enyim.Caching
 	/// <summary>
 	/// A fast comparer for dictionaries indexed by UInt. Faster than using Comparer.Default
 	/// </summary>
-	public sealed class UIntEqualityComparer : IEqualityComparer<uint>
+	public sealed class ULongEqualityComparer : IEqualityComparer<ulong>
 	{
-		bool IEqualityComparer<uint>.Equals(uint x, uint y)
+		bool IEqualityComparer<ulong>.Equals(ulong x, ulong y)
 		{
 			return x == y;
 		}
 
-		int IEqualityComparer<uint>.GetHashCode(uint value)
+		int IEqualityComparer<ulong>.GetHashCode(ulong value)
 		{
 			return value.GetHashCode();
 		}
@@ -22,7 +22,7 @@ namespace Enyim.Caching
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kiskï¿½, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
