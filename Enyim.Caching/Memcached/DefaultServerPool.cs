@@ -190,7 +190,7 @@ namespace Enyim.Caching.Memcached
         IMemcachedNode IServerPool.Locate(string key)
         {
             var node = this.nodeLocator.Locate(key);
-
+            _logger.LogWarning(String.Format("Address for key {0} is node is {1}.", key, node.EndPoint.ToString()));
             return node;
         }
 
