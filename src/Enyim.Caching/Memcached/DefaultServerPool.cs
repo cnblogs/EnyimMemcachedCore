@@ -44,13 +44,23 @@ namespace Enyim.Caching.Memcached
 
         ~DefaultServerPool()
         {
-            try { ((IDisposable)this).Dispose(); }
-            catch { }
+            try
+            {
+                ((IDisposable)this).Dispose();
+            }
+            catch
+            {
+            }
         }
 
         protected virtual IMemcachedNode CreateNode(EndPoint endpoint)
         {
+#if NET5_0_OR_GREATER
             return new MemcachedNode(endpoint, _configuration.SocketPool, _logger, _configuration.UseSslStream, _configuration.UseIPv6, _configuration.SslClientAuth);
+#else
+            return new MemcachedNode(endpoint, _configuration.SocketPool, _logger, _configuration.UseSslStream,
+                _configuration.UseIPv6);
+#endif
         }
 
         private void rezCallback(object state)
@@ -152,7 +162,8 @@ namespace Enyim.Caching.Memcached
             {
                 if (_isDisposed)
                 {
-                    if (_logger.IsEnabled(LogLevel.Warning)) _logger.LogWarning("Got a node fail but the pool is already disposed. Ignoring.");
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                        _logger.LogWarning("Got a node fail but the pool is already disposed. Ignoring.");
 
                     return;
                 }
@@ -206,15 +217,13 @@ namespace Enyim.Caching.Memcached
 
         void IServerPool.Start()
         {
-            _allNodes = _configuration.Servers.
-                                Select(ep =>
-                                {
-                                    var node = CreateNode(ep);
-                                    node.Failed += NodeFail;
+            _allNodes = _configuration.Servers.Select(ep =>
+            {
+                var node = CreateNode(ep);
+                node.Failed += NodeFail;
 
-                                    return node;
-                                }).
-                                ToArray();
+                return node;
+            }).ToArray();
 
             // initialize the locator
             var locator = _configuration.CreateNodeLocator();
@@ -230,6 +239,7 @@ namespace Enyim.Caching.Memcached
         }
 
         #endregion
+
         #region [ IDisposable                  ]
 
         void IDisposable.Dispose()
@@ -246,14 +256,26 @@ namespace Enyim.Caching.Memcached
                 // the nodes one last time
                 var nd = _nodeLocator as IDisposable;
                 if (nd != null)
-                    try { nd.Dispose(); }
-                    catch (Exception e) { _logger.LogError(nameof(DefaultServerPool), e); }
+                    try
+                    {
+                        nd.Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(nameof(DefaultServerPool), e);
+                    }
 
                 _nodeLocator = null;
 
                 for (var i = 0; i < _allNodes.Length; i++)
-                    try { _allNodes[i].Dispose(); }
-                    catch (Exception e) { _logger.LogError(nameof(DefaultServerPool), e); }
+                    try
+                    {
+                        _allNodes[i].Dispose();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(nameof(DefaultServerPool), e);
+                    }
 
                 // stop the timer
                 if (_resurrectTimer != null)
@@ -270,21 +292,23 @@ namespace Enyim.Caching.Memcached
 }
 
 #region [ License information          ]
+
 /* ************************************************************
- * 
+ *
  *    Copyright (c) 2010 Attila Kisk? enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
+
 #endregion

@@ -1,33 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <Description>EnyimMemcachedCore is a Memcached client library for .NET. Add services.AddEnyimMemcached() in Startup. Inject IMemcachedClient into constructors.</Description>
-    <Authors>cnblogs.com</Authors>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>EnyimMemcachedCore</AssemblyName>
-    <PackageId>EnyimMemcachedCore</PackageId>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>memcached;cache</PackageTags>
-    <PackageProjectUrl>https://github.com/cnblogs/EnyimMemcachedCore</PackageProjectUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/cnblogs/EnyimMemcachedCore</RepositoryUrl>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <LangVersion>latest</LangVersion>
-    <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Description>EnyimMemcachedCore is a Memcached client library for .NET. Add services.AddEnyimMemcached() in Startup. Inject IMemcachedClient into constructors.</Description>
+        <Authors>cnblogs.com</Authors>
+        <TargetFrameworks>net6.0;net7.0;net8.0;net48;net481</TargetFrameworks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AssemblyName>EnyimMemcachedCore</AssemblyName>
+        <PackageId>EnyimMemcachedCore</PackageId>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageTags>memcached;cache</PackageTags>
+        <PackageProjectUrl>https://github.com/cnblogs/EnyimMemcachedCore</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/cnblogs/EnyimMemcachedCore</RepositoryUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+        <LangVersion>latest</LangVersion>
+        <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
+    </PropertyGroup>
 
-  <ItemGroup>
-      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-      <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
-  </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)'!='net48' And '$(TargetFramework)'!='net481'">
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MessagePack" Version="2.5.140" />
-  </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)'=='net48' Or '$(TargetFramework)'=='net481'">
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2"/>
+        <PackageReference Include="System.Net.Security" Version="4.3.2"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="../../README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MessagePack" Version="2.5.140"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../../README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 </Project>
