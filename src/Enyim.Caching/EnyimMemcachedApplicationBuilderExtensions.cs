@@ -12,6 +12,7 @@ namespace Microsoft.AspNetCore.Builder
 {
     public static class EnyimMemcachedApplicationBuilderExtensions
     {
+#if NET5_0_OR_GREATER
         public static IApplicationBuilder UseEnyimMemcached(this IApplicationBuilder app)
         {
             var logger = app.ApplicationServices.GetService<ILogger<IMemcachedClient>>();
@@ -27,5 +28,6 @@ namespace Microsoft.AspNetCore.Builder
 
             return app;
         }
+#endif
     }
 }

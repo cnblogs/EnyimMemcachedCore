@@ -26,15 +26,24 @@ namespace Enyim.Caching.Memcached
 
         private NetworkStream _inputStream;
         private SslStream _sslStream;
+#if NET5_0_OR_GREATER
         private readonly SslClientAuthenticationOptions _sslClientAuthOptions;
+#endif
 
-        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger, bool useSslStream, bool useIPv6, SslClientAuthenticationOptions sslClientAuthOptions)
+#if NET5_0_OR_GREATER
+        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger,
+            bool useSslStream, bool useIPv6, SslClientAuthenticationOptions sslClientAuthOptions)
+#else
+        public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger,
+            bool useSslStream, bool useIPv6)
+#endif
         {
             _endpoint = endpoint;
             _logger = logger;
             _isAlive = true;
             _useSslStream = useSslStream;
             _useIPv6 = useIPv6;
+#if NET5_0_OR_GREATER
             _sslClientAuthOptions = sslClientAuthOptions;
 
             if (_useSslStream && _sslClientAuthOptions == null)
@@ -45,8 +54,9 @@ namespace Enyim.Caching.Memcached
                     TargetHost = ((DnsEndPoint)_endpoint).Host,
                 };
             }
-
-            var socket = new Socket(useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+#endif
+            var socket = new Socket(useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork,
+                SocketType.Stream, ProtocolType.Tcp);
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.NoDelay = true;
 
@@ -71,6 +81,7 @@ namespace Enyim.Caching.Memcached
             //Learn from https://github.com/dotnet/corefx/blob/release/2.2/src/System.Data.SqlClient/src/System/Data/SqlClient/SNI/SNITcpHandle.cs#L180
             var cts = new CancellationTokenSource();
             cts.CancelAfter(_connectionTimeout);
+
             void Cancel()
             {
                 if (_socket != null && !_socket.Connected)
@@ -79,6 +90,7 @@ namespace Enyim.Caching.Memcached
                     _socket = null;
                 }
             }
+
             cts.Token.Register(Cancel);
 
             try
@@ -106,6 +118,7 @@ namespace Enyim.Caching.Memcached
 
             if (success)
             {
+#if NET5_0_OR_GREATER
                 if (_useSslStream)
                 {
                     _sslStream = new SslStream(new NetworkStream(_socket));
@@ -115,6 +128,9 @@ namespace Enyim.Caching.Memcached
                 {
                     _inputStream = new NetworkStream(_socket);
                 }
+#else
+                _inputStream = new NetworkStream(_socket);
+#endif
             }
             else
             {
@@ -141,6 +157,7 @@ namespace Enyim.Caching.Memcached
                         _socket.Dispose();
                         _socket = null;
                     }
+
                     throw new TimeoutException($"Timeout to connect to {_endpoint}.");
                 }
             }
@@ -165,6 +182,7 @@ namespace Enyim.Caching.Memcached
 
             if (success)
             {
+#if NET5_0_OR_GREATER
                 if (_useSslStream)
                 {
                     _sslStream = new SslStream(new NetworkStream(_socket));
@@ -174,6 +192,9 @@ namespace Enyim.Caching.Memcached
                 {
                     _inputStream = new NetworkStream(_socket);
                 }
+#else
+                _inputStream = new NetworkStream(_socket);
+#endif
             }
             else
             {
@@ -282,7 +303,13 @@ namespace Enyim.Caching.Memcached
                 {
                     if (_socket != null)
                     {
-                        try { _socket.Dispose(); } catch { }
+                        try
+                        {
+                            _socket.Dispose();
+                        }
+                        catch
+                        {
+                        }
                     }
 
                     if (_inputStream != null)
@@ -362,6 +389,7 @@ namespace Enyim.Caching.Memcached
                 {
                     _isAlive = false;
                 }
+
                 throw;
             }
         }
@@ -377,7 +405,9 @@ namespace Enyim.Caching.Memcached
             {
                 try
                 {
-                    int currentRead = (_useSslStream ? await _sslStream.ReadAsync(buffer, offset, shouldRead) : await _inputStream.ReadAsync(buffer, offset, shouldRead));
+                    int currentRead = (_useSslStream
+                        ? await _sslStream.ReadAsync(buffer, offset, shouldRead)
+                        : await _inputStream.ReadAsync(buffer, offset, shouldRead));
                     if (currentRead == count)
                         break;
                     if (currentRead < 1)
@@ -417,7 +447,9 @@ namespace Enyim.Caching.Memcached
             {
                 try
                 {
-                    int currentRead = (_useSslStream ? _sslStream.Read(buffer, offset, shouldRead) : _inputStream.Read(buffer, offset, shouldRead));
+                    int currentRead = (_useSslStream
+                        ? _sslStream.Read(buffer, offset, shouldRead)
+                        : _inputStream.Read(buffer, offset, shouldRead));
                     if (currentRead == count)
                         break;
                     if (currentRead < 1)
@@ -433,6 +465,7 @@ namespace Enyim.Caching.Memcached
                     {
                         _isAlive = false;
                     }
+
                     throw;
                 }
             }
@@ -455,6 +488,7 @@ namespace Enyim.Caching.Memcached
                     {
                         _isAlive = false;
                     }
+
                     throw;
                 }
             }
@@ -487,6 +521,7 @@ namespace Enyim.Caching.Memcached
                     {
                         _sslStream.Write(buf.Array);
                     }
+
                     _sslStream.Flush();
                 }
                 else
@@ -505,6 +540,7 @@ namespace Enyim.Caching.Memcached
                 {
                     _isAlive = false;
                 }
+
                 _logger.LogError(ex, nameof(PooledSocket.Write));
                 throw;
             }
@@ -522,6 +558,7 @@ namespace Enyim.Caching.Memcached
                     {
                         await _sslStream.WriteAsync(buf.Array, 0, buf.Count);
                     }
+
                     await _sslStream.FlushAsync();
                 }
                 else
@@ -530,7 +567,8 @@ namespace Enyim.Caching.Memcached
                     if (bytesTransferred <= 0)
                     {
                         _isAlive = false;
-                        _logger.LogError($"Failed to {nameof(PooledSocket.WriteAsync)}. bytesTransferred: {bytesTransferred}");
+                        _logger.LogError(
+                            $"Failed to {nameof(PooledSocket.WriteAsync)}. bytesTransferred: {bytesTransferred}");
                         ThrowHelper.ThrowSocketWriteError(_endpoint);
                     }
                 }
@@ -541,6 +579,7 @@ namespace Enyim.Caching.Memcached
                 {
                     _isAlive = false;
                 }
+
                 _logger.LogError(ex, nameof(PooledSocket.WriteAsync));
                 throw;
             }

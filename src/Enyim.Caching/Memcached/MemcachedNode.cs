@@ -3,9 +3,7 @@ using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
 using Enyim.Collections;
-
 using Microsoft.Extensions.Logging;
-
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -38,19 +36,27 @@ namespace Enyim.Caching.Memcached
         private readonly TimeSpan _initPoolTimeout;
         private bool _useSslStream;
         private bool _useIPv6;
+#if NET5_0_OR_GREATER
         private readonly SslClientAuthenticationOptions _sslClientAuthOptions;
+#endif
 
         public MemcachedNode(
             EndPoint endpoint,
             ISocketPoolConfiguration socketPoolConfig,
             ILogger logger,
             bool useSslStream,
+#if NET5_0_OR_GREATER
             bool useIPv6,
             SslClientAuthenticationOptions sslClientAuthOptions)
+#else
+            bool useIPv6)
+#endif
         {
             _endPoint = endpoint;
             _useSslStream = useSslStream;
+#if NET5_0_OR_GREATER
             _sslClientAuthOptions = sslClientAuthOptions;
+#endif
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
             _config = socketPoolConfig;
 
@@ -136,14 +142,22 @@ namespace Enyim.Caching.Memcached
 
                     Interlocked.Exchange(ref _internalPoolImpl, newPool);
 
-                    try { oldPool.Dispose(); }
-                    catch { }
+                    try
+                    {
+                        oldPool.Dispose();
+                    }
+                    catch
+                    {
+                    }
                 }
 
                 return true;
             }
             //could not reconnect
-            catch { return false; }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -170,7 +184,8 @@ namespace Enyim.Caching.Memcached
 
                         if (_logger.IsEnabled(LogLevel.Information))
                         {
-                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms",
+                                (DateTime.Now - startTime).TotalMilliseconds);
                         }
                     }
                 }
@@ -218,7 +233,8 @@ namespace Enyim.Caching.Memcached
 
                         if (_logger.IsEnabled(LogLevel.Information))
                         {
-                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                            _logger.LogInformation("MemcachedInitPool-cost: {0}ms",
+                                (DateTime.Now - startTime).TotalMilliseconds);
                         }
                     }
                 }
@@ -243,8 +259,13 @@ namespace Enyim.Caching.Memcached
 
         ~MemcachedNode()
         {
-            try { ((IDisposable)this).Dispose(); }
-            catch { }
+            try
+            {
+                ((IDisposable)this).Dispose();
+            }
+            catch
+            {
+            }
         }
 
         /// <summary>
@@ -361,7 +382,6 @@ namespace Enyim.Caching.Memcached
 
                     if (_logger.IsEnabled(LogLevel.Debug))
                         _logger.LogDebug("Pool has been inited for {0} with {1} sockets", _endPoint, _minItems);
-
                 }
                 catch (Exception e)
                 {
@@ -396,7 +416,6 @@ namespace Enyim.Caching.Memcached
 
                     if (_logger.IsEnabled(LogLevel.Debug))
                         _logger.LogDebug("Pool has been inited for {0} with {1} sockets", _endPoint, _minItems);
-
                 }
                 catch (Exception e)
                 {
@@ -520,7 +539,8 @@ namespace Enyim.Caching.Memcached
 
                     if (_logger.IsEnabled(LogLevel.Information))
                     {
-                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms",
+                            (DateTime.Now - startTime).TotalMilliseconds);
                     }
 
                     result.Value = socket;
@@ -650,7 +670,8 @@ namespace Enyim.Caching.Memcached
 
                     if (_logger.IsEnabled(LogLevel.Information))
                     {
-                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        _logger.LogInformation("MemcachedAcquire-CreateSocket: {0}ms",
+                            (DateTime.Now - startTime).TotalMilliseconds);
                     }
 
                     result.Value = socket;
@@ -780,7 +801,8 @@ namespace Enyim.Caching.Memcached
                         {
                             if (_logger.IsEnabled(LogLevel.Information))
                             {
-                                _logger.LogInformation("Connection idle timeout {idleTimeout} reached.", _connectionIdleTimeout);
+                                _logger.LogInformation("Connection idle timeout {idleTimeout} reached.",
+                                    _connectionIdleTimeout);
                             }
 
                             socket.Destroy();
@@ -804,8 +826,13 @@ namespace Enyim.Caching.Memcached
 
             ~InternalPoolImpl()
             {
-                try { ((IDisposable)this).Dispose(); }
-                catch { }
+                try
+                {
+                    ((IDisposable)this).Dispose();
+                }
+                catch
+                {
+                }
             }
 
             /// <summary>
@@ -824,8 +851,14 @@ namespace Enyim.Caching.Memcached
 
                     while (_freeItems.TryPop(out var socket))
                     {
-                        try { socket.Destroy(); }
-                        catch (Exception ex) { _logger.LogError(ex, $"failed to destroy {nameof(PooledSocket)}"); }
+                        try
+                        {
+                            socket.Destroy();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"failed to destroy {nameof(PooledSocket)}");
+                        }
                     }
 
                     _ownerNode = null;
@@ -842,7 +875,9 @@ namespace Enyim.Caching.Memcached
         }
 
         #endregion
+
         #region [ Comparer                     ]
+
         internal sealed class Comparer : IEqualityComparer<IMemcachedNode>
         {
             public static readonly Comparer Instance = new Comparer();
@@ -857,13 +892,19 @@ namespace Enyim.Caching.Memcached
                 return obj.EndPoint.GetHashCode();
             }
         }
+
         #endregion
 
         protected internal virtual PooledSocket CreateSocket()
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger, _useSslStream, _useIPv6, _sslClientAuthOptions);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
+#if NET5_0_OR_GREATER
+                    _useSslStream, _useIPv6, _sslClientAuthOptions);
+#else
+                    _useSslStream, _useIPv6);
+#endif
                 ps.Connect();
                 return ps;
             }
@@ -872,14 +913,18 @@ namespace Enyim.Caching.Memcached
                 _logger.LogError(ex, $"Create {nameof(PooledSocket)}");
                 throw;
             }
-
         }
 
         protected internal virtual async Task<PooledSocket> CreateSocketAsync()
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger, _useSslStream, _useIPv6, _sslClientAuthOptions);
+                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
+#if NET5_0_OR_GREATER
+                    _useSslStream, _useIPv6, _sslClientAuthOptions);
+#else
+                    _useSslStream, _useIPv6);
+#endif
                 await ps.ConnectAsync();
                 return ps;
             }
@@ -923,6 +968,7 @@ namespace Enyim.Caching.Memcached
                     {
                         readResult.Combine(result);
                     }
+
                     return result;
                 }
                 catch (IOException e)
@@ -939,11 +985,12 @@ namespace Enyim.Caching.Memcached
             }
             else
             {
-                var errorMsg = string.IsNullOrEmpty(result.Message) ? "Failed to acquire a socket from pool" : result.Message;
+                var errorMsg = string.IsNullOrEmpty(result.Message)
+                    ? "Failed to acquire a socket from pool"
+                    : result.Message;
                 _logger.LogError(errorMsg);
                 return result;
             }
-
         }
 
         protected virtual async Task<IPooledSocketResult> ExecuteOperationAsync(IOperation op)
@@ -974,6 +1021,7 @@ namespace Enyim.Caching.Memcached
                         result.Fail("Timeout to pooledSocket.WriteAsync");
                         return result;
                     }
+
                     await writeSocketTask;
 
                     //if Get, call BinaryResponse
@@ -1003,6 +1051,7 @@ namespace Enyim.Caching.Memcached
 
                         readResult.Combine(result);
                     }
+
                     return result;
                 }
                 catch (IOException e)
@@ -1026,7 +1075,9 @@ namespace Enyim.Caching.Memcached
             }
             else
             {
-                var errorMsg = string.IsNullOrEmpty(result.Message) ? "Failed to acquire a socket from pool" : result.Message;
+                var errorMsg = string.IsNullOrEmpty(result.Message)
+                    ? "Failed to acquire a socket from pool"
+                    : result.Message;
                 _logger.LogError(errorMsg);
                 return result;
             }
@@ -1114,6 +1165,7 @@ namespace Enyim.Caching.Memcached
 }
 
 #region [ License information          ]
+
 /* ************************************************************
  *
  *    Copyright (c) 2010 Attila Kisk? enyim.com
@@ -1131,4 +1183,5 @@ namespace Enyim.Caching.Memcached
  *    limitations under the License.
  *
  * ************************************************************/
+
 #endregion

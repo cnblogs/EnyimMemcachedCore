@@ -28,7 +28,9 @@ namespace Enyim.Caching.Configuration
 
         public bool SuppressException { get; set; } = true;
 
+#if NET5_0_OR_GREATER
         public SslClientAuthenticationOptions SslClientAuth { get; set; }
+#endif
 
         public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
@@ -49,8 +51,8 @@ namespace Enyim.Caching.Configuration
                 Parameters = new Dictionary<string, string>
                 {
                     { $"{nameof(zone)}", zone },
-                    { $"{nameof(userName)}", userName},
-                    { $"{nameof(password)}", password}
+                    { $"{nameof(userName)}", userName },
+                    { $"{nameof(password)}", password }
                 }
             };
         }
@@ -79,7 +81,9 @@ namespace Enyim.Caching.Configuration
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
         public TimeSpan ConnectionIdleTimeout { get; set; } = TimeSpan.Zero;
         public TimeSpan InitPoolTimeout { get; set; } = new TimeSpan(0, 1, 0);
-        public INodeFailurePolicyFactory FailurePolicyFactory { get; set; } = new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
+
+        public INodeFailurePolicyFactory FailurePolicyFactory { get; set; } =
+            new ThrottlingFailurePolicyFactory(5, TimeSpan.FromMilliseconds(2000));
 
         public void CheckPoolSize()
         {
