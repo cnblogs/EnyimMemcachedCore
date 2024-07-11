@@ -130,12 +130,12 @@ namespace Enyim.Caching.Memcached
             if (_keys.Length == 0) return null;
 
 
-            Console.WriteLine("hashing key via murmur - " + key);
+            var startTime = DateTime.Now;
             ulong itemKeyHash = MurmurHash3.Hash(key);
-            Console.WriteLine("hashing completed - " + key);
+            var hashTime = DateTime.Now;
             // get the index of the server assigned to this hash
             int foundIndex = Array.BinarySearch<ulong>(_keys, itemKeyHash);
-            Console.WriteLine("Searching node for key - " + key);
+            Console.WriteLine(String.Format("Time taken for key - {0} hash - {1}. Index search - {2} ", key, (hashTime - startTime).TotalMilliseconds, (DateTime.Now - hashTime).TotalMilliseconds));
 
             // no exact match
             if (foundIndex < 0)
