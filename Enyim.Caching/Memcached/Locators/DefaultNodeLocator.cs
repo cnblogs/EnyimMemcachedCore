@@ -126,7 +126,7 @@ namespace Enyim.Caching.Memcached
         /// <returns></returns>
         private IMemcachedNode FindNode(string key)
         {
-            key = string.Concat(key, "_m");
+            // key = string.Concat(key, "_m");
             if (_keys.Length == 0) return null;
 
 
