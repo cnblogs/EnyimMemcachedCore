@@ -105,7 +105,7 @@ namespace Enyim.Caching.Memcached
                 // while waiting for the write lock
                 if (!node.IsAlive)
                 {
-                    Console.WriteLine("Deadserver found", node);
+                    Console.WriteLine("Deadserver found - " + node);
                     _deadServers[node] = true;
                 }
                 BuildIndex(_allServers.Except(_deadServers.Keys).ToList());
@@ -130,12 +130,12 @@ namespace Enyim.Caching.Memcached
             if (_keys.Length == 0) return null;
 
 
-            Console.WriteLine("hashing key via murmur", key);
+            Console.WriteLine("hashing key via murmur - " + key);
             ulong itemKeyHash = MurmurHash3.Hash(key);
-            Console.WriteLine("hashing completed", key);
+            Console.WriteLine("hashing completed - " + key);
             // get the index of the server assigned to this hash
             int foundIndex = Array.BinarySearch<ulong>(_keys, itemKeyHash);
-            Console.WriteLine("Searching node for key", key);
+            Console.WriteLine("Searching node for key - " + key);
 
             // no exact match
             if (foundIndex < 0)
