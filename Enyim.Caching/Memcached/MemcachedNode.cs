@@ -157,7 +157,10 @@ namespace Enyim.Caching.Memcached
                         var startTime = DateTime.Now;
                         this.internalPoolImpl.InitPool();
                         this.isInitialized = true;
-                        _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+
+                        var log = String.Format("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        _logger.LogInformation(log);
+                        Console.WriteLine(log);
                     }
                 }
                 finally
@@ -201,7 +204,9 @@ namespace Enyim.Caching.Memcached
                         var startTime = DateTime.Now;
                         await this.internalPoolImpl.InitPoolAsync();
                         this.isInitialized = true;
-                        _logger.LogInformation("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        var log = String.Format("MemcachedInitPool-cost: {0}ms", (DateTime.Now - startTime).TotalMilliseconds);
+                        _logger.LogInformation(log);
+                        Console.WriteLine(log);
                     }
                 }
                 finally
