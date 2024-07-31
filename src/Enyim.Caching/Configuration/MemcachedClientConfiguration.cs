@@ -43,6 +43,7 @@ namespace Enyim.Caching.Configuration
             _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
 
             var options = optionsAccessor.Value;
+#if NET5_0_OR_GREATER
             if ((options == null || options.Servers.Count == 0) && configuration != null)
             {
                 var section = configuration.GetSection("enyimMemcached");
@@ -56,6 +57,7 @@ namespace Enyim.Caching.Configuration
                     options.AddDefaultServer();
                 }
             }
+#endif
 
             ConfigureServers(options);
 
@@ -84,7 +86,8 @@ namespace Enyim.Caching.Configuration
                 _logger.LogInformation($"{nameof(SocketPool.QueueTimeout)}: {SocketPool.QueueTimeout}");
 
                 SocketPool.ConnectionIdleTimeout = options.SocketPool.ConnectionIdleTimeout;
-                _logger.LogInformation($"{nameof(SocketPool.ConnectionIdleTimeout)}: {SocketPool.ConnectionIdleTimeout}");
+                _logger.LogInformation(
+                    $"{nameof(SocketPool.ConnectionIdleTimeout)}: {SocketPool.ConnectionIdleTimeout}");
 
                 SocketPool.InitPoolTimeout = options.SocketPool.InitPoolTimeout;
 
@@ -117,14 +120,17 @@ namespace Enyim.Caching.Configuration
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(new EventId(), ex, $"Unable to load authentication type {options.Authentication.Type}.");
+                    _logger.LogError(new EventId(), ex,
+                        $"Unable to load authentication type {options.Authentication.Type}.");
                 }
             }
 
             UseSslStream = options.UseSslStream;
             UseIPv6 = options.UseIPv6;
             SuppressException = options.SuppressException;
+#if NET5_0_OR_GREATER
             SslClientAuth = options.SslClientAuth;
+#endif
 
             if (!string.IsNullOrEmpty(options.KeyTransformer))
             {
@@ -213,7 +219,10 @@ namespace Enyim.Caching.Configuration
                     if (!IPAddress.TryParse(server.Address, out var address))
                     {
                         address = Dns.GetHostAddresses(server.Address)
-                            .FirstOrDefault(i => i.AddressFamily == (options.UseIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork));
+                            .FirstOrDefault(i =>
+                                i.AddressFamily == (options.UseIPv6
+                                    ? AddressFamily.InterNetworkV6
+                                    : AddressFamily.InterNetwork));
 
                         if (address == null)
                         {
@@ -339,8 +348,8 @@ namespace Enyim.Caching.Configuration
             if (f != null) return f.Create();
 
             return NodeLocator == null
-                    ? new SingleNodeLocator()
-                    : (IMemcachedNodeLocator)FastActivator.Create(NodeLocator);
+                ? new SingleNodeLocator()
+                : (IMemcachedNodeLocator)FastActivator.Create(NodeLocator);
         }
 
         ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
@@ -352,7 +361,8 @@ namespace Enyim.Caching.Configuration
         {
             switch (Protocol)
             {
-                case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger);
+                case MemcachedProtocol.Text:
+                    return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger);
                 case MemcachedProtocol.Binary: return new BinaryPool(this, _logger);
             }
 
@@ -362,28 +372,32 @@ namespace Enyim.Caching.Configuration
         public bool UseSslStream { get; private set; }
         public bool UseIPv6 { get; private set; }
         public bool SuppressException { get; private set; }
+#if NET5_0_OR_GREATER
         public SslClientAuthenticationOptions SslClientAuth { get; private set; }
+#endif
 
         #endregion
     }
 }
 
 #region [ License information          ]
+
 /* ************************************************************
- * 
+ *
  *    Copyright (c) 2010 Attila Kisk? enyim.com
- *    
+ *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
  *    You may obtain a copy of the License at
- *    
+ *
  *        http://www.apache.org/licenses/LICENSE-2.0
- *    
+ *
  *    Unless required by applicable law or agreed to in writing, software
  *    distributed under the License is distributed on an "AS IS" BASIS,
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
- *    
+ *
  * ************************************************************/
+
 #endregion
