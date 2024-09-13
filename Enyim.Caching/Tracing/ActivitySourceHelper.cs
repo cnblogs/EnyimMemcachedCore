@@ -16,7 +16,6 @@ namespace Enyim.Caching.Tracing
 
         public static Activity? StartActivity(string name, IEnumerable<KeyValuePair<string, object?>>? activityTags = null)
         {
-            Console.WriteLine("Correct ActivitySourceHelper StartActivity");
             var activity = ActivitySource.StartActivity(name, ActivityKind.Client, default(ActivityContext), activityTags);
             if (activity is { IsAllDataRequested: true })
             {
@@ -31,20 +30,18 @@ namespace Enyim.Caching.Tracing
 
             var keysToTag = keys.Take(maxTagLimit).ToList();
 
-            var tag = $"Node:{node.EndPoint}";
+            var tag = $"net.peer.query.key:{node.EndPoint}";
             var tagValue = string.Join(",", keysToTag);
 
             activity?.SetTag(tag, tagValue);
         }
 
         public static void SetSuccess(this Activity? activity) {
-            Console.WriteLine("Correct ActivitySourceHelper SetSuccess");
             activity?.SetTag(StatusCodeTagName, "OK");
         } 
 
         public static void SetException(this Activity activity, Exception exception)
         {
-            Console.WriteLine("Correct ActivitySourceHelper SetException");
             activity.SetTag(StatusCodeTagName, "ERROR");
             activity.SetTag(StatusDescription, exception?.Message);
             activity.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection

@@ -152,9 +152,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformTryGet", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -260,9 +260,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("GetAsync", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -296,9 +296,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("GetAsync", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -424,9 +424,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformTryGet", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -479,9 +479,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformTryGet", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -667,9 +667,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformStore", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -730,9 +730,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformStoreAsync", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -1006,9 +1006,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformMutate", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -1058,9 +1058,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformMutateAsync", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
@@ -1167,9 +1167,9 @@ namespace Enyim.Caching
             #if NET6_0
             using var activity = ActivitySourceHelper.StartActivity("PerformConcatenate", new[]
             {
-                new KeyValuePair<string, object?>("cache.key", key),
-                new KeyValuePair<string, object?>("node.ip", node.EndPoint),
-                new KeyValuePair<string, object?>("node.isActive", node.IsAlive)
+                new KeyValuePair<string, object?>("net.peer.query.key", key),
+                new KeyValuePair<string, object?>("net.peer.name", node.EndPoint),
+                new KeyValuePair<string, object?>("net.peer.isActive", node.IsAlive)
             });
             # endif
 
