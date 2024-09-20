@@ -44,11 +44,11 @@ namespace Enyim.Caching.Tracing
             activity?.SetTag(StatusCodeTagName, "OK");
         } 
 
-        public static void SetException(this Activity activity, Exception exception)
+        public static void SetException(this Activity? activity, Exception exception)
         {
-            activity.SetTag(StatusCodeTagName, "ERROR");
-            activity.SetTag(StatusDescription, exception?.Message);
-            activity.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
+            activity?.SetTag(StatusCodeTagName, "ERROR");
+            activity?.SetTag(StatusDescription, exception?.Message);
+            activity?.AddEvent(new ActivityEvent("exception", tags: new ActivityTagsCollection
             {
                 { "exception.type", exception?.GetType().FullName },
                 { "exception.message", exception?.Message },
