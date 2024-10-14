@@ -72,6 +72,9 @@ namespace Enyim.Caching.Configuration
                 SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");
 
+                SocketPool.ConnectionIdleTimeout = options.SocketPool.ConnectionIdleTimeout;
+                _logger.LogInformation($"{nameof(SocketPool.ConnectionIdleTimeout)}: {SocketPool.ConnectionIdleTimeout}");
+
                 SocketPool.ReceiveTimeout = options.SocketPool.ReceiveTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ReceiveTimeout)}: {SocketPool.ReceiveTimeout}");
 

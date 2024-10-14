@@ -65,6 +65,7 @@ namespace Enyim.Caching.Configuration
         public int MinPoolSize { get; set; } = 5;
         public int MaxPoolSize { get; set; } = 100;
         public TimeSpan ConnectionTimeout { get; set; } = new TimeSpan(0, 0, 10);
+        public TimeSpan ConnectionIdleTimeout { get; set; } = new TimeSpan(0, 0, 0);
         public TimeSpan ReceiveTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan DeadTimeout { get; set; } = new TimeSpan(0, 0, 10);
         public TimeSpan QueueTimeout { get; set; } = new TimeSpan(0, 0, 0, 0, 100);
@@ -85,6 +86,7 @@ namespace Enyim.Caching.Configuration
 
         public void CheckTimeout()
         {
+            CheckTimeout(nameof(ConnectionIdleTimeout), ConnectionIdleTimeout);
             CheckTimeout(nameof(ConnectionTimeout), ConnectionTimeout);
             CheckTimeout(nameof(ReceiveTimeout), ReceiveTimeout);
             CheckTimeout(nameof(DeadTimeout), DeadTimeout);
