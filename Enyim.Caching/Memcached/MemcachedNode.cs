@@ -431,6 +431,7 @@ namespace Enyim.Caching.Memcached
                     {
                         lock (_freeItems)
                         {
+                            // Calculate if current connection count <= minimum pool size
                             if (maxItems - _semaphore.CurrentCount + _freeItems.Count <= minItems)
                                 return;
                         }
