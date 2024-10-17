@@ -11,6 +11,10 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <PackageReleaseNotes>
+      3.0.0
+      Add connection idle timeoout
+      Breaking change: Remove support of netstandard2.0;netstandard2.1;net5.0;
+      ---------
       2.1.1
       Add null check for activity
       ----------
