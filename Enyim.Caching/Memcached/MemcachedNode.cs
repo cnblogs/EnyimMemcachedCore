@@ -947,7 +947,7 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 ps.Connect();
-                _metricFunctions.Inc("cache_connection_count", "Optimus");
+                _metricFunctions.Inc("cache_connection_count", EndPointString);
                 return ps;
             }
             catch (Exception ex)
@@ -964,7 +964,7 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 await ps.ConnectAsync();
-                _metricFunctions.Inc("cache_connection_count", "Optimus");
+                _metricFunctions.Inc("cache_connection_count", EndPointString);
                 return ps;
             }
             catch (Exception ex)
