@@ -61,7 +61,7 @@ namespace Enyim.Caching.Memcached
 
             _logger = logger;
             _metricFunctions = metricFunctions;
-            this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig, _logger);
+            this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig, _logger, _metricFunctions);
         }
 
         public event Action<IMemcachedNode> Failed;
@@ -125,7 +125,7 @@ namespace Enyim.Caching.Memcached
                     // it's easier to create a new pool than reinitializing a dead one
                     // rewrite-then-dispose to avoid a race condition with Acquire (which does no locking)
                     var oldPool = this.internalPoolImpl;
-                    var newPool = new InternalPoolImpl(this, _config, _logger);
+                    var newPool = new InternalPoolImpl(this, _config, _logger, _metricFunctions);
 
                     Interlocked.Exchange(ref this.internalPoolImpl, newPool);
 
@@ -284,17 +284,19 @@ namespace Enyim.Caching.Memcached
 
             private MemcachedNode ownerNode;
             private readonly EndPoint _endPoint;
+            private readonly string _endPointStr;
             private readonly TimeSpan queueTimeout;
             private readonly TimeSpan _receiveTimeout;
             private readonly TimeSpan _connectionIdleTimeout;
             private SemaphoreSlim _semaphore;
             private readonly object initLock = new Object();
             private readonly SemaphoreSlim _cleanSemaphore;
+            private readonly IMetricFunctions _metricFunctions;
 
             internal InternalPoolImpl(
                 MemcachedNode ownerNode,
                 ISocketPoolConfiguration config,
-                ILogger logger)
+                ILogger logger, IMetricFunctions metricFunctions)
             {
                 if (config.MinPoolSize < 0)
                     throw new InvalidOperationException("minItems must be larger >= 0", null);
@@ -308,6 +310,7 @@ namespace Enyim.Caching.Memcached
                 this.ownerNode = ownerNode;
                 this.isAlive = true;
                 _endPoint = ownerNode.EndPoint;
+                _endPointStr = _endPoint.ToString().Replace("Unspecified/", string.Empty);
                 this.queueTimeout = config.QueueTimeout;
                 _receiveTimeout = config.ReceiveTimeout;
                 this._connectionIdleTimeout = config.ConnectionIdleTimeout;
@@ -320,6 +323,7 @@ namespace Enyim.Caching.Memcached
                 _freeItems = new();
 
                 _logger = logger;
+                _metricFunctions = metricFunctions;
                 _isDebugEnabled = _logger.IsEnabled(LogLevel.Debug);
             }
 
@@ -413,6 +417,10 @@ namespace Enyim.Caching.Memcached
                         {
                             using var source = new CancellationTokenSource(_connectionIdleTimeout);
                             await ReconcileAsync(source.Token).ConfigureAwait(false);
+                            lock (_freeItems)
+                            {
+                                _metricFunctions.Set("cache_connection_count", (ulong)(maxItems - _semaphore.CurrentCount + _freeItems.Count), _endPointStr);
+                            }
                         }
                         catch (Exception e)
                         {
@@ -947,7 +955,6 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 ps.Connect();
-                _metricFunctions.Inc("cache_connection_count", EndPointString);
                 return ps;
             }
             catch (Exception ex)
@@ -964,7 +971,6 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 await ps.ConnectAsync();
-                _metricFunctions.Inc("cache_connection_count", EndPointString);
                 return ps;
             }
             catch (Exception ex)
