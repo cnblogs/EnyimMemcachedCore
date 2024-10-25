@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using AEPLCore.Monitoring;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
@@ -15,9 +16,9 @@ namespace Enyim.Caching
 
         public event Action<IMemcachedNode> NodeFailed;
 
-        public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration)
+        public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration, IMetricFunctions metricFunctions)
         {
-            _memcachedClient = new MemcachedClient(loggerFactory, configuration);
+            _memcachedClient = new MemcachedClient(loggerFactory, configuration, metricFunctions);
         }
 
         public bool Add(string key, object value, int cacheSeconds)

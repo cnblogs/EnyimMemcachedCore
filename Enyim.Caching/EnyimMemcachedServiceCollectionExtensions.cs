@@ -1,4 +1,5 @@
-﻿using Enyim.Caching;
+﻿using AEPLCore.Monitoring;
+using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Microsoft.Extensions.Caching.Distributed;
@@ -109,9 +110,10 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IMemcachedClient<T>>(sp =>
             {
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                var metricFunctions = sp.GetRequiredService<IMetricFunctions>();
                 var options = sp.GetRequiredService<IOptionsMonitor<MemcachedClientOptions>>();
                 var conf = new MemcachedClientConfiguration(loggerFactory, options.Get(sectionKey));
-                return new MemcachedClient<T>(loggerFactory, conf);
+                return new MemcachedClient<T>(loggerFactory, conf, metricFunctions);
             });
 
             return services;

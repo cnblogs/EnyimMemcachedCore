@@ -1,3 +1,4 @@
+using AEPLCore.Monitoring;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached.Results;
@@ -25,6 +26,7 @@ namespace Enyim.Caching.Memcached
     public class MemcachedNode : IMemcachedNode
     {
         private readonly ILogger _logger;
+        private readonly IMetricFunctions _metricFunctions;
         private static readonly object SyncRoot = new Object();
 
         private bool isDisposed;
@@ -39,7 +41,7 @@ namespace Enyim.Caching.Memcached
         public MemcachedNode(
             EndPoint endpoint,
             ISocketPoolConfiguration socketPoolConfig,
-            ILogger logger)
+            ILogger logger, IMetricFunctions metricFunctions)
         {
             _endPoint = endpoint;
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
@@ -58,6 +60,7 @@ namespace Enyim.Caching.Memcached
             }
 
             _logger = logger;
+            _metricFunctions = metricFunctions;
             this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig, _logger);
         }
 
@@ -343,7 +346,7 @@ namespace Enyim.Caching.Memcached
                         }
                     }
 
-                   StartReconciliationTask();
+                    StartReconciliationTask();
 
                     if (_logger.IsEnabled(LogLevel.Debug))
                         _logger.LogDebug("Pool has been inited for {0} with {1} sockets", _endPoint, this.minItems);
@@ -379,7 +382,7 @@ namespace Enyim.Caching.Memcached
                                 break;
                         }
                     }
-                    
+
                     StartReconciliationTask();
 
                     if (_logger.IsEnabled(LogLevel.Debug))
@@ -411,7 +414,7 @@ namespace Enyim.Caching.Memcached
                             using var source = new CancellationTokenSource(_connectionIdleTimeout);
                             await ReconcileAsync(source.Token).ConfigureAwait(false);
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             _logger.LogWarning("ReconciliationTaskFailed", new EventId(0), e);
                         }
@@ -463,7 +466,8 @@ namespace Enyim.Caching.Memcached
                                 _logger.LogInformation("{0} pool found session {1} to clean up", ownerNode, retval.InstanceId);
                                 retval.Destroy();
                             }
-                            else {
+                            else
+                            {
                                 lock (_freeItems)
                                     _freeItems.AddLast(retval);
                                 return;
@@ -943,6 +947,7 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 ps.Connect();
+                _metricFunctions.Inc("cache_connection_count", "Optimus");
                 return ps;
             }
             catch (Exception ex)
@@ -959,6 +964,7 @@ namespace Enyim.Caching.Memcached
             {
                 var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger);
                 await ps.ConnectAsync();
+                _metricFunctions.Inc("cache_connection_count", "Optimus");
                 return ps;
             }
             catch (Exception ex)

@@ -13,6 +13,8 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using AEPLCore.Monitoring;
+
 #if NET6_0
 using Enyim.Caching.Tracing;
 # endif
@@ -30,6 +32,8 @@ namespace Enyim.Caching
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
         //internal static readonly MemcachedClientSection DefaultSettings = ConfigurationManager.GetSection("enyim.com/memcached") as MemcachedClientSection;
         private ILogger<MemcachedClient> _logger;
+        private readonly IMetricFunctions _metricFunctions;
+
 
         private IServerPool pool;
         private IMemcachedKeyTransformer keyTransformer;
@@ -45,9 +49,10 @@ namespace Enyim.Caching
         protected IMemcachedKeyTransformer KeyTransformer { get { return this.keyTransformer; } }
         protected ITranscoder Transcoder { get { return this.transcoder; } }
 
-        public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration)
+        public MemcachedClient(ILoggerFactory loggerFactory, IMemcachedClientConfiguration configuration, IMetricFunctions metricFunctions)
         {
             _logger = loggerFactory.CreateLogger<MemcachedClient>();
+            _metricFunctions = metricFunctions;
 
             if (configuration == null)
             {
