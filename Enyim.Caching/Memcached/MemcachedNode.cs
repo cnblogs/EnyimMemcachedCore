@@ -417,10 +417,7 @@ namespace Enyim.Caching.Memcached
                         {
                             using var source = new CancellationTokenSource(_connectionIdleTimeout);
                             await ReconcileAsync(source.Token).ConfigureAwait(false);
-                            lock (_freeItems)
-                            {
-                                _metricFunctions.Set("cache_connection_count", (ulong)(maxItems - _semaphore.CurrentCount + _freeItems.Count), _endPointStr);
-                            }
+                            _metricFunctions.Set("cache_connection_count", (ulong)(maxItems - _semaphore.CurrentCount + _freeItems.Count), _endPointStr);
                         }
                         catch (Exception e)
                         {
@@ -440,13 +437,10 @@ namespace Enyim.Caching.Memcached
                     var waitTimeout = TimeSpan.FromMilliseconds(10);
                     while (true)
                     {
-                        lock (_freeItems)
-                        {
+                       
                             // Calculate if current connection count <= minimum pool size
-                            if (maxItems - _semaphore.CurrentCount + _freeItems.Count <= minItems)
+                        if (maxItems - _semaphore.CurrentCount + _freeItems.Count <= minItems)
                                 return;
-                        }
-
 
                         if (!await _semaphore.WaitAsync(waitTimeout, cancellationToken).ConfigureAwait(false))
                             return;
