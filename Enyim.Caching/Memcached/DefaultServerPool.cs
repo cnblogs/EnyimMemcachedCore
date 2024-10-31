@@ -6,12 +6,14 @@ using System.Net;
 using System.Threading;
 using Enyim.Caching.Configuration;
 using Microsoft.Extensions.Logging;
+using AEPLCore.Monitoring;
 
 namespace Enyim.Caching.Memcached
 {
     public class DefaultServerPool : IServerPool, IDisposable
     {
         private readonly ILogger _logger;
+        private readonly IMetricFunctions _metricFunctions;
 
         private IMemcachedNode[] allNodes;
 
@@ -29,7 +31,8 @@ namespace Enyim.Caching.Memcached
         public DefaultServerPool(
             IMemcachedClientConfiguration configuration,
             IOperationFactory opFactory,
-            ILogger logger)
+            ILogger logger,
+            IMetricFunctions metricFunctions)
         {
             if (configuration == null) throw new ArgumentNullException("socketConfig");
             if (opFactory == null) throw new ArgumentNullException("opFactory");
@@ -40,6 +43,7 @@ namespace Enyim.Caching.Memcached
             this.deadTimeoutMsec = (int)this.configuration.SocketPool.DeadTimeout.TotalMilliseconds;
 
             _logger = logger;
+            _metricFunctions = metricFunctions;
         }
 
         ~DefaultServerPool()
@@ -50,7 +54,7 @@ namespace Enyim.Caching.Memcached
 
         protected virtual IMemcachedNode CreateNode(EndPoint endpoint)
         {
-            return new MemcachedNode(endpoint, this.configuration.SocketPool, _logger);
+            return new MemcachedNode(endpoint, this.configuration.SocketPool, _logger, _metricFunctions);
         }
 
         private void rezCallback(object state)
