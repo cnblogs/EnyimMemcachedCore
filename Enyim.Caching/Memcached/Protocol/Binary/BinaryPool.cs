@@ -7,6 +7,7 @@ using Enyim.Caching.Configuration;
 using Enyim.Collections;
 using System.Security;
 using Microsoft.Extensions.Logging;
+using AEPLCore.Monitoring;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -18,18 +19,20 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         readonly ISaslAuthenticationProvider authenticationProvider;
         readonly IMemcachedClientConfiguration configuration;
         private readonly ILogger _logger;
+        private readonly IMetricFunctions _metricFunctions;
 
-        public BinaryPool(IMemcachedClientConfiguration configuration, ILogger logger)
-            : base(configuration, new BinaryOperationFactory(logger), logger)
+        public BinaryPool(IMemcachedClientConfiguration configuration, ILogger logger, IMetricFunctions metricFunctions)
+            : base(configuration, new BinaryOperationFactory(logger), logger, metricFunctions)
         {
             this.authenticationProvider = GetProvider(configuration);
             this.configuration = configuration;
             _logger = logger;
+            _metricFunctions = metricFunctions;
         }
 
         protected override IMemcachedNode CreateNode(EndPoint endpoint)
         {
-            return new BinaryNode(endpoint, this.configuration.SocketPool, this.authenticationProvider, _logger);
+            return new BinaryNode(endpoint, this.configuration.SocketPool, this.authenticationProvider, _logger, _metricFunctions);
         }
 
         private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)

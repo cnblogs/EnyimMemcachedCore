@@ -8,6 +8,7 @@ using Enyim.Collections;
 using System.Security;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using AEPLCore.Monitoring;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
@@ -17,17 +18,20 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
     public class BinaryNode : MemcachedNode
     {
         private readonly ILogger _logger;
+        private readonly IMetricFunctions _metricFunctions;
         readonly ISaslAuthenticationProvider authenticationProvider;
 
         public BinaryNode(
             EndPoint endpoint,
             ISocketPoolConfiguration config,
             ISaslAuthenticationProvider authenticationProvider,
-            ILogger logger)
-            : base(endpoint, config, logger)
+            ILogger logger, IMetricFunctions metricFunctions)
+            : base(endpoint, config, logger, metricFunctions)
         {
             this.authenticationProvider = authenticationProvider;
             _logger = logger;
+            _metricFunctions = metricFunctions;
+
         }
 
         /// <summary>

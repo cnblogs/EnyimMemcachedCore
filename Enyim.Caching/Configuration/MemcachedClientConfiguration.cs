@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Net.Sockets;
+using AEPLCore.Monitoring;
 
 namespace Enyim.Caching.Configuration
 {
@@ -22,6 +23,7 @@ namespace Enyim.Caching.Configuration
         private ITranscoder _transcoder;
         private IMemcachedKeyTransformer _keyTransformer;
         private ILogger<MemcachedClientConfiguration> _logger;
+        private readonly IMetricFunctions _metricFunctions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -31,7 +33,8 @@ namespace Enyim.Caching.Configuration
             IOptions<MemcachedClientOptions> optionsAccessor,
             IConfiguration configuration = null,
             ITranscoder transcoder = null,
-            IMemcachedKeyTransformer keyTransformer = null)
+            IMemcachedKeyTransformer keyTransformer = null,
+            IMetricFunctions metricFunctions = null)
         {
             if (optionsAccessor == null)
             {
@@ -39,6 +42,7 @@ namespace Enyim.Caching.Configuration
             }
 
             _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
+            _metricFunctions = metricFunctions;
 
             var options = optionsAccessor.Value;
             if ((options == null || options.Servers.Count == 0) && configuration != null)
@@ -71,6 +75,9 @@ namespace Enyim.Caching.Configuration
 
                 SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");
+
+                SocketPool.ConnectionIdleTimeout = options.SocketPool.ConnectionIdleTimeout;
+                _logger.LogInformation($"{nameof(SocketPool.ConnectionIdleTimeout)}: {SocketPool.ConnectionIdleTimeout}");
 
                 SocketPool.ReceiveTimeout = options.SocketPool.ReceiveTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ReceiveTimeout)}: {SocketPool.ReceiveTimeout}");
@@ -317,8 +324,8 @@ namespace Enyim.Caching.Configuration
         {
             switch (this.Protocol)
             {
-                case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger);
-                case MemcachedProtocol.Binary: return new BinaryPool(this, _logger);
+                case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger, _metricFunctions);
+                case MemcachedProtocol.Binary: return new BinaryPool(this, _logger, _metricFunctions);
             }
 
             throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);

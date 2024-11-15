@@ -1,3 +1,4 @@
+using AEPLCore.Monitoring;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached.Results;
@@ -25,6 +26,7 @@ namespace Enyim.Caching.Memcached
     public class MemcachedNode : IMemcachedNode
     {
         private readonly ILogger _logger;
+        private readonly IMetricFunctions _metricFunctions;
         private static readonly object SyncRoot = new Object();
 
         private bool isDisposed;
@@ -39,7 +41,7 @@ namespace Enyim.Caching.Memcached
         public MemcachedNode(
             EndPoint endpoint,
             ISocketPoolConfiguration socketPoolConfig,
-            ILogger logger)
+            ILogger logger, IMetricFunctions metricFunctions)
         {
             _endPoint = endpoint;
             EndPointString = endpoint?.ToString().Replace("Unspecified/", string.Empty);
@@ -58,7 +60,8 @@ namespace Enyim.Caching.Memcached
             }
 
             _logger = logger;
-            this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig, _logger);
+            _metricFunctions = metricFunctions;
+            this.internalPoolImpl = new InternalPoolImpl(this, socketPoolConfig, _logger, _metricFunctions);
         }
 
         public event Action<IMemcachedNode> Failed;
@@ -122,7 +125,7 @@ namespace Enyim.Caching.Memcached
                     // it's easier to create a new pool than reinitializing a dead one
                     // rewrite-then-dispose to avoid a race condition with Acquire (which does no locking)
                     var oldPool = this.internalPoolImpl;
-                    var newPool = new InternalPoolImpl(this, _config, _logger);
+                    var newPool = new InternalPoolImpl(this, _config, _logger, _metricFunctions);
 
                     Interlocked.Exchange(ref this.internalPoolImpl, newPool);
 
@@ -270,7 +273,7 @@ namespace Enyim.Caching.Memcached
             /// <summary>
             /// A list of already connected but free to use sockets
             /// </summary>
-            private ConcurrentStack<PooledSocket> _freeItems;
+            private LinkedList<PooledSocket> _freeItems;
 
             private bool isDisposed;
             private bool isAlive;
@@ -281,16 +284,19 @@ namespace Enyim.Caching.Memcached
 
             private MemcachedNode ownerNode;
             private readonly EndPoint _endPoint;
+            private readonly string _endPointStr;
             private readonly TimeSpan queueTimeout;
             private readonly TimeSpan _receiveTimeout;
+            private readonly TimeSpan _connectionIdleTimeout;
             private SemaphoreSlim _semaphore;
-
             private readonly object initLock = new Object();
+            private readonly SemaphoreSlim _cleanSemaphore;
+            private readonly IMetricFunctions _metricFunctions;
 
             internal InternalPoolImpl(
                 MemcachedNode ownerNode,
                 ISocketPoolConfiguration config,
-                ILogger logger)
+                ILogger logger, IMetricFunctions metricFunctions)
             {
                 if (config.MinPoolSize < 0)
                     throw new InvalidOperationException("minItems must be larger >= 0", null);
@@ -304,16 +310,20 @@ namespace Enyim.Caching.Memcached
                 this.ownerNode = ownerNode;
                 this.isAlive = true;
                 _endPoint = ownerNode.EndPoint;
+                _endPointStr = _endPoint.ToString().Replace("Unspecified/", string.Empty);
                 this.queueTimeout = config.QueueTimeout;
                 _receiveTimeout = config.ReceiveTimeout;
+                this._connectionIdleTimeout = config.ConnectionIdleTimeout;
 
                 this.minItems = config.MinPoolSize;
                 this.maxItems = config.MaxPoolSize;
 
                 _semaphore = new SemaphoreSlim(maxItems, maxItems);
-                _freeItems = new ConcurrentStack<PooledSocket>();
+                _cleanSemaphore = new(1);
+                _freeItems = new();
 
                 _logger = logger;
+                _metricFunctions = metricFunctions;
                 _isDebugEnabled = _logger.IsEnabled(LogLevel.Debug);
             }
 
@@ -327,7 +337,7 @@ namespace Enyim.Caching.Memcached
                         {
                             try
                             {
-                                _freeItems.Push(CreateSocket());
+                                _freeItems.AddFirst(CreateSocket());
                             }
                             catch (Exception ex)
                             {
@@ -339,6 +349,8 @@ namespace Enyim.Caching.Memcached
                                 break;
                         }
                     }
+
+                    StartReconciliationTask();
 
                     if (_logger.IsEnabled(LogLevel.Debug))
                         _logger.LogDebug("Pool has been inited for {0} with {1} sockets", _endPoint, this.minItems);
@@ -362,7 +374,7 @@ namespace Enyim.Caching.Memcached
                         {
                             try
                             {
-                                _freeItems.Push(await CreateSocketAsync());
+                                _freeItems.AddFirst(await CreateSocketAsync());
                             }
                             catch (Exception ex)
                             {
@@ -375,6 +387,8 @@ namespace Enyim.Caching.Memcached
                         }
                     }
 
+                    StartReconciliationTask();
+
                     if (_logger.IsEnabled(LogLevel.Debug))
                         _logger.LogDebug("Pool has been inited for {0} with {1} sockets", _endPoint, this.minItems);
 
@@ -386,6 +400,95 @@ namespace Enyim.Caching.Memcached
                     this.MarkAsDead();
                 }
             }
+
+            private void StartReconciliationTask()
+            {
+                if (_connectionIdleTimeout == TimeSpan.Zero)
+                    return;
+
+                var reconcileTimer = new PeriodicTimer(_connectionIdleTimeout);
+                _ = RunTimer();
+
+                async Task RunTimer()
+                {
+                    while (await reconcileTimer.WaitForNextTickAsync().ConfigureAwait(false))
+                    {
+                        try
+                        {
+                            using var source = new CancellationTokenSource(_connectionIdleTimeout);
+                            await ReconcileAsync(source.Token).ConfigureAwait(false);
+                            _metricFunctions.Set("cache_connection_count", (ulong)(maxItems - _semaphore.CurrentCount + _freeItems.Count), _endPointStr);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogWarning("ReconciliationTaskFailed", new EventId(0), e);
+                        }
+                    }
+                }
+
+            }
+
+            private async Task ReconcileAsync(CancellationToken cancellationToken)
+            {
+                // synchronize access to this method as only one clean routine should be run at a time
+                await _cleanSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    var waitTimeout = TimeSpan.FromMilliseconds(10);
+                    while (true)
+                    {
+                       
+                            // Calculate if current connection count <= minimum pool size
+                        if (maxItems - _semaphore.CurrentCount + _freeItems.Count <= minItems)
+                                return;
+
+                        if (!await _semaphore.WaitAsync(waitTimeout, cancellationToken).ConfigureAwait(false))
+                            return;
+
+                        try
+                        {
+                            PooledSocket retval = null;
+                            lock (_freeItems)
+                            {
+                                if (_freeItems.Count > 0)
+                                {
+                                    retval = _freeItems.Last!.Value;
+                                    _freeItems.RemoveLast();
+                                }
+                            }
+
+                            if (retval is null)
+                                return;
+
+                            var idleTime = DateTime.UtcNow - retval.LastConnectionTimestamp;
+
+
+                            if (idleTime > _connectionIdleTimeout)
+                            {
+                                _logger.LogInformation("{0} pool found session {1} to clean up", ownerNode, retval.InstanceId);
+                                retval.Destroy();
+                            }
+                            else
+                            {
+                                lock (_freeItems)
+                                    _freeItems.AddLast(retval);
+                                return;
+                            }
+                        }
+                        finally
+                        {
+                            _semaphore.Release();
+                        }
+                    }
+
+                }
+                finally
+                {
+                    _cleanSemaphore.Release();
+                }
+
+            }
+
 
             private async Task<PooledSocket> CreateSocketAsync()
             {
@@ -461,8 +564,17 @@ namespace Enyim.Caching.Memcached
                     return result;
                 }
 
+                lock (_freeItems)
+                {
+                    if (_freeItems.Count > 0)
+                    {
+                        retval = _freeItems.First!.Value;
+                        _freeItems.RemoveFirst();
+                    }
+                }
+
                 // do we have free items?
-                if (_freeItems.TryPop(out retval))
+                if (retval is not null)
                 {
                     #region [ get it from the pool         ]
 
@@ -577,8 +689,19 @@ namespace Enyim.Caching.Memcached
                     return result;
                 }
 
+
+                lock (_freeItems)
+                {
+                    if (_freeItems.Count > 0)
+                    {
+                        retval = _freeItems.First!.Value;
+                        _freeItems.RemoveFirst();
+
+                    }
+                }
+
                 // do we have free items?
-                if (_freeItems.TryPop(out retval))
+                if (retval is not null)
                 {
                     #region [ get it from the pool         ]
 
@@ -702,7 +825,8 @@ namespace Enyim.Caching.Memcached
                         try
                         {
                             // mark the item as free
-                            _freeItems.Push(socket);
+                            lock (_freeItems)
+                                _freeItems.AddFirst(socket);
                         }
                         finally
                         {
@@ -773,12 +897,19 @@ namespace Enyim.Caching.Memcached
                     this.isAlive = false;
                     this.isDisposed = true;
 
-                    PooledSocket ps;
 
-                    while (_freeItems.TryPop(out ps))
+                    lock (_freeItems)
                     {
-                        try { ps.Destroy(); }
-                        catch { }
+                        while (_freeItems.Count > 0)
+                        {
+                            try
+                            {
+                                PooledSocket ps = _freeItems.First!.Value;
+                                _freeItems.RemoveFirst();
+                                ps.Destroy();
+                            }
+                            catch { }
+                        }
                     }
 
                     this.ownerNode = null;

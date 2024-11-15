@@ -23,6 +23,7 @@ namespace Enyim.Caching.Memcached
         private readonly int _connectionTimeout;
 
         private NetworkStream _inputStream;
+        public DateTime LastConnectionTimestamp { get; set; }
 
         public PooledSocket(EndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout, ILogger logger)
         {
@@ -79,6 +80,7 @@ namespace Enyim.Caching.Memcached
             {
                 if (_socket.Connected)
                 {
+                    LastConnectionTimestamp = DateTime.UtcNow;
                     success = true;
                 }
                 else
@@ -131,6 +133,7 @@ namespace Enyim.Caching.Memcached
                 if (_socket.Connected)
                 {
                     success = true;
+                    LastConnectionTimestamp = DateTime.UtcNow;
                 }
                 else
                 {
