@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Description>EnyimMemcachedCore is a Memcached client library for .NET. Add services.AddEnyimMemcached() in Startup. Inject IMemcachedClient into constructors.</Description>
         <Authors>cnblogs.com</Authors>
-        <TargetFrameworks>net6.0;net7.0;net8.0;net48;net481</TargetFrameworks>
+        <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net48;net481</TargetFrameworks>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <AssemblyName>EnyimMemcachedCore</AssemblyName>
         <PackageId>EnyimMemcachedCore</PackageId>
@@ -19,26 +19,26 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'!='net48' And '$(TargetFramework)'!='net481'">
-        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='net48' Or '$(TargetFramework)'=='net481'">
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0"/>
-        <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2"/>
-        <PackageReference Include="System.Net.Security" Version="4.3.2"/>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+        <PackageReference Include="System.Net.Security" Version="4.3.2" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2"/>
+        <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="MessagePack" Version="2.5.187"/>
+        <PackageReference Include="MessagePack" Version="2.5.192" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../README.md" Pack="true" PackagePath="\"/>
+        <None Include="../../README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

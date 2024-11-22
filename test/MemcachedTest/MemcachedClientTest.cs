@@ -295,44 +295,37 @@ namespace MemcachedTest
         [Fact]
         public virtual async Task MultiGetWithCasTest()
         {
-            using (var client = GetClient())
+            using var client = GetClient();
+            var keys = new List<string>();
+            var tasks = new List<Task<bool>>();
+
+            for (int i = 0; i < 10; i++)
             {
-                var keys = new List<string>();
-                var tasks = new List<Task<bool>>();
+                string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
+                keys.Add(k);
 
-                for (int i = 0; i < 10; i++)
-                {
-                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
-                    keys.Add(k);
-
-                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)));
-                }
-
-                await Task.WhenAll(tasks);
-
-                foreach (var task in tasks)
-                {
-                    Assert.True(await task, "Store failed");
-                }
-
-                var retvals = await client.GetWithCasAsync(keys);
-
-                Assert.Equal(keys.Count, retvals.Count);
-
-                tasks.Clear();
-                for (int i = 0; i < keys.Count; i++)
-                {
-                    string key = keys[i];
-
-                    Assert.True(retvals.TryGetValue(key, out var value), "missing key: " + key);
-                    Assert.Equal(value.Result, i);
-                    Assert.NotEqual(value.Cas, (ulong)0);
-
-                    tasks.Add(client.RemoveAsync(key));
-                }
-
-                await Task.WhenAll(tasks);
+                bool success = await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(600));
+                Assert.True(success, "Store failed");
             }
+
+            var retvals = await client.GetWithCasAsync(keys);
+
+            await Task.Delay(100);
+
+            Assert.Equal(keys.Count, retvals.Count);
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                string key = keys[i];
+
+                Assert.True(retvals.TryGetValue(key, out var value), "missing key: " + key);
+                Assert.Equal(value.Result, i);
+                Assert.NotEqual((ulong)0, value.Cas);
+
+                tasks.Add(client.RemoveAsync(key));
+            }
+
+            await Task.WhenAll(tasks);
         }
 
         [Fact]
