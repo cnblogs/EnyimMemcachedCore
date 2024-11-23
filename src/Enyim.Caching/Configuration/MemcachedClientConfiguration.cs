@@ -17,11 +17,13 @@ namespace Enyim.Caching.Configuration
     /// </summary>
     public class MemcachedClientConfiguration : IMemcachedClientConfiguration
     {
-        // these are lazy initialized in the getters
+        private readonly bool _useLegacyNodeLocator;
+        private readonly ILogger<MemcachedClientConfiguration> _logger;
+
         private Type _nodeLocator;
         private ITranscoder _transcoder;
         private IMemcachedKeyTransformer _keyTransformer;
-        private ILogger<MemcachedClientConfiguration> _logger;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
@@ -153,18 +155,10 @@ namespace Enyim.Caching.Configuration
                 _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer}'");
             }
 
+            _useLegacyNodeLocator = options.UseLegacyNodeLocator;
             if (NodeLocator == null)
             {
-                if (options.Servers.Count > 1)
-                {
-                    NodeLocator = options.UseLegacyNodeLocator ? typeof(LegacyNodeLocator) : typeof(DefaultNodeLocator);
-                }
-                else
-                {
-                    NodeLocator = typeof(SingleNodeLocator);
-                }
-
-                _logger.LogDebug($"Use NodeLocator: {NodeLocator}");
+                SetNodeLocator();
             }
 
             if (!string.IsNullOrEmpty(options.Transcoder))
@@ -217,7 +211,7 @@ namespace Enyim.Caching.Configuration
                 {
                     if (IPAddress.TryParse(server.Address, out var address))
                     {
-                        Servers.Add(new IPEndPoint(address, server.Port));
+                        AddServer(address, server.Port);
                     }
                     else
                     {
@@ -229,6 +223,20 @@ namespace Enyim.Caching.Configuration
             }
         }
 
+        private void SetNodeLocator()
+        {
+            if (Servers.Count > 1)
+            {
+                NodeLocator = _useLegacyNodeLocator ? typeof(LegacyNodeLocator) : typeof(DefaultNodeLocator);
+            }
+            else
+            {
+                NodeLocator = typeof(SingleNodeLocator);
+            }
+
+            _logger.LogDebug("Use NodeLocator: {NodeLocator}", NodeLocator);
+        }
+
         /// <summary>
         /// Adds a new server to the pool.
         /// </summary>
@@ -236,16 +244,29 @@ namespace Enyim.Caching.Configuration
         public void AddServer(string address)
         {
             Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
+            SetNodeLocator();
         }
 
         /// <summary>
         /// Adds a new server to the pool.
         /// </summary>
-        /// <param name="address">The host name or IP address of the server.</param>
+        /// <param name="address">The host name.</param>
         /// <param name="port">The port number of the memcached instance.</param>
         public void AddServer(string host, int port)
         {
             Servers.Add(new DnsEndPoint(host, port));
+            SetNodeLocator();
+        }
+
+        /// <summary>
+        /// Adds a new server to the pool.
+        /// </summary>
+        /// <param name="ip">The IP address of the server.</param>
+        /// <param name="port">The port number of the memcached instance.</param>
+        public void AddServer(IPAddress ip, int port)
+        {
+            Servers.Add(new IPEndPoint(ip, port));
+            SetNodeLocator();
         }
 
         /// <summary>
