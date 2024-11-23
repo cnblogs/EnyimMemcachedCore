@@ -7,10 +7,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Net.Sockets;
 
 namespace Enyim.Caching.Configuration
 {
@@ -208,7 +206,7 @@ namespace Enyim.Caching.Configuration
 
         private void ConfigureServers(MemcachedClientOptions options)
         {
-            Servers = new List<EndPoint>();
+            Servers = [];
             foreach (var server in options.Servers)
             {
                 if (options.UseSslStream)
@@ -217,29 +215,16 @@ namespace Enyim.Caching.Configuration
                 }
                 else
                 {
-                    if (!IPAddress.TryParse(server.Address, out var address))
+                    if (IPAddress.TryParse(server.Address, out var address))
                     {
-                        address = Dns.GetHostAddresses(server.Address)
-                            .FirstOrDefault(i =>
-                                i.AddressFamily == (options.UseIPv6
-                                    ? AddressFamily.InterNetworkV6
-                                    : AddressFamily.InterNetwork));
-
-                        if (address == null)
-                        {
-                            _logger.LogError($"Could not resolve host '{server.Address}'.");
-                        }
-                        else
-                        {
-                            _logger.LogInformation($"Memcached server address - {address}");
-                        }
+                        Servers.Add(new IPEndPoint(address, server.Port));
                     }
                     else
                     {
-                        _logger.LogInformation($"Memcached server address - {server.Address}:{server.Port}");
+                        AddServer(server.Address, server.Port);
                     }
 
-                    Servers.Add(new IPEndPoint(address, server.Port));
+                    _logger.LogInformation("Memcached server address - {address}:{port}", server.Address, server.Port);
                 }
             }
         }
