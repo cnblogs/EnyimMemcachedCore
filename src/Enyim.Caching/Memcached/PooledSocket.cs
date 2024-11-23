@@ -18,9 +18,10 @@ namespace Enyim.Caching.Memcached
         private readonly ILogger _logger;
 
         private bool _isAlive;
-        private bool _useSslStream;
-        private bool _useIPv6;
+        private readonly bool _useSslStream;
+        private readonly bool _useIPv6;
         private Socket _socket;
+        private bool _isSocketDisposed;
         private readonly EndPoint _endpoint;
         private readonly int _connectionTimeout;
 
@@ -74,7 +75,7 @@ namespace Enyim.Caching.Memcached
             _socket = socket;
         }
 
-        public void Connect()
+        public bool Connect()
         {
             bool success = false;
 
@@ -86,8 +87,7 @@ namespace Enyim.Caching.Memcached
             {
                 if (_socket != null && !_socket.Connected)
                 {
-                    _socket.Dispose();
-                    _socket = null;
+                    DisposeSocket();
                 }
             }
 
@@ -95,11 +95,13 @@ namespace Enyim.Caching.Memcached
 
             try
             {
+                if (_isSocketDisposed) return false;
                 _socket.Connect(_endpoint);
             }
             catch (PlatformNotSupportedException)
             {
                 var ep = GetIPEndPoint(_endpoint);
+                if (_isSocketDisposed) return false;
                 _socket.Connect(ep.Address, ep.Port);
             }
 
@@ -111,8 +113,7 @@ namespace Enyim.Caching.Memcached
                 }
                 else
                 {
-                    _socket.Dispose();
-                    _socket = null;
+                    DisposeSocket();
                 }
             }
 
@@ -133,6 +134,8 @@ namespace Enyim.Caching.Memcached
                 {
                     _inputStream = new NetworkStream(_socket);
                 }
+
+                return true;
             }
             else
             {
@@ -140,9 +143,14 @@ namespace Enyim.Caching.Memcached
             }
         }
 
-        public async Task ConnectAsync()
+        public async Task<bool> ConnectAsync()
         {
             bool success = false;
+
+            if (_isSocketDisposed)
+            {
+                return false;
+            }
 
             try
             {
@@ -156,8 +164,7 @@ namespace Enyim.Caching.Memcached
                 {
                     if (_socket != null)
                     {
-                        _socket.Dispose();
-                        _socket = null;
+                        DisposeSocket();
                     }
 
                     throw new TimeoutException($"Timeout to connect to {_endpoint}.");
@@ -166,6 +173,7 @@ namespace Enyim.Caching.Memcached
             catch (PlatformNotSupportedException)
             {
                 var ep = GetIPEndPoint(_endpoint);
+                if (_isSocketDisposed) return false;
                 await _socket.ConnectAsync(ep.Address, ep.Port);
             }
 
@@ -177,8 +185,7 @@ namespace Enyim.Caching.Memcached
                 }
                 else
                 {
-                    _socket.Dispose();
-                    _socket = null;
+                    DisposeSocket();
                 }
             }
 
@@ -199,6 +206,8 @@ namespace Enyim.Caching.Memcached
                 {
                     _inputStream = new NetworkStream(_socket);
                 }
+
+                return true;
             }
             else
             {
@@ -333,7 +342,7 @@ namespace Enyim.Caching.Memcached
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(nameof(PooledSocket), e);
+                    _logger.LogError(e, nameof(PooledSocket));
                 }
             }
             else
@@ -352,8 +361,17 @@ namespace Enyim.Caching.Memcached
 
         private void CheckDisposed()
         {
-            if (_socket == null)
+            if (_isSocketDisposed || _socket == null)
+            {
                 throw new ObjectDisposedException("PooledSocket");
+            }
+        }
+
+        private void DisposeSocket()
+        {
+            _isSocketDisposed = true;
+            _socket.Dispose();
+            _socket = null;
         }
 
         /// <summary>

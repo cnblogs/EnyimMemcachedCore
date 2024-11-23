@@ -1,8 +1,6 @@
 using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached.Protocol.Binary;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
-using Enyim.Collections;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -12,8 +10,6 @@ using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Runtime.Serialization;
-using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -899,49 +895,71 @@ namespace Enyim.Caching.Memcached
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
-#if NET5_0_OR_GREATER
-                    _useSslStream, _useIPv6, _sslClientAuthOptions);
-#else
-                    _useSslStream, _useIPv6);
-#endif
-                ps.Connect();
-                return ps;
+                return CreateSocketInternal();
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogError(ex, $"Create {nameof(PooledSocket)}");
-                throw;
+                try
+                {
+                    return CreateSocketInternal();
+                }
+                catch (Exception ex)
+                {
+                    LogCreateSocketError(ex, nameof(CreateSocket));
+                    throw;
+                }
             }
+        }
+
+        private PooledSocket CreateSocketInternal()
+        {
+            var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
+#if NET5_0_OR_GREATER
+            _useSslStream, _useIPv6, _sslClientAuthOptions);
+#else
+            _useSslStream, _useIPv6);
+#endif
+            ps.Connect();
+            return ps;
         }
 
         protected internal virtual async Task<PooledSocket> CreateSocketAsync()
         {
             try
             {
-                var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
-#if NET5_0_OR_GREATER
-                    _useSslStream, _useIPv6, _sslClientAuthOptions);
-#else
-                    _useSslStream, _useIPv6);
-#endif
-                await ps.ConnectAsync();
-                return ps;
+                return await CreateSocketInternalAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                var endPointStr = _endPoint.ToString().Replace("Unspecified/", string.Empty);
-                _logger.LogError(ex, $"Failed to {nameof(CreateSocketAsync)} to {endPointStr}");
-                throw;
+                try
+                {
+                    return await CreateSocketInternalAsync();
+                }
+                catch (Exception ex)
+                {
+                    LogCreateSocketError(ex, nameof(CreateSocketAsync));
+                    throw;
+                }
             }
         }
 
-        //protected internal virtual PooledSocket CreateSocket(IPEndPoint endpoint, TimeSpan connectionTimeout, TimeSpan receiveTimeout)
-        //{
-        //    PooledSocket retval = new PooledSocket(endPoint, connectionTimeout, receiveTimeout);
+        private async Task<PooledSocket> CreateSocketInternalAsync()
+        {
+            var ps = new PooledSocket(_endPoint, _config.ConnectionTimeout, _config.ReceiveTimeout, _logger,
+#if NET5_0_OR_GREATER
+            _useSslStream, _useIPv6, _sslClientAuthOptions);
+#else
+                _useSslStream, _useIPv6);
+#endif
+            await ps.ConnectAsync();
+            return ps;
+        }
 
-        //    return retval;
-        //}
+        private void LogCreateSocketError(Exception ex, string operation)
+        {
+            var endPointStr = _endPoint.ToString().Replace("Unspecified/", string.Empty);
+            _logger.LogError(ex, "Failed to {operation} to {EndPoint}", operation, endPointStr);
+        }
 
         protected virtual IPooledSocketResult ExecuteOperation(IOperation op)
         {
