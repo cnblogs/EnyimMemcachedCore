@@ -16,6 +16,8 @@
         <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
         <LangVersion>latest</LangVersion>
         <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
+        <SignAssembly>True</SignAssembly>
+        <AssemblyOriginatorKeyFile>../../key.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'!='net48' And '$(TargetFramework)'!='net481'">
