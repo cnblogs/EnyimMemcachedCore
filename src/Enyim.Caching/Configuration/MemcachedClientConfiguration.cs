@@ -43,6 +43,7 @@ namespace Enyim.Caching.Configuration
             _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
 
             var options = optionsAccessor.Value;
+
 #if NET5_0_OR_GREATER
             if ((options == null || options.Servers.Count == 0) && configuration != null)
             {

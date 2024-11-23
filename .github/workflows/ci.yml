@@ -9,11 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet/sdk:8.0
+    container: mcr.microsoft.com/dotnet/sdk:9.0
 
     services:
       memcached:
-        image: memcached
+        image: memcached:1.5.8
 
     steps:
     - name: Checkout
