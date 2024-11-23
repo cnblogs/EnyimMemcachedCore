@@ -84,6 +84,11 @@ namespace Enyim.Caching
 
         public event Action<IMemcachedNode> NodeFailed;
 
+        public bool Add(string key, object value)
+        {
+            return Store(StoreMode.Add, key, value);
+        }
+
         public bool Add(string key, object value, int cacheSeconds)
         {
             return Store(StoreMode.Add, key, value, TimeSpan.FromSeconds(cacheSeconds));
@@ -97,6 +102,11 @@ namespace Enyim.Caching
         public bool Add(string key, object value, TimeSpan timeSpan)
         {
             return Store(StoreMode.Add, key, value, timeSpan);
+        }
+
+        public async Task<bool> AddAsync(string key, object value)
+        {
+            return await StoreAsync(StoreMode.Add, key, value);
         }
 
         public async Task<bool> AddAsync(string key, object value, int cacheSeconds)
@@ -549,6 +559,11 @@ namespace Enyim.Caching
             int status;
 
             return PerformStore(mode, key, value, MemcachedClient.GetExpiration(validFor, null), ref tmp, out status).Success;
+        }
+
+        public async Task<bool> StoreAsync(StoreMode mode, string key, object value)
+        {
+            return (await PerformStoreAsync(mode, key, value, 0)).Success;
         }
 
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)

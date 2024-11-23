@@ -1,11 +1,8 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using System.Threading;
-using Enyim.Caching.Memcached;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Enyim.Caching.Memcached;
+using Microsoft.Extensions.Caching.Distributed;
 using System;
-using Microsoft.Extensions.Options;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching
 {
@@ -40,10 +37,17 @@ namespace Enyim.Caching
         void IDistributedCache.Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
             ulong tmp = 0;
+
+            if (!HasSlidingExpiration(options))
+            {
+                PerformStore(StoreMode.Set, key, value, 0, ref tmp, out var status0);
+                return;
+            }
+
             var expiration = GetExpiration(options);
             PerformStore(StoreMode.Set, key, value, expiration, ref tmp, out var status);
 
-            if (options.SlidingExpiration.HasValue)
+            if (options != null && options.SlidingExpiration.HasValue)
             {
                 var sldExp = options.SlidingExpiration.Value;
                 Add(GetSlidingExpirationKey(key), sldExp.ToString(), sldExp);
@@ -52,6 +56,12 @@ namespace Enyim.Caching
 
         async Task IDistributedCache.SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
         {
+            if (!HasSlidingExpiration(options))
+            {
+                await PerformStoreAsync(StoreMode.Set, key, value, 0);
+                return;
+            }
+
             var expiration = GetExpiration(options);
             await PerformStoreAsync(StoreMode.Set, key, value, expiration);
 
@@ -60,6 +70,23 @@ namespace Enyim.Caching
                 var sldExp = options.SlidingExpiration.Value;
                 await AddAsync(GetSlidingExpirationKey(key), sldExp.ToString(), sldExp);
             }
+        }
+
+        private static bool HasSlidingExpiration(DistributedCacheEntryOptions options)
+        {
+            if (options == null)
+            {
+                return false;
+            }
+
+            if ((options.SlidingExpiration.HasValue == false || options.SlidingExpiration.Value == TimeSpan.Zero) &&
+               options.AbsoluteExpiration.HasValue == false &&
+               options.AbsoluteExpirationRelativeToNow.HasValue == false)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public void Refresh(string key)
