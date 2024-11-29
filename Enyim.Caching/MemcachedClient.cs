@@ -221,6 +221,8 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
+                var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                 result.Value = transcoder.Deserialize(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
@@ -237,6 +239,8 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
+                var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                 result.Value = transcoder.Deserialize<T>(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
@@ -443,6 +447,8 @@ namespace Enyim.Caching
 
                 if (commandResult.Success)
                 {
+                    var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                    command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                     result.Value = value = this.transcoder.Deserialize(command.Result);
                     result.Cas = cas = command.CasValue;
 
@@ -496,6 +502,8 @@ namespace Enyim.Caching
 
                 if (commandResult.Success)
                 {
+                    var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                    command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                     result.Value = value = transcoder.Deserialize<T>(command.Result);
                     result.Cas = cas = command.CasValue;
 
@@ -682,7 +690,11 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try 
+                { 
+                    item = this.transcoder.Serialize(value); 
+                    item.Data = ZSTDCompression.Compress(item.Data, _logger);
+                }
                 catch (Exception e)
                 {
                     _logger.LogError("PerformStore", e);
@@ -746,7 +758,11 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try 
+                { 
+                    item = this.transcoder.Serialize(value); 
+                    item.Data = ZSTDCompression.Compress(item.Data, _logger);
+                }
                 catch (Exception e)
                 {
                     _logger.LogError(new EventId(), e, $"{nameof(PerformStoreAsync)} for '{key}' key");

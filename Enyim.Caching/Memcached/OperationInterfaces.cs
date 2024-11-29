@@ -42,7 +42,7 @@ namespace Enyim.Caching.Memcached
 
     public interface IGetOperation : ISingleItemOperation
     {
-        CacheItem Result { get; }
+        CacheItem Result { get; set;}
     }
 
     public interface IMultiGetOperation : IMultiItemOperation
