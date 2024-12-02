@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Net;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Reflection;
 
 namespace Enyim.Caching.Configuration
 {
@@ -11,8 +9,7 @@ namespace Enyim.Caching.Configuration
     {
         internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out int value, bool required)
         {
-            string tmp;
-            if (TryGetAndRemove(dict, name, out tmp, required)
+            if (TryGetAndRemove(dict, name, out string tmp, required)
                 && Int32.TryParse(tmp, out value))
             {
                 return true;
@@ -28,8 +25,7 @@ namespace Enyim.Caching.Configuration
 
         internal static bool TryGetAndRemove(Dictionary<string, string> dict, string name, out TimeSpan value, bool required)
         {
-            string tmp;
-            if (TryGetAndRemove(dict, name, out tmp, required)
+            if (TryGetAndRemove(dict, name, out string tmp, required)
                 && TimeSpan.TryParse(tmp, out value))
             {
                 return true;
@@ -82,8 +78,7 @@ namespace Enyim.Caching.Configuration
             if (parts.Length != 2)
                 throw new ArgumentException("host:port is expected", "value");
 
-            int port;
-            if (!Int32.TryParse(parts[1], out port))
+            if (!Int32.TryParse(parts[1], out int port))
                 throw new ArgumentException("Cannot parse port: " + parts[1], "value");
 
             return new DnsEndPoint(parts[0], port);

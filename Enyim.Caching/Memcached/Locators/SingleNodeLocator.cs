@@ -11,7 +11,7 @@ namespace Enyim.Caching.Memcached
 	{
 		private IMemcachedNode node;
 		private bool isInitialized;
-		private object initLock = new Object();
+		private object initLock = new();
 
 		void IMemcachedNodeLocator.Initialize(IList<IMemcachedNode> nodes)
 		{

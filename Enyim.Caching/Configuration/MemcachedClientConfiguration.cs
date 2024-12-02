@@ -36,10 +36,7 @@ namespace Enyim.Caching.Configuration
             IMemcachedKeyTransformer keyTransformer = null,
             IMetricFunctions metricFunctions = null)
         {
-            if (optionsAccessor == null)
-            {
-                throw new ArgumentNullException(nameof(optionsAccessor));
-            }
+            ArgumentNullException.ThrowIfNull(optionsAccessor);
 
             _logger = loggerFactory.CreateLogger<MemcachedClientConfiguration>();
             _metricFunctions = metricFunctions;

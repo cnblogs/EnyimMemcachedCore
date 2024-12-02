@@ -6,31 +6,25 @@ using Enyim.Caching.Configuration;
 
 namespace Enyim.Caching.Memcached
 {
-	/// <summary>
-	/// Fails a node when the specified number of failures happen in a specified time window.
-	/// </summary>
-	public class ThrottlingFailurePolicy : INodeFailurePolicy
+    /// <summary>
+    /// Fails a node when the specified number of failures happen in a specified time window.
+    /// </summary>
+    /// <remarks>
+    /// Creates a new instance of <see cref="T:ThrottlingFailurePolicy"/>.
+    /// </remarks>
+    /// <param name="resetAfter">Specifies the time in milliseconds how long a node should function properly to reset its failure counter.</param>
+    /// <param name="failureThreshold">Specifies the number of failures that must occur in the specified time window to fail a node.</param>
+    public class ThrottlingFailurePolicy(int resetAfter, int failureThreshold) : INodeFailurePolicy
 	{
 		private static readonly ILog log = LogManager.GetLogger(typeof(ThrottlingFailurePolicy));
 		private static readonly bool LogIsDebugEnabled = log.IsDebugEnabled;
 
-		private int resetAfter;
-		private int failureThreshold;
+		private readonly int resetAfter = resetAfter;
+		private readonly int failureThreshold = failureThreshold;
 		private DateTime lastFailed;
 		private int failCounter;
 
-		/// <summary>
-		/// Creates a new instance of <see cref="T:ThrottlingFailurePolicy"/>.
-		/// </summary>
-		/// <param name="resetAfter">Specifies the time in milliseconds how long a node should function properly to reset its failure counter.</param>
-		/// <param name="failureThreshold">Specifies the number of failures that must occur in the specified time window to fail a node.</param>
-		public ThrottlingFailurePolicy(int resetAfter, int failureThreshold)
-		{
-			this.resetAfter = resetAfter;
-			this.failureThreshold = failureThreshold;
-		}
-
-		bool INodeFailurePolicy.ShouldFail()
+        bool INodeFailurePolicy.ShouldFail()
 		{
 			var now = DateTime.UtcNow;
 
@@ -110,15 +104,13 @@ namespace Enyim.Caching.Memcached
 
 		void IProvider.Initialize(Dictionary<string, string> parameters)
 		{
-			int failureThreshold;
-			ConfigurationHelper.TryGetAndRemove(parameters, "failureThreshold", out failureThreshold, true);
+            ConfigurationHelper.TryGetAndRemove(parameters, "failureThreshold", out int failureThreshold, true);
 
-			if (failureThreshold < 1) throw new InvalidOperationException("failureThreshold must be > 0");
+            if (failureThreshold < 1) throw new InvalidOperationException("failureThreshold must be > 0");
 			this.FailureThreshold = failureThreshold;
 
-			TimeSpan reset;
-			ConfigurationHelper.TryGetAndRemove(parameters, "resetAfter", out reset, true);
-			if (reset <= TimeSpan.Zero) throw new InvalidOperationException("resetAfter must be > 0msec");
+            ConfigurationHelper.TryGetAndRemove(parameters, "resetAfter", out TimeSpan reset, true);
+            if (reset <= TimeSpan.Zero) throw new InvalidOperationException("resetAfter must be > 0msec");
 
 			this.ResetAfter = (int)reset.TotalMilliseconds;
 		}

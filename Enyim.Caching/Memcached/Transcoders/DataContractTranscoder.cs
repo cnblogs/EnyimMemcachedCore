@@ -14,14 +14,10 @@ namespace Enyim.Caching.Memcached
     {
         protected override object DeserializeObject(ArraySegment<byte> value)
         {
-            using (var ms = new MemoryStream(value.Array, value.Offset, value.Count))
-            {
-                using (var reader = new BsonDataReader(ms))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    return serializer.Deserialize(reader);
-                }
-            }
+            using var ms = new MemoryStream(value.Array, value.Offset, value.Count);
+            using var reader = new BsonDataReader(ms);
+            JsonSerializer serializer = new();
+            return serializer.Deserialize(reader);
         }
 
         protected override ArraySegment<byte> SerializeObject(object value)
