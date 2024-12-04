@@ -14,7 +14,7 @@ public static class ZSTDCompression
     {
         if (data.Count == 0)
         {
-            return new ArraySegment<byte>([]);
+            return data;
         }
 
         try
@@ -40,19 +40,20 @@ public static class ZSTDCompression
     {
         if (data.Count == 0)
         {
-            return new ArraySegment<byte>([]);
+            return data;
         }
 
         try
         {
             using var decompressor = new Decompressor();
-            byte[] decompressedData = decompressor.Unwrap(data.Array).ToArray();
-            return new ArraySegment<byte>(decompressedData);
-        }
+            return new ArraySegment<byte>(
+                decompressor.Unwrap(new ReadOnlySpan<byte>(data.Array, data.Offset, data.Count))
+                .ToArray());
+            }
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Decompression failed.");
-            return data; 
+            return data;
         }
     }
 }
