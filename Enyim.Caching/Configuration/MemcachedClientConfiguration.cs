@@ -154,6 +154,9 @@ namespace Enyim.Caching.Configuration
             {
                 try
                 {
+                    if (options.Transcoder == "BinaryFormatterTranscoder")
+                        options.Transcoder = "Enyim.Caching.Memcached.Transcoders.BinaryFormatterTranscoder";
+
                     var transcoderType = Type.GetType(options.Transcoder);
                     if (transcoderType != null)
                     {

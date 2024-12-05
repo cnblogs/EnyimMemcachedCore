@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <Description>CWMemcache is a Memcached client library for .NET Core. Usage: Add services.AddEnyimMemcached(...) and app.UseEnyimMemcached() in Startup. Add IMemcachedClient into constructor.</Description>
-    <VersionPrefix>4.0.0-alpha.1</VersionPrefix>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <TargetFrameworks>net6.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>CWMemcache</AssemblyName>
     <PackageId>CWMemcache</PackageId>
@@ -11,10 +11,6 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>latest</LangVersion>
     <PackageReleaseNotes>
-      4.0.0-alpha-1
-      Breaking change: Added support for NET 8
-      Remove BinaryFormatterTranscoder 
-      ----------
       3.0.0
       Add connection idle timeoout
       Add Gauge Metric for Active Connections
