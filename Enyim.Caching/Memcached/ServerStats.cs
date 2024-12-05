@@ -70,12 +70,11 @@ namespace Enyim.Caching.Memcached
 				if (String.IsNullOrEmpty(tmp))
 					throw new ArgumentException("Item was not found: " + item);
 
-				long value;
-				// return the value
-				if (Int64.TryParse(tmp, out value))
-					return value;
+                // return the value
+                if (Int64.TryParse(tmp, out long value))
+                    return value;
 
-				throw new ArgumentException("Invalid value string was returned: " + tmp);
+                throw new ArgumentException("Invalid value string was returned: " + tmp);
 			}
 
 			// check if we can sum the value for all servers
@@ -118,11 +117,10 @@ namespace Enyim.Caching.Memcached
 			if (String.IsNullOrEmpty(uptime))
 				throw new ArgumentException("No uptime found for the server " + server);
 
-			long value;
-			if (!Int64.TryParse(uptime, out value))
-				throw new ArgumentException("Invalid uptime string was returned: " + uptime);
+            if (!Int64.TryParse(uptime, out long value))
+                throw new ArgumentException("Invalid uptime string was returned: " + uptime);
 
-			return TimeSpan.FromSeconds(value);
+            return TimeSpan.FromSeconds(value);
 		}
 
 		/// <summary>
@@ -133,24 +131,22 @@ namespace Enyim.Caching.Memcached
 		/// <returns>The value of the stat item</returns>
 		public string GetRaw(IPEndPoint server, string key)
 		{
-			Dictionary<string, string> serverValues;
-			string retval;
 
-			if (this.results.TryGetValue(server, out serverValues))
-			{
-				if (serverValues.TryGetValue(key, out retval))
-					return retval;
+            if (this.results.TryGetValue(server, out Dictionary<string, string> serverValues))
+            {
+                if (serverValues.TryGetValue(key, out string retval))
+                    return retval;
 
-				if (log.IsDebugEnabled)
-					log.DebugFormat("The stat item {0} does not exist for {1}", key, server);
-			}
-			else
-			{
-				if (log.IsDebugEnabled)
-					log.DebugFormat("No stats are stored for {0}", server);
-			}
+                if (log.IsDebugEnabled)
+                    log.DebugFormat("The stat item {0} does not exist for {1}", key, server);
+            }
+            else
+            {
+                if (log.IsDebugEnabled)
+                    log.DebugFormat("No stats are stored for {0}", server);
+            }
 
-			return null;
+            return null;
 		}
 
 		/// <summary>

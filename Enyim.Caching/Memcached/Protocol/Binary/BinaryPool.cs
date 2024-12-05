@@ -14,21 +14,12 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
     /// <summary>
     /// Server pool implementing the binary protocol.
     /// </summary>
-    public class BinaryPool : DefaultServerPool
+    public class BinaryPool(IMemcachedClientConfiguration configuration, ILogger logger, IMetricFunctions metricFunctions) : DefaultServerPool(configuration, new BinaryOperationFactory(logger), logger, metricFunctions)
     {
-        readonly ISaslAuthenticationProvider authenticationProvider;
-        readonly IMemcachedClientConfiguration configuration;
-        private readonly ILogger _logger;
-        private readonly IMetricFunctions _metricFunctions;
-
-        public BinaryPool(IMemcachedClientConfiguration configuration, ILogger logger, IMetricFunctions metricFunctions)
-            : base(configuration, new BinaryOperationFactory(logger), logger, metricFunctions)
-        {
-            this.authenticationProvider = GetProvider(configuration);
-            this.configuration = configuration;
-            _logger = logger;
-            _metricFunctions = metricFunctions;
-        }
+        readonly ISaslAuthenticationProvider authenticationProvider = GetProvider(configuration);
+        readonly IMemcachedClientConfiguration configuration = configuration;
+        private readonly ILogger _logger = logger;
+        private readonly IMetricFunctions _metricFunctions = metricFunctions;
 
         protected override IMemcachedNode CreateNode(EndPoint endpoint)
         {

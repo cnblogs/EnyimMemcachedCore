@@ -7,15 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-    public class GetOperation : BinarySingleItemOperation, IGetOperation
+    public class GetOperation(string key, ILogger logger) : BinarySingleItemOperation(key), IGetOperation
     {
-        private readonly ILogger _logger;
+        private readonly ILogger _logger = logger;
         private CacheItem result;
-
-        public GetOperation(string key, ILogger logger) : base(key)
-        {
-            _logger = logger;
-        }
 
         protected override BinaryRequest Build()
         {

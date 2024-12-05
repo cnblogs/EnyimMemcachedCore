@@ -6,14 +6,9 @@ namespace Enyim.Caching.Memcached.Protocol
     /// <summary>
     /// Base class for implementing operations working with keyed items.
     /// </summary>
-    public abstract class SingleItemOperation : Operation, ISingleItemOperation
+    public abstract class SingleItemOperation(string key) : Operation, ISingleItemOperation
     {
-        protected SingleItemOperation(string key)
-        {
-            this.Key = key;
-        }
-
-        public string Key { get; private set; }
+        public string Key { get; private set; } = key;
 
         public ulong Cas { get; set; }
 

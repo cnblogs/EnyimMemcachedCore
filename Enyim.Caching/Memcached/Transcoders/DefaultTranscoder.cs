@@ -16,7 +16,7 @@ namespace Enyim.Caching.Memcached
     public class DefaultTranscoder : ITranscoder
     {
         public const uint RawDataFlag = 0xfa52;
-        private static readonly ArraySegment<byte> NullArray = new ArraySegment<byte>(new byte[0]);
+        private static readonly ArraySegment<byte> NullArray = new([]);
 
         CacheItem ITranscoder.Serialize(object value)
         {
@@ -46,39 +46,34 @@ namespace Enyim.Caching.Memcached
                 }
                 else
                 {
-                    return default(T);
+                    return default;
                 }
             }
 
-            using (var ms = new MemoryStream(item.Data.ToArray()))
+            using var ms = new MemoryStream([.. item.Data]);
+            using var reader = new BsonDataReader(ms);
+            if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
             {
-                using (var reader = new BsonDataReader(ms))
-                {
-                    if (typeof(T).GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEnumerable)))
-                    {
-                        reader.ReadRootValueAsArray = true;
-                    }
-                    var serializer = new JsonSerializer();
-                    return serializer.Deserialize<T>(reader);
-                }
+                reader.ReadRootValueAsArray = true;
             }
+            var serializer = new JsonSerializer();
+            return serializer.Deserialize<T>(reader);
         }
 
         protected virtual CacheItem Serialize(object value)
         {
             // raw data is a special case when some1 passes in a buffer (byte[] or ArraySegment<byte>)
-            if (value is ArraySegment<byte>)
+            if (value is ArraySegment<byte> segment)
             {
                 // ArraySegment<byte> is only passed in when a part of buffer is being 
                 // serialized, usually from a MemoryStream (To avoid duplicating arrays 
                 // the byte[] returned by MemoryStream.GetBuffer is placed into an ArraySegment.)
-                return new CacheItem(RawDataFlag, (ArraySegment<byte>)value);
+                return new CacheItem(RawDataFlag, segment);
             }
 
-            var tmpByteArray = value as byte[];
 
             // - or we just received a byte[]. No further processing is needed.
-            if (tmpByteArray != null)
+            if (value is byte[] tmpByteArray)
             {
                 return new CacheItem(RawDataFlag, new ArraySegment<byte>(tmpByteArray));
             }
@@ -147,7 +142,7 @@ namespace Enyim.Caching.Memcached
 
             var data = item.Data;
 
-            switch (code)
+            return code switch
             {
                 // incrementing a non-existing key then getting it
                 // returns as a string, but the flag will be 0
@@ -157,34 +152,30 @@ namespace Enyim.Caching.Memcached
                 // however we store 'null' as Empty + an empty array, 
                 // so this must special-cased for compatibilty with 
                 // earlier versions. we introduced DBNull as null marker in emc2.6
-                case TypeCode.Empty:
-                    return (data.Array == null || data.Count == 0)
-                            ? null
-                            : DeserializeString(data);
-
-                case (TypeCode)2: return null; // TypeCode.DBNull
-                case TypeCode.String: return this.DeserializeString(data);
-                case TypeCode.Boolean: return this.DeserializeBoolean(data);
-                case TypeCode.Int16: return this.DeserializeInt16(data);
-                case TypeCode.Int32: return this.DeserializeInt32(data);
-                case TypeCode.Int64: return this.DeserializeInt64(data);
-                case TypeCode.UInt16: return this.DeserializeUInt16(data);
-                case TypeCode.UInt32: return this.DeserializeUInt32(data);
-                case TypeCode.UInt64: return this.DeserializeUInt64(data);
-                case TypeCode.Char: return this.DeserializeChar(data);
-                case TypeCode.DateTime: return this.DeserializeDateTime(data);
-                case TypeCode.Double: return this.DeserializeDouble(data);
-                case TypeCode.Single: return this.DeserializeSingle(data);
-                case TypeCode.Byte: return this.DeserializeByte(data);
-                case TypeCode.SByte: return this.DeserializeSByte(data);
-
+                TypeCode.Empty => (data.Array == null || data.Count == 0)
+                                            ? null
+                                            : DeserializeString(data),
+                (TypeCode)2 => null,// TypeCode.DBNull
+                TypeCode.String => this.DeserializeString(data),
+                TypeCode.Boolean => this.DeserializeBoolean(data),
+                TypeCode.Int16 => this.DeserializeInt16(data),
+                TypeCode.Int32 => this.DeserializeInt32(data),
+                TypeCode.Int64 => this.DeserializeInt64(data),
+                TypeCode.UInt16 => this.DeserializeUInt16(data),
+                TypeCode.UInt32 => this.DeserializeUInt32(data),
+                TypeCode.UInt64 => this.DeserializeUInt64(data),
+                TypeCode.Char => this.DeserializeChar(data),
+                TypeCode.DateTime => this.DeserializeDateTime(data),
+                TypeCode.Double => this.DeserializeDouble(data),
+                TypeCode.Single => this.DeserializeSingle(data),
+                TypeCode.Byte => this.DeserializeByte(data),
+                TypeCode.SByte => this.DeserializeSByte(data),
                 // backward compatibility
                 // earlier versions serialized decimals with TypeCode.Decimal
                 // even though they were saved by BinaryFormatter
-                case TypeCode.Decimal:
-                case TypeCode.Object: return this.DeserializeObject(data);
-                default: throw new InvalidOperationException("Unknown TypeCode was returned: " + code);
-            }
+                TypeCode.Decimal or TypeCode.Object => this.DeserializeObject(data),
+                _ => throw new InvalidOperationException("Unknown TypeCode was returned: " + code),
+            };
         }
 
         #region [ Typed serialization          ]
@@ -201,12 +192,12 @@ namespace Enyim.Caching.Memcached
 
         protected virtual ArraySegment<byte> SerializeByte(byte value)
         {
-            return new ArraySegment<byte>(new byte[] { value });
+            return new ArraySegment<byte>([value]);
         }
 
         protected virtual ArraySegment<byte> SerializeSByte(sbyte value)
         {
-            return new ArraySegment<byte>(new byte[] { (byte)value });
+            return new ArraySegment<byte>([(byte)value]);
         }
 
         protected virtual ArraySegment<byte> SerializeBoolean(bool value)
@@ -266,15 +257,11 @@ namespace Enyim.Caching.Memcached
 
         protected virtual ArraySegment<byte> SerializeObject(object value)
         {
-            using (var ms = new MemoryStream())
-            {
-                using (var writer = new BsonDataWriter(ms))
-                {
-                    var serializer = new JsonSerializer();
-                    serializer.Serialize(writer, value);
-                    return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
-                }
-            }
+            using var ms = new MemoryStream();
+            using var writer = new BsonDataWriter(ms);
+            var serializer = new JsonSerializer();
+            serializer.Serialize(writer, value);
+            return new ArraySegment<byte>(ms.ToArray(), 0, (int)ms.Length);
         }
 
         #endregion
@@ -352,14 +339,10 @@ namespace Enyim.Caching.Memcached
 
         protected virtual object DeserializeObject(ArraySegment<byte> value)
         {
-            using (var ms = new MemoryStream(value.Array, value.Offset, value.Count))
-            {
-                using (var reader = new BsonDataReader(ms))
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    return serializer.Deserialize(reader);
-                }
-            }
+            using var ms = new MemoryStream(value.Array, value.Offset, value.Count);
+            using var reader = new BsonDataReader(ms);
+            JsonSerializer serializer = new();
+            return serializer.Deserialize(reader);
         }
 
         #endregion

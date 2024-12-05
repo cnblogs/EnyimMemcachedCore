@@ -7,17 +7,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	/// <summary>
 	/// SASL auth step.
 	/// </summary>
-	public class SaslContinue : SaslStep
+	public class SaslContinue(ISaslAuthenticationProvider provider, byte[] continuation) : SaslStep(provider)
 	{
-		private byte[] continuation;
+		private readonly byte[] continuation = continuation;
 
-		public SaslContinue(ISaslAuthenticationProvider provider, byte[] continuation)
-			: base(provider)
-		{
-			this.continuation = continuation;
-		}
-
-		protected override BinaryRequest Build()
+        protected override BinaryRequest Build()
 		{
 			var request = new BinaryRequest(OpCode.SaslStep)
 			{

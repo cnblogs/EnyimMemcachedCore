@@ -59,8 +59,7 @@ namespace Enyim.Caching
 		/// <param name="factory"></param>
 		public static void AssignFactory(ILogFactory factory)
 		{
-			if (factory == null) throw new ArgumentNullException("factory");
-			LogManager.factory = factory;
+            LogManager.factory = factory ?? throw new ArgumentNullException("factory");
 		}
 
 		/// <summary>

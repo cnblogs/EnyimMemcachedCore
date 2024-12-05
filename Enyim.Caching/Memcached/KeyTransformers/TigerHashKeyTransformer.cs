@@ -10,7 +10,7 @@ namespace Enyim.Caching.Memcached
 	{
 		public override string Transform(string key)
 		{
-			TigerHash th = new TigerHash();
+			TigerHash th = new();
 			byte[] data = th.ComputeHash(Encoding.Unicode.GetBytes(key));
 
 			return Convert.ToBase64String(data);

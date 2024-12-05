@@ -26,36 +26,35 @@ namespace Enyim.Caching.Memcached
 		public int Read(byte[] buffer, int offset, int count)
 		{
 			var read = 0;
-			Segment segment;
 
-			while (read < count && this.buffers.Peek(out segment))
-			{
-				var available = Math.Min(segment.WriteOffset - segment.ReadOffset, count - read);
+            while (read < count && this.buffers.Peek(out Segment segment))
+            {
+                var available = Math.Min(segment.WriteOffset - segment.ReadOffset, count - read);
 
-				if (available > 0)
-				{
-					System.Buffer.BlockCopy(segment.Data, segment.ReadOffset, buffer, offset + read, available);
+                if (available > 0)
+                {
+                    System.Buffer.BlockCopy(segment.Data, segment.ReadOffset, buffer, offset + read, available);
 
-					read += available;
-					segment.ReadOffset += available;
-				}
+                    read += available;
+                    segment.ReadOffset += available;
+                }
 
-				// are we at the end of the segment?
-				if (segment.ReadOffset == segment.WriteOffset)
-				{
-					// we can dispose the current segment if it's not the last 
-					// (which is probably being written by the receiver)
-					if (this.lastSegment != segment)
-					{
-						this.buffers.Dequeue(out segment);
-						//Debug.Assert(success, "Could peek but could not dequeue?");
+                // are we at the end of the segment?
+                if (segment.ReadOffset == segment.WriteOffset)
+                {
+                    // we can dispose the current segment if it's not the last 
+                    // (which is probably being written by the receiver)
+                    if (this.lastSegment != segment)
+                    {
+                        this.buffers.Dequeue(out segment);
+                        //Debug.Assert(success, "Could peek but could not dequeue?");
 
-						//bufferManager.ReturnBuffer(segment.Data);
-					}
-				}
-			}
+                        //bufferManager.ReturnBuffer(segment.Data);
+                    }
+                }
+            }
 
-			Interlocked.Add(ref this.available, -read);
+            Interlocked.Add(ref this.available, -read);
 
 			return read;
 		}
@@ -112,24 +111,18 @@ namespace Enyim.Caching.Memcached
 
 		public void UnsafeClear()
 		{
-			Segment tmp;
 
-			this.lastSegment = null;
-			while (this.buffers.Dequeue(out tmp)) ;
+            this.lastSegment = null;
+            while (this.buffers.Dequeue(out Segment tmp)) ;
 
 			this.available = 0;
 		}
 
 		#region [ Segment                      ]
 
-		private class Segment
-		{
-			public Segment(byte[] data)
-			{
-				this.Data = data;
-			}
-
-			public readonly byte[] Data;
+		private class Segment(byte[] data)
+        {
+            public readonly byte[] Data = data;
 			public int WriteOffset;
 			public int ReadOffset;
 		}
