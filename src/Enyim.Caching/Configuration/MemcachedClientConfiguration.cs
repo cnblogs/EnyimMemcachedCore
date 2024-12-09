@@ -60,7 +60,12 @@ namespace Enyim.Caching.Configuration
             }
 #endif
 
+            _useLegacyNodeLocator = options.UseLegacyNodeLocator;
             ConfigureServers(options);
+            if (NodeLocator == null)
+            {
+                SetNodeLocator();
+            }
 
             SocketPool = new SocketPoolConfiguration();
             if (options.SocketPool != null)
@@ -155,12 +160,6 @@ namespace Enyim.Caching.Configuration
                 _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer}'");
             }
 
-            _useLegacyNodeLocator = options.UseLegacyNodeLocator;
-            if (NodeLocator == null)
-            {
-                SetNodeLocator();
-            }
-
             if (!string.IsNullOrEmpty(options.Transcoder))
             {
                 try
@@ -234,7 +233,7 @@ namespace Enyim.Caching.Configuration
                 NodeLocator = typeof(SingleNodeLocator);
             }
 
-            _logger.LogDebug("Use NodeLocator: {NodeLocator}", NodeLocator);
+            _logger.LogDebug("Use NodeLocator: {NodeLocator}. Current server count: {serverCount}", NodeLocator, Servers.Count);
         }
 
         /// <summary>
