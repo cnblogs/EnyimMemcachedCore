@@ -58,9 +58,9 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 
         protected internal override async Task<PooledSocket> CreateSocketAsync()
         {
-            var retval = await base.CreateSocketAsync();
+            var retval = await base.CreateSocketAsync().ConfigureAwait(false);
 
-            if (_authenticationProvider != null && !(await AuthAsync(retval)))
+            if (_authenticationProvider != null && !await AuthAsync(retval).ConfigureAwait(false))
             {
                 _logger.LogError("Authentication failed: " + EndPoint);
 
@@ -105,15 +105,15 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             SaslStep currentStep = new SaslStart(_authenticationProvider);
 
-            await socket.WriteAsync(currentStep.GetBuffer());
+            await socket.WriteAsync(currentStep.GetBuffer()).ConfigureAwait(false);
 
-            while (!(await currentStep.ReadResponseAsync(socket)).Success)
+            while (!(await currentStep.ReadResponseAsync(socket).ConfigureAwait(false)).Success)
             {
                 // challenge-response authentication
                 if (currentStep.StatusCode == 0x21)
                 {
                     currentStep = new SaslContinue(_authenticationProvider, currentStep.Data);
-                    await socket.WriteAsync(currentStep.GetBuffer());
+                    await socket.WriteAsync(currentStep.GetBuffer()).ConfigureAwait(false);
                 }
                 else
                 {

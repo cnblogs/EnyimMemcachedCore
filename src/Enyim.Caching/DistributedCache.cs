@@ -24,11 +24,11 @@ namespace Enyim.Caching
 
         async Task<byte[]> IDistributedCache.GetAsync(string key, CancellationToken token = default)
         {
-            var value = await GetValueAsync<byte[]>(key);
+            var value = await GetValueAsync<byte[]>(key).ConfigureAwait(false);
 
             if (value != null)
             {
-                await RefreshAsync(key);
+                await RefreshAsync(key).ConfigureAwait(false);
             }
 
             return value;
@@ -58,17 +58,17 @@ namespace Enyim.Caching
         {
             if (!HasSlidingExpiration(options))
             {
-                await PerformStoreAsync(StoreMode.Set, key, value, 0);
+                await PerformStoreAsync(StoreMode.Set, key, value, 0).ConfigureAwait(false);
                 return;
             }
 
             var expiration = GetExpiration(options);
-            await PerformStoreAsync(StoreMode.Set, key, value, expiration);
+            await PerformStoreAsync(StoreMode.Set, key, value, expiration).ConfigureAwait(false);
 
             if (options.SlidingExpiration.HasValue)
             {
                 var sldExp = options.SlidingExpiration.Value;
-                await AddAsync(GetSlidingExpirationKey(key), sldExp.ToString(), sldExp);
+                await AddAsync(GetSlidingExpirationKey(key), sldExp.ToString(), sldExp).ConfigureAwait(false);
             }
         }
 
@@ -108,15 +108,15 @@ namespace Enyim.Caching
         public async Task RefreshAsync(string key, CancellationToken token = default)
         {
             var sldExpKey = GetSlidingExpirationKey(key);
-            var sldExpStr = await GetValueAsync<string>(sldExpKey);
+            var sldExpStr = await GetValueAsync<string>(sldExpKey).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(sldExpStr)
                 && TimeSpan.TryParse(sldExpStr, out var sldExp))
             {
-                var value = (await GetAsync(key)).Value;
+                var value = (await GetAsync(key).ConfigureAwait(false)).Value;
                 if (value != null)
                 {
-                    await ReplaceAsync(key, value, sldExp);
-                    await ReplaceAsync(sldExpKey, sldExpStr, sldExp);
+                    await ReplaceAsync(key, value, sldExp).ConfigureAwait(false);
+                    await ReplaceAsync(sldExpKey, sldExpStr, sldExp).ConfigureAwait(false);
                 }
             }
         }
@@ -129,8 +129,8 @@ namespace Enyim.Caching
 
         async Task IDistributedCache.RemoveAsync(string key, CancellationToken token = default)
         {
-            await RemoveAsync(key);
-            await RemoveAsync(GetSlidingExpirationKey(key));
+            await RemoveAsync(key).ConfigureAwait(false);
+            await RemoveAsync(GetSlidingExpirationKey(key)).ConfigureAwait(false);
         }
 
         private uint GetExpiration(DistributedCacheEntryOptions options)

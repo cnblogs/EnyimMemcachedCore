@@ -38,7 +38,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             var response = new BinaryResponse();
 
-            var retval = await response.ReadAsync(socket);
+            var retval = await response.ReadAsync(socket).ConfigureAwait(false);
 
             StatusCode = response.StatusCode;
             Data = response.Data.Array;

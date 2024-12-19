@@ -492,7 +492,7 @@ namespace Enyim.Caching
             if (node != null)
             {
                 var command = _pool.OperationFactory.Delete(hashedKey, 0);
-                var commandResult = await node.ExecuteAsync(command);
+                var commandResult = await node.ExecuteAsync(command).ConfigureAwait(false);
 
                 if (commandResult.Success)
                 {

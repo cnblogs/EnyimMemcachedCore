@@ -109,17 +109,17 @@ namespace Enyim.Caching
             return Task.FromResult(result);
         }
 
-        public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
+        public Task<IGetOperationResult<T>> GetAsync<T>(string key)
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
             result.Success = false;
             result.Value = default(T);
-            return await Task.FromResult(result);
+            return Task.FromResult(result);
         }
 
-        public async Task<T> GetValueAsync<T>(string key)
+        public Task<T> GetValueAsync<T>(string key)
         {
-            return await Task.FromResult(default(T));
+            return Task.FromResult(default(T));
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
@@ -127,9 +127,10 @@ namespace Enyim.Caching
             return new Dictionary<string, CasResult<object>>();
         }
 
-        public async Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
+        public Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
         {
-            return await Task.FromResult(new Dictionary<string, CasResult<object>>());
+            IDictionary<string, CasResult<object>> dictionary = new Dictionary<string, CasResult<object>>();
+            return Task.FromResult(dictionary);
         }
 
         public CasResult<object> GetWithCas(string key)
@@ -217,14 +218,14 @@ namespace Enyim.Caching
             return false;
         }
 
-        public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
+        public Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
-            return await Task.FromResult(false);
+            return Task.FromResult(false);
         }
 
-        public async Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
+        public Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
         {
-            return await Task.FromResult(false);
+            return Task.FromResult(false);
         }
 
         public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
