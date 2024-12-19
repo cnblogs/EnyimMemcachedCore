@@ -64,7 +64,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var serverData = new Dictionary<string, string>();
             var retval = false;
 
-            while ((await response.ReadAsync(socket)) && response.KeyLength > 0)
+            while ((await response.ReadAsync(socket).ConfigureAwait(false)) && response.KeyLength > 0)
             {
                 retval = true;
 

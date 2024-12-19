@@ -156,9 +156,9 @@ namespace Enyim.Caching.Memcached
             {
                 var connTask = _socket.ConnectAsync(_endpoint);
 
-                if (await Task.WhenAny(connTask, Task.Delay(_connectionTimeout)) == connTask)
+                if (await Task.WhenAny(connTask, Task.Delay(_connectionTimeout)).ConfigureAwait(false) == connTask)
                 {
-                    await connTask;
+                    await connTask.ConfigureAwait(false);
                 }
                 else
                 {
@@ -174,7 +174,7 @@ namespace Enyim.Caching.Memcached
             {
                 var ep = GetIPEndPoint(_endpoint);
                 if (_isSocketDisposed) return false;
-                await _socket.ConnectAsync(ep.Address, ep.Port);
+                await _socket.ConnectAsync(ep.Address, ep.Port).ConfigureAwait(false);
             }
 
             if (_socket != null)
@@ -200,7 +200,7 @@ namespace Enyim.Caching.Memcached
 #else
                         ((DnsEndPoint)_endpoint).Host
 #endif
-                        );
+                        ).ConfigureAwait(false);
                 }
                 else
                 {
@@ -253,8 +253,6 @@ namespace Enyim.Caching.Memcached
 
         public async Task ResetAsync()
         {
-            // await _inputStream.FlushAsync();
-
             int available = _socket.Available;
 
             if (available > 0)
@@ -268,7 +266,7 @@ namespace Enyim.Caching.Memcached
 
                 byte[] data = new byte[available];
 
-                await ReadAsync(data, 0, available);
+                await ReadAsync(data, 0, available).ConfigureAwait(false);
             }
 
             if (_logger.IsEnabled(LogLevel.Debug))
@@ -428,8 +426,8 @@ namespace Enyim.Caching.Memcached
                 try
                 {
                     int currentRead = (_useSslStream
-                        ? await _sslStream.ReadAsync(buffer, offset, shouldRead)
-                        : await _inputStream.ReadAsync(buffer, offset, shouldRead));
+                        ? await _sslStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false)
+                        : await _inputStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false));
                     if (currentRead == count)
                         break;
                     if (currentRead < 1)
@@ -578,14 +576,14 @@ namespace Enyim.Caching.Memcached
                 {
                     foreach (var buf in buffers)
                     {
-                        await _sslStream.WriteAsync(buf.Array, 0, buf.Count);
+                        await _sslStream.WriteAsync(buf.Array, 0, buf.Count).ConfigureAwait(false);
                     }
 
-                    await _sslStream.FlushAsync();
+                    await _sslStream.FlushAsync().ConfigureAwait(false);
                 }
                 else
                 {
-                    var bytesTransferred = await _socket.SendAsync(buffers, SocketFlags.None);
+                    var bytesTransferred = await _socket.SendAsync(buffers, SocketFlags.None).ConfigureAwait(false);
                     if (bytesTransferred <= 0)
                     {
                         _isAlive = false;
