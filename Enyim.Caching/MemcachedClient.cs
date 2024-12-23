@@ -221,6 +221,8 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
+                var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                 result.Value = transcoder.Deserialize(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
@@ -237,6 +239,8 @@ namespace Enyim.Caching
         {
             if (commandResult.Success)
             {
+                var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                 result.Value = transcoder.Deserialize<T>(command.Result);
                 result.Cas = command.CasValue;
                 result.Pass();
@@ -443,6 +447,8 @@ namespace Enyim.Caching
 
                 if (commandResult.Success)
                 {
+                    var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                    command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                     result.Value = value = this.transcoder.Deserialize(command.Result);
                     result.Cas = cas = command.CasValue;
 
@@ -496,6 +502,8 @@ namespace Enyim.Caching
 
                 if (commandResult.Success)
                 {
+                    var decompressedBytes = ZSTDCompression.Decompress(command.Result.Data, _logger);
+                    command.Result = new CacheItem(command.Result.Flags, decompressedBytes);
                     result.Value = value = transcoder.Deserialize<T>(command.Result);
                     result.Cas = cas = command.CasValue;
 
@@ -682,7 +690,11 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try 
+                { 
+                    item = this.transcoder.Serialize(value); 
+                    item.Data = ZSTDCompression.Compress(item.Data, _logger);
+                }
                 catch (Exception e)
                 {
                     _logger.LogError("PerformStore", e);
@@ -746,7 +758,11 @@ namespace Enyim.Caching
             {
                 CacheItem item;
 
-                try { item = this.transcoder.Serialize(value); }
+                try 
+                { 
+                    item = this.transcoder.Serialize(value); 
+                    item.Data = ZSTDCompression.Compress(item.Data, _logger);
+                }
                 catch (Exception e)
                 {
                     _logger.LogError(new EventId(), e, $"{nameof(PerformStoreAsync)} for '{key}' key");
@@ -1339,32 +1355,50 @@ namespace Enyim.Caching
         /// <returns>a Dictionary holding all items indexed by their key.</returns>
         public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
         {
-            return PerformMultiGet<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
+            return PerformMultiGet<T>(keys, (mget, kvp) =>
+            {
+                var decompressedBytes = ZSTDCompression.Decompress(kvp.Value.Data, _logger);
+                var decompressedCacheItem = new CacheItem(kvp.Value.Flags, decompressedBytes);
+                return this.transcoder.Deserialize<T>(decompressedCacheItem);
+            });
         }
 
         public async Task<IDictionary<string, T>> GetAsync<T>(IEnumerable<string> keys)
         {
-            return await PerformMultiGetAsync<T>(keys, (mget, kvp) => this.transcoder.Deserialize<T>(kvp.Value));
+            return await PerformMultiGetAsync<T>(keys, (mget, kvp) =>
+            {
+                var decompressedBytes = ZSTDCompression.Decompress(kvp.Value.Data, _logger);
+                var decompressedCacheItem = new CacheItem(kvp.Value.Flags, decompressedBytes);
+                return this.transcoder.Deserialize<T>(decompressedCacheItem);
+            });
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
         {
-            return PerformMultiGet(keys, (mget, kvp) => new CasResult<object>
+            return PerformMultiGet(keys, (mget, kvp) =>
             {
-                Result = this.transcoder.Deserialize(kvp.Value),
-                Cas = mget.Cas[kvp.Key]
+                var decompressedBytes = ZSTDCompression.Decompress(kvp.Value.Data, _logger);
+                var decompressedCacheItem = new CacheItem(kvp.Value.Flags, decompressedBytes);
+                return new CasResult<object>
+                {
+                    Result = this.transcoder.Deserialize(decompressedCacheItem),
+                    Cas = mget.Cas[kvp.Key]
+                };
             });
         }
 
         public async Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
         {
-            return await PerformMultiGetAsync(keys, (mget, kvp) => new CasResult<object>
-            {
-                Result = this.transcoder.Deserialize(kvp.Value),
-                Cas = mget.Cas[kvp.Key]
+            return await PerformMultiGetAsync(keys, (mget, kvp) => {
+                var decompressedBytes = ZSTDCompression.Decompress(kvp.Value.Data, _logger);
+                var decompressedCacheItem = new CacheItem(kvp.Value.Flags, decompressedBytes);
+                return new CasResult<object>
+                {
+                    Result = this.transcoder.Deserialize(decompressedCacheItem),
+                    Cas = mget.Cas[kvp.Key]
+                };
             });
         }
-
         protected virtual IDictionary<string, T> PerformMultiGet<T>(IEnumerable<string> keys, Func<IMultiGetOperation, KeyValuePair<string, CacheItem>, T> collector)
         {
             // transform the keys and index them by hashed => original
