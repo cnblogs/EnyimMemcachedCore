@@ -24,7 +24,6 @@ namespace Enyim.Caching.Configuration
         private ITranscoder _transcoder;
         private IMemcachedKeyTransformer _keyTransformer;
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="T:MemcachedClientConfiguration"/> class.
         /// </summary>

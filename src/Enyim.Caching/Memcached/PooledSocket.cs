@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached
 {
-    [DebuggerDisplay("[ Address: {endpoint}, IsAlive = {IsAlive} ]")]
+    [DebuggerDisplay("[ Address: {_endpoint}, IsAlive = {_isAlive} ]")]
     public partial class PooledSocket : IDisposable
     {
         private readonly ILogger _logger;
