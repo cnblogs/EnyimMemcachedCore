@@ -421,31 +421,41 @@ namespace Enyim.Caching.Memcached
             int read = 0;
             int shouldRead = count;
 
-            while (read < count)
+            try
             {
-                try
+                if (_useSslStream)
                 {
-                    int currentRead = (_useSslStream
-                        ? await _sslStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false)
-                        : await _inputStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false));
-                    if (currentRead == count)
-                        break;
-                    if (currentRead < 1)
-                        throw new IOException("The socket seems to be disconnected");
-
-                    read += currentRead;
-                    offset += currentRead;
-                    shouldRead -= currentRead;
-                }
-                catch (Exception ex)
-                {
-                    if (ex is IOException || ex is SocketException)
+                    int currentRead = -1;
+                    do
                     {
-                        _isAlive = false;
+                        currentRead = await _sslStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false);
                     }
-
-                    throw;
+                    while (currentRead != 0);
                 }
+                else
+                {
+                    while (read < count)
+                    {
+                        int currentRead = await _inputStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false);
+                        if (currentRead == count)
+                            break;
+                        if (currentRead < 1)
+                            throw new IOException("The socket seems to be disconnected");
+
+                        read += currentRead;
+                        offset += currentRead;
+                        shouldRead -= currentRead;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is IOException || ex is SocketException)
+                {
+                    _isAlive = false;
+                }
+
+                throw;
             }
         }
 
@@ -463,31 +473,41 @@ namespace Enyim.Caching.Memcached
             int read = 0;
             int shouldRead = count;
 
-            while (read < count)
+            try
             {
-                try
+                if (_useSslStream)
                 {
-                    int currentRead = (_useSslStream
-                        ? _sslStream.Read(buffer, offset, shouldRead)
-                        : _inputStream.Read(buffer, offset, shouldRead));
-                    if (currentRead == count)
-                        break;
-                    if (currentRead < 1)
-                        throw new IOException("The socket seems to be disconnected");
-
-                    read += currentRead;
-                    offset += currentRead;
-                    shouldRead -= currentRead;
-                }
-                catch (Exception ex)
-                {
-                    if (ex is IOException || ex is SocketException)
+                    int currentRead = -1;
+                    do
                     {
-                        _isAlive = false;
+                        currentRead = _sslStream.Read(buffer, offset, shouldRead);
                     }
-
-                    throw;
+                    while (currentRead != 0);
                 }
+                else
+                {
+                    while (read < count)
+                    {
+                        int currentRead = _inputStream.Read(buffer, offset, shouldRead);
+                        if (currentRead == count)
+                            break;
+                        if (currentRead < 1)
+                            throw new IOException("The socket seems to be disconnected");
+
+                        read += currentRead;
+                        offset += currentRead;
+                        shouldRead -= currentRead;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is IOException || ex is SocketException)
+                {
+                    _isAlive = false;
+                }
+
+                throw;
             }
         }
 
