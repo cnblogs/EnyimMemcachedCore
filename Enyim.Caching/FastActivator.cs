@@ -15,7 +15,7 @@ namespace Enyim.Reflection
     /// </summary>
     public static class FastActivator
     {
-        private static Dictionary<Type, Func<object>> factoryCache = new Dictionary<Type, Func<object>>();
+        private static Dictionary<Type, Func<object>> factoryCache = [];
 
         /// <summary>
         /// Creates an instance of the specified type using a generated factory to avoid using Reflection.
@@ -34,9 +34,8 @@ namespace Enyim.Reflection
         /// <returns>The newly created instance.</returns>
         public static object Create(Type type)
         {
-            Func<object> f;
 
-            if (!factoryCache.TryGetValue(type, out f))
+            if (!factoryCache.TryGetValue(type, out Func<object> f))
             {
                 lock (factoryCache)
                     if (!factoryCache.TryGetValue(type, out f))

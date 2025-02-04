@@ -247,8 +247,7 @@ namespace Enyim.Caching.Memcached
 
                 // dispose the locator first, maybe it wants to access 
                 // the nodes one last time
-                var nd = this.nodeLocator as IDisposable;
-                if (nd != null)
+                if (this.nodeLocator is IDisposable nd)
                     try { nd.Dispose(); }
                     catch (Exception e) { _logger.LogError(nameof(DefaultServerPool), e); }
 

@@ -13,7 +13,7 @@ namespace Enyim.Caching.Configuration
 
         public SocketPoolOptions SocketPool { get; set; }
 
-        public List<Server> Servers { get; set; } = new List<Server>();
+        public List<Server> Servers { get; set; } = [];
 
         public Authentication Authentication { get; set; }
 
@@ -93,7 +93,7 @@ namespace Enyim.Caching.Configuration
             CheckTimeout(nameof(QueueTimeout), QueueTimeout);
         }
 
-        private void CheckTimeout(string paramName, TimeSpan value)
+        private static void CheckTimeout(string paramName, TimeSpan value)
         {
             if (value.TotalHours > 1)
             {

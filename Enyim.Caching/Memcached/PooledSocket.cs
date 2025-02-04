@@ -469,9 +469,7 @@ namespace Enyim.Caching.Memcached
             {
                 var dnsEndPoint = (DnsEndPoint)endpoint;
                 var address = Dns.GetHostAddresses(dnsEndPoint.Host).FirstOrDefault(ip =>
-                    ip.AddressFamily == AddressFamily.InterNetwork);
-                if (address == null)
-                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint));
+                    ip.AddressFamily == AddressFamily.InterNetwork) ?? throw new ArgumentException(String.Format("Could not resolve host '{0}'.", endpoint));
                 return new IPEndPoint(address, dnsEndPoint.Port);
             }
             else if (endpoint is IPEndPoint)

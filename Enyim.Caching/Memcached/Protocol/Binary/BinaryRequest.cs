@@ -5,25 +5,18 @@ using System.Threading;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-    public class BinaryRequest
+    public class BinaryRequest(byte commandCode)
     {
         private static readonly Enyim.Caching.ILog log = Enyim.Caching.LogManager.GetLogger(typeof(BinaryRequest));
         private static int InstanceCounter;
 
-        public byte Operation;
-        public readonly int CorrelationId;
+        public byte Operation = commandCode;
+        public readonly int CorrelationId = Interlocked.Increment(ref InstanceCounter);
 
         public string Key;
         public ulong Cas;
 
         public BinaryRequest(OpCode operation) : this((byte)operation) { }
-
-        public BinaryRequest(byte commandCode)
-        {
-            this.Operation = commandCode;
-            // session id
-            this.CorrelationId = Interlocked.Increment(ref InstanceCounter);
-        }
 
         public IList<ArraySegment<byte>> CreateBuffer()
         {

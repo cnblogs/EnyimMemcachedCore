@@ -7,18 +7,11 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
 	/// <summary>
 	/// Memcached client.
 	/// </summary>
-	public class BinaryOperationFactory : IOperationFactory
+	public class BinaryOperationFactory(ILogger logger) : IOperationFactory
 	{
-        private readonly ILogger _logger;
-
-        public BinaryOperationFactory(ILogger logger)
-        {
-            _logger = logger;
-        }
-
         IGetOperation IOperationFactory.Get(string key)
 		{
-			return new GetOperation(key, _logger);
+			return new GetOperation(key, logger);
 		}
 
 		IMultiGetOperation IOperationFactory.MultiGet(IList<string> keys)

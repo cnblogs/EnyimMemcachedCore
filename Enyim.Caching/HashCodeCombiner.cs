@@ -4,18 +4,13 @@ namespace Enyim
 	/// <summary>
 	/// Combines multiple hash codes into one.
 	/// </summary>
-	public class HashCodeCombiner
-	{
-		private int currentHash;
+	public class HashCodeCombiner(int initialValue)
+    {
+		private int currentHash = initialValue;
 
 		public HashCodeCombiner() : this(0x1505) { }
 
-		public HashCodeCombiner(int initialValue)
-		{
-			this.currentHash = initialValue;
-		}
-
-		public static int Combine(int code1, int code2)
+        public static int Combine(int code1, int code2)
 		{
 			return ((code1 << 5) + code1) ^ code2;
 		}
@@ -45,7 +40,7 @@ namespace Enyim
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kiskï¿½, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
