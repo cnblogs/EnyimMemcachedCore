@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Enyim.Caching.Memcached;
 using Enyim.Caching.Memcached.Results;
@@ -74,12 +76,12 @@ namespace Enyim.Caching
 
         public void Dispose()
         {
-
+            
         }
 
         public void FlushAll()
         {
-
+            
         }
 
         public IDictionary<string, T> Get<T>(IEnumerable<string> keys)
@@ -102,34 +104,22 @@ namespace Enyim.Caching
             return default(T);
         }
 
-        public Task<IGetOperationResult> GetAsync(string key)
-        {
-            var result = new DefaultGetOperationResultFactory().Create();
-            result.Success = false;
-            return Task.FromResult(result);
-        }
-
         public async Task<IGetOperationResult<T>> GetAsync<T>(string key)
         {
             var result = new DefaultGetOperationResultFactory<T>().Create();
             result.Success = false;
             result.Value = default(T);
-            return await Task.FromResult(result);
+            return result;
         }
 
         public async Task<T> GetValueAsync<T>(string key)
         {
-            return await Task.FromResult(default(T));
+            return default(T);
         }
 
         public IDictionary<string, CasResult<object>> GetWithCas(IEnumerable<string> keys)
         {
             return new Dictionary<string, CasResult<object>>();
-        }
-
-        public async Task<IDictionary<string, CasResult<object>>> GetWithCasAsync(IEnumerable<string> keys)
-        {
-            return await Task.FromResult(new Dictionary<string, CasResult<object>>());
         }
 
         public CasResult<object> GetWithCas(string key)
@@ -189,12 +179,7 @@ namespace Enyim.Caching
 
         public Task<bool> RemoveAsync(string key)
         {
-            return Task.FromResult(false);
-        }
-
-        public Task<bool> RemoveMultiAsync(params string[] keys)
-        {
-            return Task.FromResult(false);
+            return Task.FromResult<bool>(false);
         }
 
         public ServerStats Stats()
@@ -219,12 +204,12 @@ namespace Enyim.Caching
 
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, TimeSpan validFor)
         {
-            return await Task.FromResult(false);
+            return false;
         }
 
         public async Task<bool> StoreAsync(StoreMode mode, string key, object value, DateTime expiresAt)
         {
-            return await Task.FromResult(false);
+            return false;
         }
 
         public bool Store(StoreMode mode, string key, object value, DateTime expiresAt)
@@ -238,72 +223,29 @@ namespace Enyim.Caching
             return false;
         }
 
-        public bool TryGet<T>(string key, out T value)
-        {
-            value = default;
-            return false;
-        }
-
         public bool TryGetWithCas(string key, out CasResult<object> value)
         {
             value = new CasResult<object>();
             return false;
         }
 
-        public bool TryGetWithCas<T>(string key, out CasResult<T> value)
+        public void Add(string key, object value, int cacheSeconds)
         {
-            value = new CasResult<T>();
-            return false;
         }
 
-        public bool Add(string key, object value, int cacheSeconds)
-        {
-            return true;
-        }
-
-        public Task<bool> AddAsync(string key, object value, int cacheSeconds)
-        {
-            return Task.FromResult(true);
-        }
-
-        public bool Set(string key, object value, int cacheSeconds)
-        {
-            return true;
-        }
-
-        public Task<bool> SetAsync(string key, object value, int cacheSeconds)
-        {
-            return Task.FromResult(true);
-        }
-
-        public bool Replace(string key, object value, int cacheSeconds)
-        {
-            return true;
-        }
-
-        public Task<bool> ReplaceAsync(string key, object value, int cacheSeconds)
-        {
-            return Task.FromResult(true);
-        }
-
-        public Task<T> GetValueOrCreateAsync<T>(string key, int cacheSeconds, Func<Task<T>> generator)
-        {
-            return generator?.Invoke();
-        }
-
-        public Task FlushAllAsync()
+        public Task AddAsync(string key, object value, int cacheSeconds)
         {
             return Task.CompletedTask;
         }
 
-        public Task<IOperationResult> TouchAsync(string key, DateTime expiresAt)
+        public void Set(string key, object value, int cacheSeconds)
         {
-            return Task.FromResult<IOperationResult>(new MutateOperationResult());
+
         }
 
-        public Task<IOperationResult> TouchAsync(string key, TimeSpan validFor)
+        public Task SetAsync(string key, object value, int cacheSeconds)
         {
-            return Task.FromResult<IOperationResult>(new MutateOperationResult());
+            return Task.CompletedTask;
         }
     }
 }

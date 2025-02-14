@@ -5,49 +5,49 @@ using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-    /// <summary>
-    /// Implements append/prepend.
-    /// </summary>
-    public class ConcatOperation : BinarySingleItemOperation, IConcatOperation
-    {
-        private readonly ArraySegment<byte> data;
-        private readonly ConcatenationMode mode;
+	/// <summary>
+	/// Implements append/prepend.
+	/// </summary>
+	public class ConcatOperation : BinarySingleItemOperation, IConcatOperation
+	{
+		private ArraySegment<byte> data;
+		private ConcatenationMode mode;
 
-        public ConcatOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
-            : base(key)
-        {
-            this.data = data;
-            this.mode = mode;
-        }
+		public ConcatOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(key)
+		{
+			this.data = data;
+			this.mode = mode;
+		}
 
-        protected override BinaryRequest Build()
-        {
-            var request = new BinaryRequest((OpCode)this.mode)
-            {
-                Key = this.Key,
-                Cas = this.Cas,
-                Data = this.data
-            };
+		protected override BinaryRequest Build()
+		{
+			var request = new BinaryRequest((OpCode)this.mode)
+			{
+				Key = this.Key,
+				Cas = this.Cas,
+				Data = this.data
+			};
 
-            return request;
-        }
+			return request;
+		}
 
-        protected override IOperationResult ProcessResponse(BinaryResponse response)
-        {
-            return new BinaryOperationResult() { Success = true };
-        }
+		protected override IOperationResult ProcessResponse(BinaryResponse response)
+		{
+			return new BinaryOperationResult() { Success = true };
+		}
 
-        ConcatenationMode IConcatOperation.Mode
-        {
-            get { return this.mode; }
-        }
-    }
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
+		}
+	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk? enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

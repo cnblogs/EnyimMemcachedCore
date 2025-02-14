@@ -45,11 +45,7 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddEnyimMemcached();
-        //services.AddEnyimMemcached(Configuration);
-        //services.AddEnyimMemcached(Configuration, "enyimMemcached");
-        //services.AddEnyimMemcached(Configuration.GetSection("enyimMemcached"));
-        //services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
+        services.AddEnyimMemcached(options => Configuration.GetSection("enyimMemcached"));
     }
     
     public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -62,28 +58,33 @@ public class Startup
 ## Example usage
 ### Use IMemcachedClient interface
 ```cs
-public class HomeController : Controller
+public class TabNavService
 {
-    private readonly IMemcachedClient _memcachedClient;
-    private readonly IBlogPostService _blogPostService;
+    private ITabNavRepository _tabNavRepository;
+    private IMemcachedClient _memcachedClient;
 
-    public HomeController(IMemcachedClient memcachedClient, IBlogPostService blogPostService)
+    public TabNavService(
+        ITabNavRepository tabNavRepository,
+        IMemcachedClient memcachedClient)
     {
+        _tabNavRepository = tabNavRepository;
         _memcachedClient = memcachedClient;
-        _blogPostService = blogPostService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IEnumerable<TabNav>> GetAll()
     {
-        var cacheKey = "blogposts-recent";
-        var cacheSeconds = 600;
-
-        var posts = await _memcachedClient.GetValueOrCreateAsync(
-            cacheKey,
-            cacheSeconds,
-            async () => await _blogPostService.GetRecent(10));
-
-        return Ok(posts);
+		var cacheKey = "aboutus_tabnavs_all";
+        var result = await _memcachedClient.GetAsync<IEnumerable<TabNav>>(cacheKey);
+        if (!result.Success)
+        {
+            var tabNavs = await _tabNavRepository.GetAll();
+            await _memcachedClient.AddAsync(cacheKey, tabNavs, 300);
+            return tabNavs;
+        }
+        else
+        {
+            return result.Value;
+        }
     }
 }
 ```

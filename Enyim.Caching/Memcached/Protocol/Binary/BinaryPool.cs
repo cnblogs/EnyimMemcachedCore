@@ -11,13 +11,13 @@ using AEPLCore.Monitoring;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
-    /// <summary>
-    /// Server pool implementing the binary protocol.
-    /// </summary>
-    public class BinaryPool : DefaultServerPool
-    {
-        readonly ISaslAuthenticationProvider authenticationProvider;
-        readonly IMemcachedClientConfiguration configuration;
+	/// <summary>
+	/// Server pool implementing the binary protocol.
+	/// </summary>
+	public class BinaryPool : DefaultServerPool
+	{
+		ISaslAuthenticationProvider authenticationProvider;
+		IMemcachedClientConfiguration configuration;
         private readonly ILogger _logger;
         private readonly IMetricFunctions _metricFunctions;
 
@@ -35,27 +35,27 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             return new BinaryNode(endpoint, this.configuration.SocketPool, this.authenticationProvider, _logger, _metricFunctions);
         }
 
-        private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
-        {
-            // create&initialize the authenticator, if any
-            // we'll use this single instance everywhere, so it must be thread safe
-            IAuthenticationConfiguration auth = configuration.Authentication;
-            if (auth != null)
-            {
-                Type t = auth.Type;
-                var provider = (t == null) ? null : Enyim.Reflection.FastActivator.Create(t) as ISaslAuthenticationProvider;
+		private static ISaslAuthenticationProvider GetProvider(IMemcachedClientConfiguration configuration)
+		{
+			// create&initialize the authenticator, if any
+			// we'll use this single instance everywhere, so it must be thread safe
+			IAuthenticationConfiguration auth = configuration.Authentication;
+			if (auth != null)
+			{
+				Type t = auth.Type;
+				var provider = (t == null) ? null : Enyim.Reflection.FastActivator.Create(t) as ISaslAuthenticationProvider;
 
-                if (provider != null)
-                {
-                    provider.Initialize(auth.Parameters);
-                    return provider;
-                }
-            }
+				if (provider != null)
+				{
+					provider.Initialize(auth.Parameters);
+					return provider;
+				}
+			}
 
-            return null;
-        }
+			return null;
+		}
 
-    }
+	}
 }
 
 #region [ License information          ]

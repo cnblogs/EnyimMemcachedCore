@@ -21,7 +21,7 @@ namespace Enyim.Caching.Memcached
         /// <param name="socket"></param>
         /// <param name="next"></param>
         /// <returns></returns>
-        Task<bool> ReadResponseAsync(PooledSocket socket, Action<bool> next);
+        bool ReadResponseAsync(PooledSocket socket, Action<bool> next);
     }
 
     public interface ISingleItemOperation : IOperation

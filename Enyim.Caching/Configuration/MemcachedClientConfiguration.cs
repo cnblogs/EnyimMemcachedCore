@@ -21,7 +21,7 @@ namespace Enyim.Caching.Configuration
         // these are lazy initialized in the getters
         private Type nodeLocator;
         private ITranscoder _transcoder;
-        private IMemcachedKeyTransformer _keyTransformer;
+        private IMemcachedKeyTransformer keyTransformer;
         private ILogger<MemcachedClientConfiguration> _logger;
         private readonly IMetricFunctions _metricFunctions;
 
@@ -30,11 +30,7 @@ namespace Enyim.Caching.Configuration
         /// </summary>
         public MemcachedClientConfiguration(
             ILoggerFactory loggerFactory,
-            IOptions<MemcachedClientOptions> optionsAccessor,
-            IConfiguration configuration = null,
-            ITranscoder transcoder = null,
-            IMemcachedKeyTransformer keyTransformer = null,
-            IMetricFunctions metricFunctions = null)
+            IOptions<MemcachedClientOptions> optionsAccessor, IMetricFunctions metricFunctions = null)
         {
             if (optionsAccessor == null)
             {
@@ -45,21 +41,19 @@ namespace Enyim.Caching.Configuration
             _metricFunctions = metricFunctions;
 
             var options = optionsAccessor.Value;
-            if ((options == null || options.Servers.Count == 0) && configuration != null)
+            Servers = new List<EndPoint>();
+            foreach (var server in options.Servers)
             {
-                var section = configuration.GetSection("enyimMemcached");
-                if (section.Exists())
+                IPAddress address;
+                if (IPAddress.TryParse(server.Address, out address))
                 {
-                    section.Bind(options);
+                    Servers.Add(new IPEndPoint(address, server.Port));
                 }
                 else
                 {
-                    _logger.LogWarning($"No enyimMemcached setting in appsetting.json. Use default configuration");
-                    options.AddDefaultServer();
-                }
+                    Servers.Add(new DnsEndPoint(server.Address, server.Port));
+                }                
             }
-
-            ConfigureServers(options);
 
             SocketPool = new SocketPoolConfiguration();
             if (options.SocketPool != null)
@@ -73,8 +67,8 @@ namespace Enyim.Caching.Configuration
                 SocketPool.MaxPoolSize = options.SocketPool.MaxPoolSize;
                 _logger.LogInformation($"{nameof(SocketPool.MaxPoolSize)}: {SocketPool.MaxPoolSize}");
 
-                SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;
-                _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");
+                SocketPool.ConnectionTimeout = options.SocketPool.ConnectionTimeout;                
+                _logger.LogInformation($"{nameof(SocketPool.ConnectionTimeout)}: {SocketPool.ConnectionTimeout}");                              
 
                 SocketPool.ConnectionIdleTimeout = options.SocketPool.ConnectionIdleTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.ConnectionIdleTimeout)}: {SocketPool.ConnectionIdleTimeout}");
@@ -87,10 +81,6 @@ namespace Enyim.Caching.Configuration
 
                 SocketPool.QueueTimeout = options.SocketPool.QueueTimeout;
                 _logger.LogInformation($"{nameof(SocketPool.QueueTimeout)}: {SocketPool.QueueTimeout}");
-
-                SocketPool.InitPoolTimeout = options.SocketPool.InitPoolTimeout;
-
-                SocketPool.FailurePolicyFactory = options.SocketPool.FailurePolicyFactory;
             }
 
             Protocol = options.Protocol;
@@ -123,7 +113,7 @@ namespace Enyim.Caching.Configuration
                 }
             }
 
-            if (!string.IsNullOrEmpty(options.KeyTransformer))
+            if(!string.IsNullOrEmpty(options.KeyTransformer))
             {
                 try
                 {
@@ -134,23 +124,18 @@ namespace Enyim.Caching.Configuration
                         _logger.LogDebug($"Use '{options.KeyTransformer}' KeyTransformer");
                     }
                 }
-                catch (Exception ex)
+                catch(Exception ex)
                 {
                     _logger.LogError(new EventId(), ex, $"Unable to load '{options.KeyTransformer}' KeyTransformer");
-                }
-            }
-            else if (keyTransformer != null)
-            {
-                this._keyTransformer = keyTransformer;
-                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer.ToString()}'");
+                }                
             }
 
-            if (NodeLocator == null)
+            if(NodeLocator == null)
             {
                 NodeLocator = options.Servers.Count > 1 ? typeof(DefaultNodeLocator) : typeof(SingleNodeLocator);
             }
 
-            if (!string.IsNullOrEmpty(options.Transcoder))
+            if(!string.IsNullOrEmpty(options.Transcoder))
             {
                 try
                 {
@@ -169,173 +154,140 @@ namespace Enyim.Caching.Configuration
                     _logger.LogError(new EventId(), ex, $"Unable to load '{options.Transcoder}'");
                 }
             }
-            else if (transcoder != null)
-            {
-                this._transcoder = transcoder;
-                _logger.LogDebug($"Use Transcoder Type : '{transcoder.ToString()}'");
-            }
 
             if (options.NodeLocatorFactory != null)
             {
                 NodeLocatorFactory = options.NodeLocatorFactory;
             }
-        }
+        }   
 
-        private void ConfigureServers(MemcachedClientOptions options)
-        {
-            Servers = new List<EndPoint>();
-            foreach (var server in options.Servers)
-            {
-                if (!IPAddress.TryParse(server.Address, out var address))
-                {
-                    address = Dns.GetHostAddresses(server.Address)
-                        .FirstOrDefault(i => i.AddressFamily == AddressFamily.InterNetwork);
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The address and the port of the server in the format 'host:port'.</param>
+		public void AddServer(string address)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
+		}
 
-                    if (address == null)
-                    {
-                        _logger.LogError($"Could not resolve host '{server.Address}'.");
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Memcached server address - {address}");
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation($"Memcached server address - {server.Address }:{server.Port}");
-                }
+		/// <summary>
+		/// Adds a new server to the pool.
+		/// </summary>
+		/// <param name="address">The host name or IP address of the server.</param>
+		/// <param name="port">The port number of the memcached instance.</param>
+		public void AddServer(string host, int port)
+		{
+			this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(host, port));
+		}
 
-                Servers.Add(new IPEndPoint(address, server.Port));
-            }
-        }
+		/// <summary>
+		/// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
+		/// </summary>
+		public IList<EndPoint> Servers { get; private set; }
 
-        /// <summary>
-        /// Adds a new server to the pool.
-        /// </summary>
-        /// <param name="address">The address and the port of the server in the format 'host:port'.</param>
-        public void AddServer(string address)
-        {
-            this.Servers.Add(ConfigurationHelper.ResolveToEndPoint(address));
-        }
+		/// <summary>
+		/// Gets the configuration of the socket pool.
+		/// </summary>
+		public ISocketPoolConfiguration SocketPool { get; private set; }
 
-        /// <summary>
-        /// Adds a new server to the pool.
-        /// </summary>
-        /// <param name="address">The host name or IP address of the server.</param>
-        /// <param name="port">The port number of the memcached instance.</param>
-        public void AddServer(string host, int port)
-        {
-            this.Servers.Add(new DnsEndPoint(host, port));
-        }
+		/// <summary>
+		/// Gets the authentication settings.
+		/// </summary>
+		public IAuthenticationConfiguration Authentication { get; private set; }
 
-        /// <summary>
-        /// Gets a list of <see cref="T:IPEndPoint"/> each representing a Memcached server in the pool.
-        /// </summary>
-        public IList<EndPoint> Servers { get; private set; }
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
+		/// </summary>
+		public IMemcachedKeyTransformer KeyTransformer
+		{
+			get { return this.keyTransformer ?? (this.keyTransformer = new DefaultKeyTransformer()); }
+			set { this.keyTransformer = value; }
+		}
 
-        /// <summary>
-        /// Gets the configuration of the socket pool.
-        /// </summary>
-        public ISocketPoolConfiguration SocketPool { get; private set; }
+		/// <summary>
+		/// Gets or sets the Type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
+		/// </summary>
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public Type NodeLocator
+		{
+			get { return this.nodeLocator; }
+			set
+			{
+				ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
+				this.nodeLocator = value;
+			}
+		}
 
-        /// <summary>
-        /// Gets the authentication settings.
-        /// </summary>
-        public IAuthenticationConfiguration Authentication { get; private set; }
+		/// <summary>
+		/// Gets or sets the NodeLocatorFactory instance which will be used to create a new IMemcachedNodeLocator instances.
+		/// </summary>
+		/// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
+		public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
 
-        /// <summary>
-        /// Gets or sets the <see cref="T:Enyim.Caching.Memcached.IMemcachedKeyTransformer"/> which will be used to convert item keys for Memcached.
-        /// </summary>
-        public IMemcachedKeyTransformer KeyTransformer
-        {
-            get { return this._keyTransformer ?? (this._keyTransformer = new DefaultKeyTransformer()); }
-            set { this._keyTransformer = value; }
-        }
+		/// <summary>
+		/// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
+		/// </summary>
+		public ITranscoder Transcoder
+		{
+			get { return _transcoder ?? (_transcoder = new DefaultTranscoder()); }
+			set { _transcoder = value; }
+		}
 
-        /// <summary>
-        /// Gets or sets the Type of the <see cref="T:Enyim.Caching.Memcached.IMemcachedNodeLocator"/> which will be used to assign items to Memcached nodes.
-        /// </summary>
-        /// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
-        public Type NodeLocator
-        {
-            get { return this.nodeLocator; }
-            set
-            {
-                ConfigurationHelper.CheckForInterface(value, typeof(IMemcachedNodeLocator));
-                this.nodeLocator = value;
-            }
-        }
+		/// <summary>
+		/// Gets or sets the type of the communication between client and server.
+		/// </summary>
+		public MemcachedProtocol Protocol { get; set; }
 
-        /// <summary>
-        /// Gets or sets the NodeLocatorFactory instance which will be used to create a new IMemcachedNodeLocator instances.
-        /// </summary>
-        /// <remarks>If both <see cref="M:NodeLocator"/> and  <see cref="M:NodeLocatorFactory"/> are assigned then the latter takes precedence.</remarks>
-        public IProviderFactory<IMemcachedNodeLocator> NodeLocatorFactory { get; set; }
+		#region [ interface                     ]
 
-        /// <summary>
-        /// Gets or sets the <see cref="T:Enyim.Caching.Memcached.ITranscoder"/> which will be used serialize or deserialize items.
-        /// </summary>
-        public ITranscoder Transcoder
-        {
-            get { return _transcoder ?? (_transcoder = new DefaultTranscoder()); }
-            set { _transcoder = value; }
-        }
+		IList<System.Net.EndPoint> IMemcachedClientConfiguration.Servers
+		{
+			get { return this.Servers; }
+		}
 
-        /// <summary>
-        /// Gets or sets the type of the communication between client and server.
-        /// </summary>
-        public MemcachedProtocol Protocol { get; set; }
+		ISocketPoolConfiguration IMemcachedClientConfiguration.SocketPool
+		{
+			get { return this.SocketPool; }
+		}
 
-        #region [ interface                     ]
-
-        IList<EndPoint> IMemcachedClientConfiguration.Servers
-        {
-            get { return this.Servers; }
-        }
-
-        ISocketPoolConfiguration IMemcachedClientConfiguration.SocketPool
-        {
-            get { return this.SocketPool; }
-        }
-
-        IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
-        {
-            get { return this.Authentication; }
-        }
+		IAuthenticationConfiguration IMemcachedClientConfiguration.Authentication
+		{
+			get { return this.Authentication; }
+		} 
 
         IMemcachedKeyTransformer IMemcachedClientConfiguration.CreateKeyTransformer()
-        {
-            return this.KeyTransformer;
-        }
+		{
+			return this.KeyTransformer;
+		}
 
-        IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
-        {
-            var f = this.NodeLocatorFactory;
-            if (f != null) return f.Create();
+		IMemcachedNodeLocator IMemcachedClientConfiguration.CreateNodeLocator()
+		{
+			var f = this.NodeLocatorFactory;
+			if (f != null) return f.Create();
 
-            return this.NodeLocator == null
-                    ? new SingleNodeLocator()
+			return this.NodeLocator == null
+					? new SingleNodeLocator() 
                     : (IMemcachedNodeLocator)FastActivator.Create(this.NodeLocator);
-        }
+		}
 
-        ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
-        {
-            return this.Transcoder;
-        }
+		ITranscoder IMemcachedClientConfiguration.CreateTranscoder()
+		{
+			return this.Transcoder;
+		}
 
-        IServerPool IMemcachedClientConfiguration.CreatePool()
-        {
-            switch (this.Protocol)
-            {
-                case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger, _metricFunctions);
-                case MemcachedProtocol.Binary: return new BinaryPool(this, _logger, _metricFunctions);
-            }
+		IServerPool IMemcachedClientConfiguration.CreatePool()
+		{
+			switch (this.Protocol)
+			{
+				case MemcachedProtocol.Text: return new DefaultServerPool(this, new Memcached.Protocol.Text.TextOperationFactory(), _logger, _metricFunctions);
+				case MemcachedProtocol.Binary: return new BinaryPool(this, _logger, _metricFunctions);
+			}
 
-            throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
-        }
+			throw new ArgumentOutOfRangeException("Unknown protocol: " + (int)this.Protocol);
+		}		
 
-        #endregion
-    }
+		#endregion
+	}
 }
 
 #region [ License information          ]

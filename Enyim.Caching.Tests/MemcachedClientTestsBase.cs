@@ -1,15 +1,12 @@
-﻿using Enyim.Caching.Configuration;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Results;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Enyim.Caching.Configuration;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Enyim.Caching.Tests
 {
@@ -17,16 +14,11 @@ namespace Enyim.Caching.Tests
     {
         protected MemcachedClient _client;
 
-        public MemcachedClientTestsBase(Action<MemcachedClientOptions> onAddEnyimMemcached = null)
+        public MemcachedClientTestsBase()
         {
             IServiceCollection services = new ServiceCollection();
-            services.AddEnyimMemcached(options =>
-            {
-                options.AddServer("memcached", 11211);
-                onAddEnyimMemcached?.Invoke(options);
-            });
-
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
+            services.AddEnyimMemcached(options => options.AddServer("memcached", 11211));
+            services.AddLogging();
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             _client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
         }
@@ -39,6 +31,7 @@ namespace Enyim.Caching.Tests
 
         protected IEnumerable<string> GetUniqueKeys(string prefix = null, int max = 5)
         {
+
             var keys = new List<string>(max);
             for (int i = 0; i < max; i++)
             {
@@ -68,20 +61,6 @@ namespace Enyim.Caching.Tests
             return _client.ExecuteStore(mode, key, value);
         }
 
-        protected Task<bool> StoreAsync(StoreMode mode = StoreMode.Set, string key = null, object value = null)
-        {
-            if (string.IsNullOrEmpty(key))
-            {
-                key = GetUniqueKey("store");
-            }
-
-            if (value == null)
-            {
-                value = GetRandomString();
-            }
-            return _client.StoreAsync(mode, key, value, TimeSpan.MaxValue);
-        }
-
         protected void StoreAssertPass(IStoreOperationResult result)
         {
             Assert.True(result.Success, "Success was false");
@@ -105,24 +84,7 @@ namespace Enyim.Caching.Tests
             Assert.Equal(expectedValue, result.Value);
         }
 
-        protected void GetAssertPass<T>(IGetOperationResult<T> result, T expectedValue)
-        {
-            Assert.True(result.Success, "Success was false");
-            Assert.True(result.Cas > 0, "Cas value was 0");
-            Assert.True((result.StatusCode ?? 0) == 0, "StatusCode was neither 0 nor null");
-            Assert.Equal(expectedValue, result.Value);
-        }
-
         protected void GetAssertFail(IGetOperationResult result)
-        {
-            Assert.False(result.Success, "Success was true");
-            Assert.Equal((ulong)0, result.Cas);
-            Assert.True(result.StatusCode > 0, "StatusCode not greater than 0");
-            Assert.False(result.HasValue, "HasValue was true");
-            Assert.Null(result.Value);
-        }
-
-        protected void GetAssertFail(IGetOperationResult<object> result)
         {
             Assert.False(result.Success, "Success was true");
             Assert.Equal((ulong)0, result.Cas);

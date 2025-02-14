@@ -2,52 +2,34 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-    public class MemcachedClientMutateTests : MemcachedClientTestsBase
-    {
-        [Fact]
-        public void When_Incrementing_Value_Result_Is_Successful()
-        {
-            var key = GetUniqueKey("mutate");
-            var mutateResult = _client.ExecuteIncrement(key, 100, 10);
-            MutateAssertPass(mutateResult, 100);
+	public class MemcachedClientMutateTests : MemcachedClientTestsBase
+	{
+		[Fact]
+		public void When_Incrementing_Value_Result_Is_Successful()
+		{
+			var key = GetUniqueKey("mutate");
+			var mutateResult = _client.ExecuteIncrement(key, 100, 10);
+			MutateAssertPass(mutateResult, 100);
 
-            mutateResult = _client.ExecuteIncrement(key, 100, 10);
-            MutateAssertPass(mutateResult, 110);
-        }
+			mutateResult = _client.ExecuteIncrement(key, 100, 10);
+			MutateAssertPass(mutateResult, 110);
+		}
 
-        [Fact]
-        public void When_Decrementing_Value_Result_Is_Successful()
-        {
-            var key = GetUniqueKey("mutate");
-            var mutateResult = _client.ExecuteDecrement(key, 100, 10);
-            MutateAssertPass(mutateResult, 100);
+		[Fact]
+		public void When_Decrementing_Value_Result_Is_Successful()
+		{
+			var key = GetUniqueKey("mutate");
+			var mutateResult = _client.ExecuteDecrement(key, 100, 10);
+			MutateAssertPass(mutateResult, 100);
 
-            mutateResult = _client.ExecuteDecrement(key, 100, 10);
-            MutateAssertPass(mutateResult, 90);
-        }
-
-        [Fact]
-        public async Task When_Touch_Item_Result_Is_Successful()
-        {
-            var key = GetUniqueKey("touch");
-            await _client.AddAsync(key, "value", 1);
-            var operationResult = await _client.GetAsync<string>(key);
-            Assert.True(operationResult.Success);
-            Assert.NotEqual(0UL, operationResult.Cas);
-            var result = await _client.TouchAsync(key, TimeSpan.FromSeconds(60));
-            await Task.Delay(1010);
-            Assert.True(result.Success, "Success was false");
-            Assert.True((result.StatusCode ?? 0) == 0, "StatusCode was not null or 0");
-            operationResult = await _client.GetAsync<string>(key);
-            Assert.True(operationResult.Success);
-            Assert.NotEqual(0UL, operationResult.Cas);
-        }
-    }
+			mutateResult = _client.ExecuteDecrement(key, 100, 10);
+			MutateAssertPass(mutateResult, 90);
+		}
+	}
 }
 
 #region [ License information          ]

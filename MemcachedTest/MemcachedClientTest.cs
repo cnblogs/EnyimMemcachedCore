@@ -1,7 +1,9 @@
 using System;
+using System.Net;
+using System.Threading;
 using Enyim.Caching;
+using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Transcoders;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
@@ -24,17 +26,12 @@ namespace MemcachedTest
             {
                 options.AddServer("memcached", 11211);
                 options.Protocol = protocol;
-                //if (useBinaryFormatterTranscoder)
-                //{
-                //    options.Transcoder = "BinaryFormatterTranscoder";
-                //}
+                if (useBinaryFormatterTranscoder)
+                {
+                    options.Transcoder = "BinaryFormatterTranscoder";
+                }
             });
-            if(useBinaryFormatterTranscoder)
-            {
-                services.AddSingleton<ITranscoder,BinaryFormatterTranscoder>();
-            }
-
-            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Information).AddConsole());
+            services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Error).AddConsole());
 
             IServiceProvider serviceProvider = services.BuildServiceProvider();
             var client = serviceProvider.GetService<IMemcachedClient>() as MemcachedClient;
@@ -92,9 +89,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal("Hello", td2.FieldA);
-                Assert.Equal("World", td2.FieldB);
-                Assert.Equal(19810619, td2.FieldC);
+                Assert.Equal(td2.FieldA, "Hello");
+                Assert.Equal(td2.FieldB, "World");
+                Assert.Equal(td2.FieldC, 19810619);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
 
@@ -104,9 +101,9 @@ namespace MemcachedTest
                 TestData td2 = client.Get<TestData>(TestObjectKey);
 
                 Assert.NotNull(td2);
-                Assert.Equal("Hello", td2.FieldA);
-                Assert.Equal("World", td2.FieldB);
-                Assert.Equal(19810619, td2.FieldC);
+                Assert.Equal(td2.FieldA, "Hello");
+                Assert.Equal(td2.FieldB, "World");
+                Assert.Equal(td2.FieldC, 19810619);
                 Assert.True(td2.FieldD, "Object was corrupted.");
             }
         }
@@ -218,40 +215,38 @@ namespace MemcachedTest
             {
                 log.Debug("Cache should be empty.");
 
-                var cacheKey = $"{nameof(AddSetReplaceTest)}-{Guid.NewGuid()}";
-
-                Assert.True(client.Store(StoreMode.Set, cacheKey, "1"), "Initialization failed");
+                Assert.True(client.Store(StoreMode.Set, "VALUE", "1"), "Initialization failed");
 
                 log.Debug("Setting VALUE to 1.");
 
-                Assert.Equal("1", client.Get(cacheKey));
+                Assert.Equal("1", client.Get("VALUE"));
 
                 log.Debug("Adding VALUE; this should return false.");
-                Assert.False(client.Store(StoreMode.Add, cacheKey, "2"), "Add should have failed");
+                Assert.False(client.Store(StoreMode.Add, "VALUE", "2"), "Add should have failed");
 
                 log.Debug("Checking if VALUE is still '1'.");
-                Assert.Equal("1", client.Get(cacheKey));
+                Assert.Equal("1", client.Get("VALUE"));
 
                 log.Debug("Replacing VALUE; this should return true.");
-                Assert.True(client.Store(StoreMode.Replace, cacheKey, "4"), "Replace failed");
+                Assert.True(client.Store(StoreMode.Replace, "VALUE", "4"), "Replace failed");
 
                 log.Debug("Checking if VALUE is '4' so it got replaced.");
-                Assert.Equal("4", client.Get(cacheKey));
+                Assert.Equal("4", client.Get("VALUE"));
 
                 log.Debug("Removing VALUE.");
-                Assert.True(client.Remove(cacheKey), "Remove failed");
+                Assert.True(client.Remove("VALUE"), "Remove failed");
 
                 log.Debug("Replacing VALUE; this should return false.");
-                Assert.False(client.Store(StoreMode.Replace, cacheKey, "8"), "Replace should not have succeeded");
+                Assert.False(client.Store(StoreMode.Replace, "VALUE", "8"), "Replace should not have succeeded");
 
                 log.Debug("Checking if VALUE is 'null' so it was not replaced.");
-                Assert.Null(client.Get(cacheKey));
+                Assert.Null(client.Get("VALUE"));
 
                 log.Debug("Adding VALUE; this should return true.");
-                Assert.True(client.Store(StoreMode.Add, cacheKey, "16"), "Item should have been Added");
+                Assert.True(client.Store(StoreMode.Add, "VALUE", "16"), "Item should have been Added");
 
                 log.Debug("Checking if VALUE is '16' so it was added.");
-                Assert.Equal("16", client.Get(cacheKey));
+                Assert.Equal("16", client.Get("VALUE"));
 
                 log.Debug("Passed AddSetReplaceTest.");
             }
@@ -323,40 +318,29 @@ namespace MemcachedTest
             using (var client = GetClient())
             {
                 var keys = new List<string>();
-                var tasks = new List<Task<bool>>();
 
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 100; i++)
                 {
-                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_{new Random().Next()}" + i;
+                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
                     keys.Add(k);
 
-                    tasks.Add(client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)));
+                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(300)), "Store of " + k + " failed");
                 }
 
-                await Task.WhenAll(tasks);
+                var retvals = client.GetWithCas(keys);
 
-                foreach (var task in tasks)
-                { 
-                    Assert.True(await task, "Store failed");
-                }
-
-                var retvals = await client.GetWithCasAsync(keys);
+                CasResult<object> value;
 
                 Assert.Equal(keys.Count, retvals.Count);
 
-                tasks.Clear();
                 for (int i = 0; i < keys.Count; i++)
                 {
                     string key = keys[i];
 
-                    Assert.True(retvals.TryGetValue(key, out var value), "missing key: " + key);
+                    Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
                     Assert.Equal(value.Result, i);
                     Assert.NotEqual(value.Cas, (ulong)0);
-
-                    tasks.Add(client.RemoveAsync(key));
                 }
-
-                await Task.WhenAll(tasks);                
             }
         }
 
@@ -369,27 +353,6 @@ namespace MemcachedTest
             {
                 Assert.Equal(initialValue, client.Increment("VALUE", initialValue, 2UL));
                 Assert.Equal(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
-            }
-        }
-
-        [Fact]
-        public async Task FlushTest()
-        {
-            using (MemcachedClient client = GetClient())
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    string cacheKey = $"Hello_Flush_{i}";
-                    Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, i, DateTime.Now.AddSeconds(30)));
-                }
-
-                await client.FlushAllAsync();
-
-                for (int i = 0; i < 10; i++)
-                {
-                    string cacheKey = $"Hello_Flush_{i}";
-                    Assert.Null(await client.GetValueAsync<string>(cacheKey));
-                }
             }
         }
     }

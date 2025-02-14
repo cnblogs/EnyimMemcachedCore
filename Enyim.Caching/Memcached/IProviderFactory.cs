@@ -2,25 +2,25 @@ using System.Collections.Generic;
 
 namespace Enyim.Caching.Memcached
 {
-    /// <summary>
-    /// Provides a way for custom initalization of the providers (locators, transcoders, key transformers)
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public interface IProviderFactory<T> : IProvider
-    {
-        T Create();
-    }
+	/// <summary>
+	/// Provides a way for custom initalization of the providers (locators, transcoders, key transformers)
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	public interface IProviderFactory<T> : IProvider
+	{
+		T Create();
+	}
 
-    public interface IProvider
-    {
-        void Initialize(Dictionary<string, string> parameters);
-    }
+	public interface IProvider
+	{
+		void Initialize(Dictionary<string, string> parameters);
+	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk? enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

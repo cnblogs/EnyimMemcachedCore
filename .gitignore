@@ -10,4 +10,3 @@ packages/*/
 project.lock.json
 /publish/*.bat
 .vs/
-.idea

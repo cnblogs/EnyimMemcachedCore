@@ -145,29 +145,16 @@ namespace Enyim.Caching
 			ulong cas = 0;
 
 			return this.PerformTryGet(key, out cas, out value);
-        }
+		}
 
-        /// <summary>
-        /// Tries to get an item from the cache.
-        /// </summary>
-        /// <param name="key">The identifier for the item to retrieve.</param>
-        /// <param name="value">The retrieved item or null if not found.</param>
-        /// <returns>The <value>true</value> if the item was successfully retrieved.</returns>
-        public IGetOperationResult ExecuteTryGet<T>(string key, out T value)
-        {
-            ulong cas = 0;
-
-            return this.PerformTryGet(key, out cas, out value);
-        }
-
-        /// <summary>
-        /// Retrieves the specified item from the cache.
-        /// </summary>
-        /// <param name="key">The identifier for the item to retrieve.</param>
-        /// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
-        public IGetOperationResult<T> ExecuteGet<T>(string key)
+		/// <summary>
+		/// Retrieves the specified item from the cache.
+		/// </summary>
+		/// <param name="key">The identifier for the item to retrieve.</param>
+		/// <returns>The retrieved item, or <value>default(T)</value> if the key was not found.</returns>
+		public IGetOperationResult<T> ExecuteGet<T>(string key)
 		{
-            T tmp;
+			object tmp;
 			var result = new DefaultGetOperationResultFactory<T>().Create();
 
 			var tryGetResult = ExecuteTryGet(key, out tmp);
@@ -457,13 +444,13 @@ namespace Enyim.Caching
 		/// <returns>true if the item was successfully removed from the cache; false otherwise.</returns>
 		public IRemoveOperationResult ExecuteRemove(string key)
 		{
-			var hashedKey = this.keyTransformer.Transform(key);
-			var node = this.pool.Locate(hashedKey);
+			//var hashedKey = this.keyTransformer.Transform(key);
+			var node = this.pool.Locate(key);
 			var result = RemoveOperationResultFactory.Create();
 
 			if (node != null)
 			{
-				var command = this.pool.OperationFactory.Delete(hashedKey, 0);
+				var command = this.pool.OperationFactory.Delete(key, 0);
 				var commandResult = node.Execute(command);
 
 				if (commandResult.Success)
@@ -485,13 +472,12 @@ namespace Enyim.Caching
 
         public async Task<IRemoveOperationResult> ExecuteRemoveAsync(string key)
         {
-            var hashedKey = this.keyTransformer.Transform(key);
-            var node = this.pool.Locate(hashedKey);
+            var node = this.pool.Locate(key);
             var result = RemoveOperationResultFactory.Create();
 
             if (node != null)
             {
-                var command = this.pool.OperationFactory.Delete(hashedKey, 0);
+                var command = this.pool.OperationFactory.Delete(key, 0);
                 var commandResult = await node.ExecuteAsync(command);
 
                 if (commandResult.Success)

@@ -1,43 +1,29 @@
-﻿using System;
+﻿//#define DEBUG_IO
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
-using Enyim.Caching.Memcached.Results.Factories;
+using System.Threading;
+using System.IO;
 
-namespace Enyim.Caching.Memcached.Results.Helpers
+namespace Enyim.Caching.Memcached
 {
-
-	public static class ResultHelper
+	public class AsyncIOArgs
 	{
+		public Action<AsyncIOArgs> Next { get; set; }
+		public int Count { get; set; }
 
-		public static string ProcessResponseData(ArraySegment<byte> data, string message = "")
-		{
-
-			if (data != null && data.Count > 0)
-			{
-				try
-				{
-					return message +
-						(! string.IsNullOrEmpty(message) ? ": " : "") +
-						Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
-				}
-				catch (Exception ex)
-				{
-					return ex.GetBaseException().Message;
-				}
-			}
-
-			return string.Empty;
-		}
+		public byte[] Result { get; internal set; }
+		public bool Fail { get; internal set; }
 	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    @author Couchbase <info@couchbase.com>
- *    @copyright 2012 Couchbase, Inc.
- *    @copyright 2012 Attila Kiskó, enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

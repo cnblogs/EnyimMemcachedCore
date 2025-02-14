@@ -2,38 +2,37 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached.Protocol.Text
 {
-    public class ConcateOperation : StoreOperationBase, IConcatOperation
-    {
-        private readonly ConcatenationMode mode;
+	public class ConcateOperation : StoreOperationBase, IConcatOperation
+	{
+		private ConcatenationMode mode;
 
-        internal ConcateOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
-            : base(mode == ConcatenationMode.Append
-                    ? StoreCommand.Append
-                    : StoreCommand.Prepend, key, new CacheItem() { Data = data, Flags = 0 }, 0, 0)
-        {
-            this.mode = mode;
-        }
+		internal ConcateOperation(ConcatenationMode mode, string key, ArraySegment<byte> data)
+			: base(mode == ConcatenationMode.Append
+					? StoreCommand.Append
+					: StoreCommand.Prepend, key, new CacheItem() { Data = data, Flags = 0 }, 0, 0)
+		{
+			this.mode = mode;
+		}
 
-        ConcatenationMode IConcatOperation.Mode
-        {
-            get { return this.mode; }
-        }
+		ConcatenationMode IConcatOperation.Mode
+		{
+			get { return this.mode; }
+		}
 
-        protected internal override Task<bool> ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
-        {
-            throw new System.NotSupportedException();
-        }
-    }
+		protected internal override bool ReadResponseAsync(PooledSocket socket, System.Action<bool> next)
+		{
+			throw new System.NotSupportedException();
+		}
+	}
 }
 
 #region [ License information          ]
 /* ************************************************************
  * 
- *    Copyright (c) 2010 Attila Kisk? enyim.com
+ *    Copyright (c) 2010 Attila Kiskó, enyim.com
  *    
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.

@@ -73,7 +73,7 @@ namespace Enyim.Caching.Configuration
             //	throw new System.Configuration.ConfigurationErrorsException("The type " + type.AssemblyQualifiedName + " must implement " + interfaceType.AssemblyQualifiedName);
         }
 
-        public static DnsEndPoint ResolveToEndPoint(string value)
+        public static EndPoint ResolveToEndPoint(string value)
         {
             if (String.IsNullOrEmpty(value))
                 throw new ArgumentNullException("value");
@@ -86,8 +86,25 @@ namespace Enyim.Caching.Configuration
             if (!Int32.TryParse(parts[1], out port))
                 throw new ArgumentException("Cannot parse port: " + parts[1], "value");
 
-            return new DnsEndPoint(parts[0], port);
-        }        
+            return ResolveToEndPoint(parts[0], port);
+        }
+
+        public static EndPoint ResolveToEndPoint(string host, int port)
+        {
+            if (String.IsNullOrEmpty(host))
+                throw new ArgumentNullException("host");
+
+            IPAddress address;
+            // parse as an IP address
+            if (!IPAddress.TryParse(host, out address))
+            {
+                var addresses = Dns.GetHostAddresses(host);
+                address = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+                if (address == null)
+                    throw new ArgumentException(String.Format("Could not resolve host '{0}'.", host));
+            }
+            return new IPEndPoint(address, port);
+        }
     }
 }
 
