@@ -24,7 +24,7 @@ namespace Enyim.Caching.Memcached
         private bool _isSocketDisposed;
         private readonly EndPoint _endpoint;
         private readonly int _connectionTimeout;
-
+        private readonly int _receiveTimeout;
         private NetworkStream _inputStream;
         private SslStream _sslStream;
 #if NET5_0_OR_GREATER
@@ -71,6 +71,7 @@ namespace Enyim.Caching.Memcached
 
             socket.ReceiveTimeout = rcv;
             socket.SendTimeout = rcv;
+            _receiveTimeout = rcv;
 
             _socket = socket;
         }
@@ -425,21 +426,31 @@ namespace Enyim.Caching.Memcached
             {
                 try
                 {
-                    int currentRead = (_useSslStream
-                        ? await _sslStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false)
-                        : await _inputStream.ReadAsync(buffer, offset, shouldRead).ConfigureAwait(false));
-                    if (currentRead == count)
-                        break;
-                    if (currentRead < 1)
-                        throw new IOException("The socket seems to be disconnected");
-
-                    read += currentRead;
-                    offset += currentRead;
-                    shouldRead -= currentRead;
+                    var readTask = _useSslStream
+                        ? _sslStream.ReadAsync(buffer, offset, shouldRead)
+                        : _inputStream.ReadAsync(buffer, offset, shouldRead);
+                    var timeoutTask = Task.Delay(_receiveTimeout);
+                    
+                    if (await Task.WhenAny(readTask, timeoutTask).ConfigureAwait(false) == readTask)
+                    {
+                        int currentRead = await readTask.ConfigureAwait(false);
+                        if (currentRead == count)
+                            break;
+                        if (currentRead < 1)
+                            throw new IOException("The socket seems to be disconnected");
+        
+                        read += currentRead;
+                        offset += currentRead;
+                        shouldRead -= currentRead;
+                    }
+                    else
+                    {
+                        throw new TimeoutException($"Timeout to read from {_endpoint}.");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    if (ex is IOException || ex is SocketException)
+                    if (ex is IOException || ex is SocketException || ex is TimeoutException)
                     {
                         _isAlive = false;
                     }
