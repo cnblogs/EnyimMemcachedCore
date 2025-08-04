@@ -1,6 +1,7 @@
+using Enyim.Caching.Configuration;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace Enyim.Caching.Memcached
@@ -17,6 +18,7 @@ namespace Enyim.Caching.Memcached
         /// Defines a value which indicates that the statstics should be retrieved for all servers in the pool.
         /// </summary>
         public static readonly IPEndPoint All = new IPEndPoint(IPAddress.Any, 0);
+
         #region [ readonly int[] Optable       ]
         // defines which values can be summed and which not
         private static readonly int[] Optable =
@@ -25,6 +27,7 @@ namespace Enyim.Caching.Memcached
             1, 1, 1, 1, 1, 1, 1, 1
         };
         #endregion
+
         #region [ readonly string[] StatKeys   ]
         private static readonly string[] StatKeys =
         {
@@ -47,11 +50,14 @@ namespace Enyim.Caching.Memcached
         };
         #endregion
 
-        private Dictionary<EndPoint, Dictionary<string, string>> _results;
+        private readonly Dictionary<EndPoint, Dictionary<string, string>> _results;
 
-        internal ServerStats(Dictionary<EndPoint, Dictionary<string, string>> results)
+        private readonly bool _useIPv6;
+
+        internal ServerStats(Dictionary<EndPoint, Dictionary<string, string>> results, bool useIPv6)
         {
             _results = results;
+            _useIPv6 = useIPv6;
         }
 
         /// <summary>
@@ -62,12 +68,14 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the specified stat item</returns>
         public long GetValue(EndPoint server, StatItem item)
         {
+            server = server.GetIPEndPoint(_useIPv6);
+
             // asked for a specific server
             if (server is not IPEndPoint || ((IPEndPoint)server).Address != IPAddress.Any)
             {
                 // error check
                 string tmp = GetRaw(server, item);
-                if (String.IsNullOrEmpty(tmp))
+                if (string.IsNullOrEmpty(tmp))
                     throw new ArgumentException("Item was not found: " + item);
 
                 long value;
@@ -100,8 +108,9 @@ namespace Enyim.Caching.Memcached
         /// <returns>The version of memcached</returns>
         public Version GetVersion(EndPoint server)
         {
+            server = server.GetIPEndPoint(_useIPv6);
             string version = GetRaw(server, StatItem.Version);
-            if (String.IsNullOrEmpty(version))
+            if (string.IsNullOrEmpty(version))
                 throw new ArgumentException("No version found for the server " + server);
 
             return new Version(version);
@@ -114,12 +123,13 @@ namespace Enyim.Caching.Memcached
         /// <returns>A value indicating how long the server is running</returns>
         public TimeSpan GetUptime(EndPoint server)
         {
+            server = server.GetIPEndPoint(_useIPv6);
             string uptime = GetRaw(server, StatItem.Uptime);
-            if (String.IsNullOrEmpty(uptime))
+            if (string.IsNullOrEmpty(uptime))
                 throw new ArgumentException("No uptime found for the server " + server);
 
             long value;
-            if (!Int64.TryParse(uptime, out value))
+            if (!long.TryParse(uptime, out value))
                 throw new ArgumentException("Invalid uptime string was returned: " + uptime);
 
             return TimeSpan.FromSeconds(value);
@@ -133,12 +143,11 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the stat item</returns>
         public string GetRaw(EndPoint server, string key)
         {
-            Dictionary<string, string> serverValues;
-            string retval;
+            server = server.GetIPEndPoint(_useIPv6);
 
-            if (_results.TryGetValue(server, out serverValues))
+            if (_results.TryGetValue(server, out Dictionary<string, string> serverValues))
             {
-                if (serverValues.TryGetValue(key, out retval))
+                if (serverValues.TryGetValue(key, out string retval))
                     return retval;
 
                 if (_log.IsDebugEnabled)
@@ -161,17 +170,17 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the stat item</returns>
         public string GetRaw(EndPoint server, StatItem item)
         {
+            server = server.GetIPEndPoint(_useIPv6);
+
             if ((int)item < StatKeys.Length && (int)item >= 0)
                 return GetRaw(server, StatKeys[(int)item]);
 
-            throw new ArgumentOutOfRangeException("item");
+            throw new ArgumentOutOfRangeException(nameof(item));
         }
 
         public IEnumerable<KeyValuePair<EndPoint, string>> GetRaw(string key)
         {
-            string tmp;
-
-            return _results.Select(kvp => new KeyValuePair<EndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out tmp) ? tmp : null)).ToList();
+            return _results.Select(kvp => new KeyValuePair<EndPoint, string>(kvp.Key, kvp.Value.TryGetValue(key, out string tmp) ? tmp : null)).ToList();
         }
     }
 }

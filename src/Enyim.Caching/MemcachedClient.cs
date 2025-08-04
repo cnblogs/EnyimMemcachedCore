@@ -22,12 +22,13 @@ namespace Enyim.Caching
         /// Represents a value which indicates that an item should never expire.
         /// </summary>
         public static readonly TimeSpan Infinite = TimeSpan.Zero;
-        private ILogger<MemcachedClient> _logger;
-        private bool _suppressException;
+        private readonly ILogger<MemcachedClient> _logger;
+        private readonly bool _suppressException;
+        private readonly IMemcachedKeyTransformer _keyTransformer;
+        private readonly ITranscoder _transcoder;
+        private readonly bool _userIPv6;
 
         private IServerPool _pool;
-        private IMemcachedKeyTransformer _keyTransformer;
-        private ITranscoder _transcoder;
 
         public IStoreOperationResultFactory StoreOperationResultFactory { get; set; }
         public IGetOperationResultFactory GetOperationResultFactory { get; set; }
@@ -48,6 +49,7 @@ namespace Enyim.Caching
                 throw new ArgumentNullException(nameof(configuration));
             }
 
+            _userIPv6 = configuration.UseIPv6;
             _suppressException = configuration.SuppressException;
             _keyTransformer = configuration.CreateKeyTransformer() ?? new DefaultKeyTransformer();
             _transcoder = configuration.CreateTranscoder() ?? new DefaultTranscoder();
@@ -1199,7 +1201,7 @@ namespace Enyim.Caching
                 Task.WaitAll(tasks.ToArray());
             }
 
-            return new ServerStats(results);
+            return new ServerStats(results, _userIPv6);
         }
 
         /// <summary>
