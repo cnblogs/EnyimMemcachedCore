@@ -1,3 +1,4 @@
+using Enyim.Caching.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -430,7 +431,7 @@ namespace Enyim.Caching.Memcached
                         ? _sslStream.ReadAsync(buffer, offset, shouldRead)
                         : _inputStream.ReadAsync(buffer, offset, shouldRead);
                     var timeoutTask = Task.Delay(_receiveTimeout);
-                    
+
                     if (await Task.WhenAny(readTask, timeoutTask).ConfigureAwait(false) == readTask)
                     {
                         int currentRead = await readTask.ConfigureAwait(false);
@@ -438,7 +439,7 @@ namespace Enyim.Caching.Memcached
                             break;
                         if (currentRead < 1)
                             throw new IOException("The socket seems to be disconnected");
-        
+
                         read += currentRead;
                         offset += currentRead;
                         shouldRead -= currentRead;
@@ -618,23 +619,7 @@ namespace Enyim.Caching.Memcached
 
         private IPEndPoint GetIPEndPoint(EndPoint endpoint)
         {
-            if (endpoint is DnsEndPoint)
-            {
-                var dnsEndPoint = (DnsEndPoint)endpoint;
-                var address = Dns.GetHostAddresses(dnsEndPoint.Host).FirstOrDefault(ip =>
-                    ip.AddressFamily == (_useIPv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork));
-                return address == null
-                    ? throw new ArgumentException(string.Format("Could not resolve host '{0}'.", endpoint))
-                    : new IPEndPoint(address, dnsEndPoint.Port);
-            }
-            else if (endpoint is IPEndPoint)
-            {
-                return endpoint as IPEndPoint;
-            }
-            else
-            {
-                throw new Exception("Not supported EndPoint type");
-            }
+            return endpoint.GetIPEndPoint(_useIPv6);
         }
     }
 }

@@ -89,37 +89,31 @@ namespace MemcachedTest
         [Fact]
         public void DeleteObjectTest()
         {
-            using (MemcachedClient client = GetClient())
-            {
-                TestData td = new TestData();
-                Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
+            using MemcachedClient client = GetClient();
+            TestData td = new TestData();
+            Assert.True(client.Store(StoreMode.Set, TestObjectKey, td), "Initialization failed.");
 
-                Assert.True(client.Remove(TestObjectKey), "Remove failed.");
-                Assert.Null(client.Get(TestObjectKey));
-            }
+            Assert.True(client.Remove(TestObjectKey), "Remove failed.");
+            Assert.Null(client.Get(TestObjectKey));
         }
 
         [Fact]
         public async Task StoreStringTest()
         {
-            using (MemcachedClient client = GetClient())
-            {
-                Assert.True(await client.StoreAsync(StoreMode.Set, "TestString", "Hello world!", DateTime.Now.AddSeconds(10)), "StoreString failed.");
+            using MemcachedClient client = GetClient();
+            Assert.True(await client.StoreAsync(StoreMode.Set, "TestString", "Hello world!", DateTime.Now.AddSeconds(10)), "StoreString failed.");
 
-                Assert.Equal("Hello world!", await client.GetValueAsync<string>("TestString"));
-            }
+            Assert.Equal("Hello world!", await client.GetValueAsync<string>("TestString"));
         }
 
 
         [Fact]
         public void StoreLongTest()
         {
-            using (MemcachedClient client = GetClient())
-            {
-                Assert.True(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreLong failed.");
+            using MemcachedClient client = GetClient();
+            Assert.True(client.Store(StoreMode.Set, "TestLong", 65432123456L), "StoreLong failed.");
 
-                Assert.Equal(65432123456L, client.Get<long>("TestLong"));
-            }
+            Assert.Equal(65432123456L, client.Get<long>("TestLong"));
         }
 
         [Fact]
@@ -232,7 +226,7 @@ namespace MemcachedTest
             }
         }
 
-        private string[] keyParts = { "multi", "get", "test", "key", "parts", "test", "values" };
+        private readonly string[] keyParts = { "multi", "get", "test", "key", "parts", "test", "values" };
 
         protected string MakeRandomKey(int partCount)
         {
@@ -252,44 +246,42 @@ namespace MemcachedTest
         [Fact]
         public async Task MultiGetTest()
         {
-            using (var client = GetClient())
+            using var client = GetClient();
+            var keys = new List<string>();
+
+            for (int i = 0; i < 10; i++)
             {
-                var keys = new List<string>();
+                string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
+                keys.Add(k);
 
-                for (int i = 0; i < 10; i++)
-                {
-                    string k = $"Hello_Multi_Get_{Guid.NewGuid()}_" + i;
-                    keys.Add(k);
-
-                    Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(30)), "Store of " + k + " failed");
-                }
-
-                IDictionary<string, int> retvals = await client.GetAsync<int>(keys);
-
-                Assert.NotEmpty(retvals);
-                Assert.Equal(keys.Count, retvals.Count);
-
-                int value = 0;
-                for (int i = 0; i < keys.Count; i++)
-                {
-                    string key = keys[i];
-
-                    Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
-                    Assert.Equal(value, i);
-                }
-
-                var key1 = $"test_key1_{Guid.NewGuid()}";
-                var key2 = $"test_key2_{Guid.NewGuid()}";
-                var obj1 = new HashSet<int> { 1, 2 };
-                var obj2 = new HashSet<int> { 3, 4 };
-                await client.StoreAsync(StoreMode.Set, key1, obj1, DateTime.Now.AddSeconds(10));
-                await client.StoreAsync(StoreMode.Set, key2, obj2, DateTime.Now.AddSeconds(10));
-
-                var multiResult = await client.GetAsync<HashSet<int>>(new string[] { key1, key2 });
-                Assert.Equal(2, multiResult.Count);
-                Assert.Equal(obj1.First(), multiResult[key1].First());
-                Assert.Equal(obj2.First(), multiResult[key2].First());
+                Assert.True(await client.StoreAsync(StoreMode.Set, k, i, DateTime.Now.AddSeconds(30)), "Store of " + k + " failed");
             }
+
+            IDictionary<string, int> retvals = await client.GetAsync<int>(keys);
+
+            Assert.NotEmpty(retvals);
+            Assert.Equal(keys.Count, retvals.Count);
+
+            int value = 0;
+            for (int i = 0; i < keys.Count; i++)
+            {
+                string key = keys[i];
+
+                Assert.True(retvals.TryGetValue(key, out value), "missing key: " + key);
+                Assert.Equal(value, i);
+            }
+
+            var key1 = $"test_key1_{Guid.NewGuid()}";
+            var key2 = $"test_key2_{Guid.NewGuid()}";
+            var obj1 = new HashSet<int> { 1, 2 };
+            var obj2 = new HashSet<int> { 3, 4 };
+            await client.StoreAsync(StoreMode.Set, key1, obj1, DateTime.Now.AddSeconds(10));
+            await client.StoreAsync(StoreMode.Set, key2, obj2, DateTime.Now.AddSeconds(10));
+
+            var multiResult = await client.GetAsync<HashSet<int>>(new string[] { key1, key2 });
+            Assert.Equal(2, multiResult.Count);
+            Assert.Equal(obj1.First(), multiResult[key1].First());
+            Assert.Equal(obj2.First(), multiResult[key2].First());
         }
 
         [Fact]
@@ -333,31 +325,27 @@ namespace MemcachedTest
         {
             var initialValue = 56UL * (ulong)Math.Pow(10, 11) + 1234;
 
-            using (MemcachedClient client = GetClient())
-            {
-                Assert.Equal(initialValue, client.Increment("VALUE", initialValue, 2UL));
-                Assert.Equal(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
-            }
+            using MemcachedClient client = GetClient();
+            Assert.Equal(initialValue, client.Increment("VALUE", initialValue, 2UL));
+            Assert.Equal(initialValue + 24, client.Increment("VALUE", 10UL, 24UL));
         }
 
         [Fact]
         public async Task FlushTest()
         {
-            using (MemcachedClient client = GetClient())
+            using MemcachedClient client = GetClient();
+            for (int i = 0; i < 10; i++)
             {
-                for (int i = 0; i < 10; i++)
-                {
-                    string cacheKey = $"Hello_Flush_{i}";
-                    Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, i, DateTime.Now.AddSeconds(30)));
-                }
+                string cacheKey = $"Hello_Flush_{i}";
+                Assert.True(await client.StoreAsync(StoreMode.Set, cacheKey, i, DateTime.Now.AddSeconds(30)));
+            }
 
-                await client.FlushAllAsync();
+            await client.FlushAllAsync();
 
-                for (int i = 0; i < 10; i++)
-                {
-                    string cacheKey = $"Hello_Flush_{i}";
-                    Assert.Null(await client.GetValueAsync<string>(cacheKey));
-                }
+            for (int i = 0; i < 10; i++)
+            {
+                string cacheKey = $"Hello_Flush_{i}";
+                Assert.Null(await client.GetValueAsync<string>(cacheKey));
             }
         }
     }

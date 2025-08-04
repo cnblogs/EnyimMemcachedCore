@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Results;
+using Enyim.Caching.Memcached.Results.Factories;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Enyim.Caching.Memcached;
-using Enyim.Caching.Memcached.Results;
-using Enyim.Caching.Memcached.Results.Factories;
 
 namespace Enyim.Caching
 {
@@ -200,7 +200,7 @@ namespace Enyim.Caching
 
         public ServerStats Stats()
         {
-            return new ServerStats(new Dictionary<EndPoint, Dictionary<string, string>>());
+            return new ServerStats(new Dictionary<EndPoint, Dictionary<string, string>>(), false);
         }
 
         public ServerStats Stats(string type)
