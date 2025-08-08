@@ -1,17 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Enyim.Caching;
-using Enyim.Caching.SampleWebApp.Models;
+﻿using Enyim.Caching.SampleWebApp.Models;
 using Enyim.Caching.SampleWebApp.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Enyim.Caching.SampleWebApp
 {
