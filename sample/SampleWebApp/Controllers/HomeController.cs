@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Enyim.Caching;
+﻿using Enyim.Caching.Configuration;
 using Enyim.Caching.SampleWebApp.Models;
 using Enyim.Caching.SampleWebApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.SampleWebApp.Controllers
 {
@@ -14,6 +14,7 @@ namespace Enyim.Caching.SampleWebApp.Controllers
     {
         private readonly IMemcachedClient _memcachedClient;
         private readonly IMemcachedClient _postbodyMemcachedClient;
+        private readonly MemcachedClientOptions options;
         private readonly IBlogPostService _blogPostService;
         private readonly ILogger _logger;
         public static readonly string CacheKey = "blogposts-recent";
@@ -21,11 +22,13 @@ namespace Enyim.Caching.SampleWebApp.Controllers
 
         public HomeController(
             IMemcachedClient memcachedClient,
+            IOptions<MemcachedClientOptions> optionsAccessor,
             IMemcachedClient<PostBody> postbodyMemcachedClient,
             IBlogPostService blogPostService,
             ILoggerFactory loggerFactory)
         {
             _memcachedClient = memcachedClient;
+            options = optionsAccessor.Value;
             _postbodyMemcachedClient = postbodyMemcachedClient;
             _blogPostService = blogPostService;
             _logger = loggerFactory.CreateLogger<HomeController>();
@@ -52,6 +55,13 @@ namespace Enyim.Caching.SampleWebApp.Controllers
             await _postbodyMemcachedClient.AddAsync(PostbodyCacheKey, postbody, 10);
             var result = await _postbodyMemcachedClient.GetAsync<string>(PostbodyCacheKey);
             return result.Success ? Ok() : StatusCode(500);
+        }
+
+        public IActionResult Uptime()
+        {
+            var server = options.Servers.First();
+            var uptime = _memcachedClient.Stats().GetUptime(new DnsEndPoint(server.Address, server.Port));
+            return Json(uptime);
         }
     }
 }

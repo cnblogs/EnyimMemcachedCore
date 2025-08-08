@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Enyim.Caching;
+﻿using Enyim.Caching;
 using Enyim.Caching.SampleWebApp;
 using Enyim.Caching.SampleWebApp.Controllers;
 using Enyim.Caching.SampleWebApp.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace SampleWebApp.IntegrationTests
@@ -44,6 +44,17 @@ namespace SampleWebApp.IntegrationTests
             var httpClient = _factory.CreateClient();
             var response = await httpClient.GetAsync("/home/postbody");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Get_uptime_test()
+        {
+            var httpClient = _factory.CreateClient();
+            var response = await httpClient.GetAsync("/home/uptime");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var uptime = await response.Content.ReadFromJsonAsync<TimeSpan>();
+            Console.WriteLine("uptime: " + uptime);
+            Assert.True(uptime > TimeSpan.Zero);
         }
     }
 }
