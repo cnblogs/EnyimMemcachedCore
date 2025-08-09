@@ -108,25 +108,24 @@ namespace Enyim.Caching.Configuration
                     var authenticationType = Type.GetType(options.Authentication.Type);
                     if (authenticationType != null)
                     {
-                        _logger.LogDebug($"Authentication type is {authenticationType}.");
+                        _logger.LogDebug("Authentication type is {authenticationType}.", authenticationType);
 
                         Authentication = new AuthenticationConfiguration();
                         Authentication.Type = authenticationType;
                         foreach (var parameter in options.Authentication.Parameters)
                         {
                             Authentication.Parameters[parameter.Key] = parameter.Value;
-                            _logger.LogDebug($"Authentication {parameter.Key} is '{parameter.Value}'.");
+                            _logger.LogDebug("Authentication {Key} is '{Value}'.", parameter.Key, parameter.Value);
                         }
                     }
                     else
                     {
-                        _logger.LogError($"Unable to load authentication type {options.Authentication.Type}.");
+                        _logger.LogError("Unable to load authentication type '{AuthenticationType}'.", options.Authentication.Type);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(new EventId(), ex,
-                        $"Unable to load authentication type {options.Authentication.Type}.");
+                    _logger.LogError(ex, "Unable to load authentication type '{AuthenticationType}'.", options.Authentication.Type);
                 }
             }
 
@@ -145,18 +144,18 @@ namespace Enyim.Caching.Configuration
                     if (keyTransformerType != null)
                     {
                         KeyTransformer = Activator.CreateInstance(keyTransformerType) as IMemcachedKeyTransformer;
-                        _logger.LogDebug($"Use '{options.KeyTransformer}' KeyTransformer");
+                        _logger.LogDebug("Use '{KeyTransformer}' KeyTransformer", options.KeyTransformer);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(new EventId(), ex, $"Unable to load '{options.KeyTransformer}' KeyTransformer");
+                    _logger.LogError(ex, "Unable to load '{KeyTransformer}' KeyTransformer", options.KeyTransformer);
                 }
             }
             else if (keyTransformer != null)
             {
                 _keyTransformer = keyTransformer;
-                _logger.LogDebug($"Use KeyTransformer Type : '{keyTransformer}'");
+                _logger.LogDebug("Use KeyTransformer Type : '{keyTransformer}'", keyTransformer);
             }
 
             if (!string.IsNullOrEmpty(options.Transcoder))
@@ -176,18 +175,18 @@ namespace Enyim.Caching.Configuration
                     if (transcoderType != null)
                     {
                         Transcoder = Activator.CreateInstance(transcoderType) as ITranscoder;
-                        _logger.LogDebug($"Use '{options.Transcoder}'");
+                        _logger.LogDebug("Use '{Transcoder}'", options.Transcoder);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(new EventId(), ex, $"Unable to load '{options.Transcoder}'");
+                    _logger.LogError(new EventId(), ex, "Unable to load '{Transcoder}'", Transcoder);
                 }
             }
             else if (transcoder != null)
             {
                 _transcoder = transcoder;
-                _logger.LogDebug($"Use Transcoder Type : '{transcoder}'");
+                _logger.LogDebug("Use Transcoder Type : '{transcoder}'", transcoder);
             }
 
             if (options.NodeLocatorFactory != null)

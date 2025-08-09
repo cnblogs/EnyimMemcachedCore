@@ -135,7 +135,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             return services.AddEnyimMemcached<T>(
-                s => s.AddOptions<MemcachedClientOptions>().BindConfiguration(sectionKey));
+                s => s.AddOptions<MemcachedClientOptions<T>>().BindConfiguration(sectionKey));
         }
 
         public static IServiceCollection AddEnyimMemcached<T>(
@@ -154,7 +154,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             return services.AddEnyimMemcached<T>(
-                s => s.Configure<MemcachedClientOptions>(configuration.GetSection(sectionKey)));
+                s => s.Configure<MemcachedClientOptions<T>>(configuration.GetSection(sectionKey)));
         }
 #endif
 
@@ -171,7 +171,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<IMemcachedClient<T>>(sp =>
             {
                 var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
-                var options = sp.GetRequiredService<IOptions<MemcachedClientOptions>>();
+                var options = sp.GetRequiredService<IOptions<MemcachedClientOptions<T>>>();
                 var conf = new MemcachedClientConfiguration(loggerFactory, options);
                 return new MemcachedClient<T>(loggerFactory, conf);
             });

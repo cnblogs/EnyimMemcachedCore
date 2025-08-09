@@ -1,8 +1,8 @@
-﻿using System;
-using Enyim.Caching.Memcached;
+﻿using Enyim.Caching.Memcached;
+using Enyim.Caching.Memcached.Results;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Enyim.Caching.Memcached.Results;
 
 namespace Enyim.Caching
 {
