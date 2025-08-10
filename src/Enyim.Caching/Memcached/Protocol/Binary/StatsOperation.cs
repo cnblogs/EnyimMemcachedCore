@@ -1,17 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using Enyim.Caching.Memcached.Results;
 using Enyim.Caching.Memcached.Results.Extensions;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
 {
     public class StatsOperation : BinaryOperation, IStatsOperation
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(StatsOperation));
-
         private readonly string _type;
         private Dictionary<string, string> _result;
 
@@ -42,7 +37,6 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
                 var data = response.Data;
                 var key = BinaryConverter.DecodeKey(data.Array, data.Offset, response.KeyLength);
                 var value = BinaryConverter.DecodeKey(data.Array, data.Offset + response.KeyLength, data.Count - response.KeyLength);
-
                 serverData[key] = value;
             }
 

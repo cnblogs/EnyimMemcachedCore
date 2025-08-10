@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Enyim.Caching.Memcached.Protocol.Binary
@@ -43,8 +42,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
         {
             return Data.Array == null
                     ? null
-                    : (responseMessage
-                        ?? (responseMessage = Encoding.ASCII.GetString(Data.Array, Data.Offset, Data.Count)));
+                    : (responseMessage ??= Encoding.ASCII.GetString(Data.Array, Data.Offset, Data.Count));
         }
 
         public unsafe bool Read(PooledSocket socket)
@@ -57,9 +55,7 @@ namespace Enyim.Caching.Memcached.Protocol.Binary
             var header = new byte[HeaderLength];
             socket.Read(header, 0, header.Length);
 
-            int dataLength, extraLength;
-
-            DeserializeHeader(header, out dataLength, out extraLength);
+            DeserializeHeader(header, out int dataLength, out int extraLength);
 
             if (dataLength > 0)
             {

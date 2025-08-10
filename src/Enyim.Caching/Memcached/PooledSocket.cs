@@ -479,9 +479,9 @@ namespace Enyim.Caching.Memcached
             {
                 try
                 {
-                    int currentRead = (_useSslStream
+                    int currentRead = _useSslStream
                         ? _sslStream.Read(buffer, offset, shouldRead)
-                        : _inputStream.Read(buffer, offset, shouldRead));
+                        : _inputStream.Read(buffer, offset, shouldRead);
                     if (currentRead == count)
                         break;
                     if (currentRead < 1)

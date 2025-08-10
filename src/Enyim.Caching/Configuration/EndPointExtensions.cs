@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 
 namespace Enyim.Caching.Configuration;
+
 public static class EndPointExtensions
 {
     public static IPEndPoint GetIPEndPoint(this EndPoint endpoint, bool useIPv6)
