@@ -1204,6 +1204,27 @@ namespace Enyim.Caching
             return new ServerStats(results, _userIPv6);
         }
 
+        public Task<ServerStats> StatsAsync()
+        {
+            return StatsAsync(null);
+        }
+
+        public async Task<ServerStats> StatsAsync(string type)
+        {
+            var results = new Dictionary<EndPoint, Dictionary<string, string>>();
+
+            foreach (var node in _pool.GetWorkingNodes())
+            {
+                var cmd = _pool.OperationFactory.Stats(type);
+                await node.ExecuteAsync(cmd);
+                var endpoint = node.EndPoint;
+                lock (results)
+                    results[endpoint] = cmd.Result;
+            }
+
+            return new ServerStats(results, _userIPv6);
+        }
+
         /// <summary>
         /// Removes the specified item from the cache.
         /// </summary>
