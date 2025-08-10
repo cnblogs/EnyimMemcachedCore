@@ -219,9 +219,9 @@ namespace Enyim.Caching.Memcached
         {
             _allNodes = _configuration.Servers.Select(ep =>
             {
-                var node = CreateNode(ep);
+                var ipEndPoint = ep.GetIPEndPoint(_configuration.UseIPv6);
+                var node = CreateNode(ipEndPoint);
                 node.Failed += NodeFail;
-
                 return node;
             }).ToArray();
 

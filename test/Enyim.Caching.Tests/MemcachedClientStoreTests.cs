@@ -9,67 +9,66 @@ using Xunit;
 
 namespace Enyim.Caching.Tests
 {
-	public class MemcachedClientStoreTests : MemcachedClientTestsBase
-	{
+    public class MemcachedClientStoreTests : MemcachedClientTestsBase
+    {
+        [Fact]
+        public void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()
+        {
+            var result = Store(StoreMode.Add);
+            StoreAssertPass(result);
 
-		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Add_Result_Is_Successful()
-		{
-			var result = Store(StoreMode.Add);
-			StoreAssertPass(result);
+        }
 
-		}
+        [Fact]
+        public void When_Storing_Item_With_Existing_Key_And_StoreMode_Add_Result_Is_Not_Successful()
+        {
+            var key = GetUniqueKey("store");
+            var result = Store(StoreMode.Add, key);
+            StoreAssertPass(result);
 
-		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Add_Result_Is_Not_Successful()
-		{
-			var key = GetUniqueKey("store");
-			var result = Store(StoreMode.Add, key);
-			StoreAssertPass(result);
+            result = Store(StoreMode.Add, key);
+            StoreAssertFail(result);
+        }
 
-			result = Store(StoreMode.Add, key);
-			StoreAssertFail(result);
-		}
+        [Fact]
+        public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
+        {
+            var result = Store(StoreMode.Replace);
+            Assert.Equal((int)StatusCodeEnums.NotFound, result.StatusCode);
+            StoreAssertFail(result);
 
-		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Replace_Result_Is_Not_Successful()
-		{
-			var result = Store(StoreMode.Replace);
-			Assert.Equal((int)StatusCodeEnums.NotFound, result.StatusCode);
-			StoreAssertFail(result);
+        }
 
-		}
+        [Fact]
+        public void When_Storing_Item_With_Existing_Key_And_StoreMode_Replace_Result_Is_Successful()
+        {
+            var key = GetUniqueKey("store");
+            var result = Store(StoreMode.Add, key);
+            StoreAssertPass(result);
 
-		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Replace_Result_Is_Successful()
-		{
-			var key = GetUniqueKey("store");
-			var result = Store(StoreMode.Add, key);
-			StoreAssertPass(result);
+            result = Store(StoreMode.Replace, key);
+            StoreAssertPass(result);
+        }
 
-			result = Store(StoreMode.Replace, key);
-			StoreAssertPass(result);
-		}
+        [Fact]
+        public void When_Storing_Item_With_New_Key_And_StoreMode_Set_Result_Is_Successful()
+        {
+            var result = Store(StoreMode.Set);
+            StoreAssertPass(result);
 
-		[Fact]
-		public void When_Storing_Item_With_New_Key_And_StoreMode_Set_Result_Is_Successful()
-		{
-			var result = Store(StoreMode.Set);
-			StoreAssertPass(result);
+        }
 
-		}
+        [Fact]
+        public void When_Storing_Item_With_Existing_Key_And_StoreMode_Set_Result_Is_Successful()
+        {
+            var key = GetUniqueKey("store");
+            var result = Store(StoreMode.Add, key);
+            StoreAssertPass(result);
 
-		[Fact]
-		public void When_Storing_Item_With_Existing_Key_And_StoreMode_Set_Result_Is_Successful()
-		{
-			var key = GetUniqueKey("store");
-			var result = Store(StoreMode.Add, key);
-			StoreAssertPass(result);
-
-			result = Store(StoreMode.Set, key);
-			StoreAssertPass(result);
-		}
-	}
+            result = Store(StoreMode.Set, key);
+            StoreAssertPass(result);
+        }
+    }
 }
 
 #region [ License information          ]

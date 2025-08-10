@@ -16,6 +16,8 @@ namespace Enyim.Caching.Tests
 {
     public abstract class MemcachedClientTestsBase
     {
+        protected static readonly string _memcachedHost = "memcached";
+        protected static readonly int _memcachedPort = 11211;
         protected MemcachedClient _client;
 
         public MemcachedClientTestsBase(Action<MemcachedClientOptions> onAddEnyimMemcached = null)
@@ -23,7 +25,7 @@ namespace Enyim.Caching.Tests
             IServiceCollection services = new ServiceCollection();
             services.AddEnyimMemcached(options =>
             {
-                options.AddServer("memcached", 11211);
+                options.AddServer(_memcachedHost, _memcachedPort);
                 onAddEnyimMemcached?.Invoke(options);
                 options.Transcoder = nameof(MessagePackTranscoder);
             });

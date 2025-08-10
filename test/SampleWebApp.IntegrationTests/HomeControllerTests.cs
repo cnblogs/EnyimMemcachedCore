@@ -53,7 +53,6 @@ namespace SampleWebApp.IntegrationTests
             var response = await httpClient.GetAsync("/home/uptime");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var uptime = await response.Content.ReadFromJsonAsync<TimeSpan>();
-            Console.WriteLine("uptime: " + uptime);
             Assert.True(uptime > TimeSpan.Zero);
         }
     }
