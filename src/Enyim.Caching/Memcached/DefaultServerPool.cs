@@ -1,44 +1,38 @@
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Net;
-using System.Threading;
 using Enyim.Caching.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading;
 
 namespace Enyim.Caching.Memcached
 {
     public class DefaultServerPool : IServerPool, IDisposable
     {
+        private readonly object _deadSync = new();
+        private readonly int _deadTimeoutMsec;
+        private readonly IMemcachedClientConfiguration _configuration;
+        private readonly IOperationFactory _factory;
         private readonly ILogger _logger;
 
         private IMemcachedNode[] _allNodes;
-
-        private readonly IMemcachedClientConfiguration _configuration;
-        private readonly IOperationFactory _factory;
         private IMemcachedNodeLocator _nodeLocator;
-
-        private readonly object DeadSync = new Object();
         private Timer _resurrectTimer;
         private bool _isTimerActive;
-        private readonly int _deadTimeoutMsec;
+
         private bool _isDisposed;
-        private event Action<IMemcachedNode> _nodeFailed;
+        private event Action<IMemcachedNode> NodeFailed;
 
         public DefaultServerPool(
             IMemcachedClientConfiguration configuration,
             IOperationFactory opFactory,
             ILogger logger)
         {
-            if (configuration == null) throw new ArgumentNullException("socketConfig");
-            if (opFactory == null) throw new ArgumentNullException("opFactory");
-
-            _configuration = configuration;
-            _factory = opFactory;
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _factory = opFactory ?? throw new ArgumentNullException(nameof(opFactory));
 
             _deadTimeoutMsec = (int)_configuration.SocketPool.DeadTimeout.TotalMilliseconds;
-
             _logger = logger;
         }
 
@@ -83,7 +77,7 @@ namespace Enyim.Caching.Memcached
             // 6. if at least one server is still down (Ping() == false), we restart the timer
             // 7. if all servers are up, we set isRunning to false, so the timer is suspended
             // 8. GOTO 2
-            lock (DeadSync)
+            lock (_deadSync)
             {
                 if (_isDisposed)
                 {
@@ -158,7 +152,7 @@ namespace Enyim.Caching.Memcached
 
             // the timer is stopped until we encounter the first dead server
             // when we have one, we trigger it and it will run after DeadTimeout has elapsed
-            lock (DeadSync)
+            lock (_deadSync)
             {
                 if (_isDisposed)
                 {
@@ -169,7 +163,7 @@ namespace Enyim.Caching.Memcached
                 }
 
                 // bubble up the fail event to the client
-                var fail = _nodeFailed;
+                var fail = NodeFailed;
                 if (fail != null)
                     fail(node);
 
@@ -234,8 +228,8 @@ namespace Enyim.Caching.Memcached
 
         event Action<IMemcachedNode> IServerPool.NodeFailed
         {
-            add { _nodeFailed += value; }
-            remove { _nodeFailed -= value; }
+            add { NodeFailed += value; }
+            remove { NodeFailed -= value; }
         }
 
         #endregion
@@ -246,7 +240,7 @@ namespace Enyim.Caching.Memcached
         {
             GC.SuppressFinalize(this);
 
-            lock (DeadSync)
+            lock (_deadSync)
             {
                 if (_isDisposed) return;
 
@@ -255,27 +249,32 @@ namespace Enyim.Caching.Memcached
                 // dispose the locator first, maybe it wants to access 
                 // the nodes one last time
                 var nd = _nodeLocator as IDisposable;
+
                 if (nd != null)
+                {
                     try
                     {
                         nd.Dispose();
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError(nameof(DefaultServerPool), e);
+                        _logger.LogError(e, "Failed to dispose node locator '{nodeLocator}'", _nodeLocator);
                     }
+                    _nodeLocator = null;
+                }
 
-                _nodeLocator = null;
 
                 for (var i = 0; i < _allNodes.Length; i++)
+                {
                     try
                     {
                         _allNodes[i].Dispose();
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError(nameof(DefaultServerPool), e);
+                        _logger.LogError(e, "Failed to dispose endpoint '{endpoint}'", _allNodes[i].EndPoint);
                     }
+                }
 
                 // stop the timer
                 if (_resurrectTimer != null)
