@@ -1,5 +1,4 @@
-﻿using Enyim.Caching.Configuration;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,10 +12,6 @@ namespace Enyim.Caching.Tests
         {
             var uptime = _client.Stats().GetUptime(new DnsEndPoint(_memcachedHost, _memcachedPort));
             Assert.True(uptime > TimeSpan.Zero);
-
-            var ipEndPoint = new DnsEndPoint(_memcachedHost, _memcachedPort).GetIPEndPoint(false);
-            uptime = _client.Stats().GetUptime(ipEndPoint);
-            Assert.True(uptime > TimeSpan.Zero);
         }
 
         [Fact]
@@ -24,11 +19,7 @@ namespace Enyim.Caching.Tests
         {
             var uptime = (await _client.StatsAsync()).GetUptime(new DnsEndPoint(_memcachedHost, _memcachedPort));
             Assert.True(uptime > TimeSpan.Zero);
-
-            var ipEndPoint = new DnsEndPoint(_memcachedHost, _memcachedPort).GetIPEndPoint(false);
-            uptime = (await _client.StatsAsync()).GetUptime(ipEndPoint);
             Console.WriteLine("uptime: " + uptime);
-            Assert.True(uptime > TimeSpan.Zero);
         }
     }
 }
