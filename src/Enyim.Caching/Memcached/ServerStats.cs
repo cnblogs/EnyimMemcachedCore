@@ -1,4 +1,3 @@
-using Enyim.Caching.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -68,8 +67,6 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the specified stat item</returns>
         public long GetValue(EndPoint server, StatItem item)
         {
-            server = server.GetIPEndPoint(_useIPv6);
-
             // asked for a specific server
             if (server is not IPEndPoint || ((IPEndPoint)server).Address != IPAddress.Any)
             {
@@ -108,7 +105,6 @@ namespace Enyim.Caching.Memcached
         /// <returns>The version of memcached</returns>
         public Version GetVersion(EndPoint server)
         {
-            server = server.GetIPEndPoint(_useIPv6);
             string version = GetRaw(server, StatItem.Version);
             if (string.IsNullOrEmpty(version))
                 throw new ArgumentException("No version found for the server " + server);
@@ -123,7 +119,6 @@ namespace Enyim.Caching.Memcached
         /// <returns>A value indicating how long the server is running</returns>
         public TimeSpan GetUptime(EndPoint server)
         {
-            server = server.GetIPEndPoint(_useIPv6);
             string uptime = GetRaw(server, StatItem.Uptime);
             if (string.IsNullOrEmpty(uptime))
                 throw new ArgumentException("No uptime found for the server " + server);
@@ -143,8 +138,6 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the stat item</returns>
         public string GetRaw(EndPoint server, string key)
         {
-            server = server.GetIPEndPoint(_useIPv6);
-
             if (_results.TryGetValue(server, out Dictionary<string, string> serverValues))
             {
                 if (serverValues.TryGetValue(key, out string retval))
@@ -170,8 +163,6 @@ namespace Enyim.Caching.Memcached
         /// <returns>The value of the stat item</returns>
         public string GetRaw(EndPoint server, StatItem item)
         {
-            server = server.GetIPEndPoint(_useIPv6);
-
             if ((int)item < StatKeys.Length && (int)item >= 0)
                 return GetRaw(server, StatKeys[(int)item]);
 
