@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    environment: nuget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10'
+      - name: Pack        
+        run: |
+          version=${GITHUB_REF#refs/tags/v}
+          ./pack.sh $version
+      - name: Publish to NuGet
+        env:
+          nuget_key: ${{ secrets.NUGETAPIKEY }}
+        run: dotnet nuget push ./artifacts/*.nupkg -s https://api.nuget.org/v3/index.json -k $nuget_key --skip-duplicate
