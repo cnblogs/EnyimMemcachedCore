@@ -50,6 +50,11 @@ namespace Enyim.Caching.Memcached
         {
             _endPoint = endpoint;
             _useSslStream = useSslStream;
+            if (_useSslStream && _endPoint is DnsEndPoint == false)
+            {
+                throw new InvalidOperationException($"Expected DnsEndPoint for SSL stream, but found {_endPoint}.");
+            }
+
 #if NET5_0_OR_GREATER
             _sslClientAuthOptions = sslClientAuthOptions;
 #endif
