@@ -3,12 +3,10 @@ using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -18,7 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddEnyimMemcached(
             this IServiceCollection services,
             string sectionKey = "enyimMemcached",
-            bool asDistributedCache = true)
+            bool asDistributedCache = false)
         {
             if (services == null)
             {
@@ -38,7 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddEnyimMemcached(
             this IServiceCollection services,
             Action<MemcachedClientOptions> setupAction,
-            bool asDistributedCache = true)
+            bool asDistributedCache = false)
         {
             if (services == null)
             {
@@ -58,7 +56,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddEnyimMemcached(
             this IServiceCollection services,
             IConfigurationSection configurationSection,
-            bool asDistributedCache)
+            bool asDistributedCache = false)
         {
             if (services == null)
             {
@@ -78,7 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             IConfiguration configuration,
             string sectionKey = "enyimMemcached",
-            bool asDistributedCache = true)
+            bool asDistributedCache = false)
         {
             if (services == null)
             {
