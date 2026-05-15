@@ -367,11 +367,11 @@ namespace Enyim.Caching.Memcached
             }
         }
 
-        private void DisposeSocket()
+        private protected void DisposeSocket()
         {
             _isSocketDisposed = true;
-            _socket.Dispose();
-            _socket = null;
+            var socket = Interlocked.Exchange(ref _socket, null);
+            socket?.Dispose();
         }
 
         /// <summary>
