@@ -627,6 +627,7 @@ namespace Enyim.Caching.Memcached
                         }
                         else
                         {
+                            resetTask.Observe();
                             _semaphore.Release();
                             socket.IsAlive = false;
 
@@ -1041,6 +1042,7 @@ namespace Enyim.Caching.Memcached
                     var writeSocketTask = pooledSocket.WriteAsync(b);
                     if (await Task.WhenAny(writeSocketTask, Task.Delay(_config.ConnectionTimeout)).ConfigureAwait(false) != writeSocketTask)
                     {
+                        writeSocketTask.Observe();
                         result.Fail("Timeout to pooledSocket.WriteAsync");
                         return result;
                     }
@@ -1056,6 +1058,7 @@ namespace Enyim.Caching.Memcached
                     var readResponseTask = op.ReadResponseAsync(pooledSocket);
                     if (await Task.WhenAny(readResponseTask, Task.Delay(_config.ConnectionTimeout)).ConfigureAwait(false) != readResponseTask)
                     {
+                        readResponseTask.Observe();
                         result.Fail($"Timeout to ReadResponseAsync(pooledSocket) for {op}");
                         return result;
                     }
