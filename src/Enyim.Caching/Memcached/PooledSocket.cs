@@ -164,6 +164,7 @@ namespace Enyim.Caching.Memcached
                 }
                 else
                 {
+                    connTask.Observe();
                     if (_socket != null)
                     {
                         DisposeSocket();
@@ -446,6 +447,7 @@ namespace Enyim.Caching.Memcached
                     }
                     else
                     {
+                        readTask.Observe();
                         throw new TimeoutException($"Timeout to read from {_endpoint}.");
                     }
                 }
